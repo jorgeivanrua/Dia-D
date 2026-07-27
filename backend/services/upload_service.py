@@ -11,6 +11,10 @@ from PIL.ExifTags import TAGS, GPSTAGS
 from backend.database import db
 from backend.models.incidentes_delitos import EvidenciaFotografica
 
+# Optional S3 / MinIO
+import boto3
+from botocore.exceptions import ClientError
+
 
 class UploadService:
     """Servicio para gestión de archivos de evidencia"""
@@ -257,12 +261,36 @@ class UploadService:
         if tipo_reporte not in ['incidente', 'delito']:
             raise ValueError('Tipo de reporte inválido')
         
+        # Preferir configuración de Flask si hay contexto, sino usar variables de entorno
+        try:
+            from flask import current_app
+            flask_conf = current_app.config if current_app else None
+        except Exception:
+            flask_conf = None
+
+        if flask_conf is not None:
+            s3_enabled = flask_conf.get('S3_ENABLED', False)
+            endpoint = flask_conf.get('S3_ENDPOINT_URL', '').rstrip('/')
+            access_key = flask_conf.get('S3_ACCESS_KEY')
+            secret_key = flask_conf.get('S3_SECRET_KEY')
+            region = flask_conf.get('S3_REGION', 'us-east-1')
+            bucket = flask_conf.get('S3_BUCKET', 'electoral-evidencias')
+            use_ssl = flask_conf.get('S3_USE_SSL', False)
+        else:
+            s3_enabled = os.environ.get('S3_ENABLED', 'False') == 'True'
+            endpoint = os.environ.get('S3_ENDPOINT_URL', '').rstrip('/')
+            access_key = os.environ.get('S3_ACCESS_KEY')
+            secret_key = os.environ.get('S3_SECRET_KEY')
+            region = os.environ.get('S3_REGION', 'us-east-1')
+            bucket = os.environ.get('S3_BUCKET', 'electoral-evidencias')
+            use_ssl = os.environ.get('S3_USE_SSL', 'False') == 'True'
+
         try:
             # Generar nombre único
             original_filename = file.filename
             unique_filename = UploadService.generate_unique_filename(original_filename)
             
-            # Crear directorio si no existe
+            # Crear directorio si no existe (temporal/local)
             upload_dir = UploadService.UPLOAD_FOLDER
             os.makedirs(upload_dir, exist_ok=True)
             
@@ -282,10 +310,59 @@ class UploadService:
             # Extraer metadatos GPS
             gps_metadata = UploadService.extract_gps_metadata(file_path)
             
-            # Generar URL de acceso
+            # Default url (local route)
             url = f"/api/evidencia/{unique_filename}"
-            
-            # Crear registro en base de datos
+
+            # If S3/MinIO is enabled, upload object and set URL accordingly
+            if s3_enabled:
+                endpoint = os.environ.get('S3_ENDPOINT_URL', '').rstrip('/')
+                access_key = os.environ.get('S3_ACCESS_KEY')
+                secret_key = os.environ.get('S3_SECRET_KEY')
+                region = os.environ.get('S3_REGION', 'us-east-1')
+                bucket = os.environ.get('S3_BUCKET', 'electoral-evidencias')
+                use_ssl = os.environ.get('S3_USE_SSL', 'False') == 'True'
+
+                s3_client = boto3.client(
+                    's3',
+                    endpoint_url=endpoint if endpoint else None,
+                    aws_access_key_id=access_key,
+                    aws_secret_access_key=secret_key,
+                    region_name=region,
+                    verify=use_ssl
+                )
+
+                # Ensure bucket exists (best-effort)
+                try:
+                    s3_client.head_bucket(Bucket=bucket)
+                except ClientError:
+                    try:
+                        s3_client.create_bucket(Bucket=bucket)
+                    except ClientError as e:
+                        # If bucket creation fails, continue but log
+                        print(f"No se pudo crear/verificar bucket S3: {e}")
+
+                # Upload file
+                try:
+                    content_type = file.content_type or 'image/jpeg'
+                    s3_client.upload_file(
+                        file_path,
+                        bucket,
+                        unique_filename,
+                        ExtraArgs={'ContentType': content_type}
+                    )
+
+                    # Construct public URL (best-effort)
+                    if endpoint:
+                        url = f"{endpoint}/{bucket}/{unique_filename}"
+                    else:
+                        # If using AWS, construct standard URL
+                        url = f"https://{bucket}.s3.{region}.amazonaws.com/{unique_filename}"
+
+                except Exception as e:
+                    print(f"Error subiendo a S3: {e}")
+                    # Fall back to local file if S3 upload fails
+
+            # Create DB record
             evidencia = EvidenciaFotografica(
                 incidente_id=reporte_id if tipo_reporte == 'incidente' else None,
                 delito_id=reporte_id if tipo_reporte == 'delito' else None,
@@ -305,6 +382,13 @@ class UploadService:
             
             db.session.add(evidencia)
             db.session.commit()
+
+            # If S3 upload succeeded and we used a temp local file, delete the local copy
+            if s3_enabled and os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                except Exception:
+                    pass
             
             return {
                 'id': evidencia.id,

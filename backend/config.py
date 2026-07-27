@@ -36,15 +36,30 @@ class Config:
     JWT_HEADER_NAME = 'Authorization'
     JWT_HEADER_TYPE = 'Bearer'
     
-    # Upload
+    # Upload (local by default; can use S3/MinIO)
     UPLOAD_FOLDER = os.getenv('UPLOAD_FOLDER', 'uploads')
-    MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5MB max file size
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
-    
+    MAX_CONTENT_LENGTH = int(os.getenv('MAX_CONTENT_LENGTH', 5 * 1024 * 1024))  # bytes
+    ALLOWED_EXTENSIONS = set(os.getenv('ALLOWED_EXTENSIONS', 'png,jpg,jpeg,pdf').split(','))
+
+    # S3 / MinIO settings (optional)
+    S3_ENABLED = os.getenv('S3_ENABLED', 'False') == 'True'
+    S3_ENDPOINT_URL = os.getenv('S3_ENDPOINT_URL', '')  # e.g. http://minio:9000
+    S3_ACCESS_KEY = os.getenv('S3_ACCESS_KEY', '')
+    S3_SECRET_KEY = os.getenv('S3_SECRET_KEY', '')
+    S3_REGION = os.getenv('S3_REGION', 'us-east-1')
+    S3_BUCKET = os.getenv('S3_BUCKET', 'electoral-evidencias')
+    S3_USE_SSL = os.getenv('S3_USE_SSL', 'False') == 'True'
+
+    # Chroma (vector DB) settings
+    CHROMA_ENABLED = os.getenv('CHROMA_ENABLED', 'False') == 'True'
+    CHROMA_PERSIST_DIR = os.getenv('CHROMA_PERSIST_DIR', 'chroma_db')
+    CHROMA_SERVER_HOST = os.getenv('CHROMA_SERVER_HOST', '')  # optional chroma server host
+    CHROMA_SERVER_PORT = int(os.getenv('CHROMA_SERVER_PORT', 8000))
+
     # Pagination
     ITEMS_PER_PAGE = 20
     MAX_ITEMS_PER_PAGE = 100
-    
+
     # SocketIO / Redis
     SOCKETIO_MESSAGE_QUEUE = os.getenv('REDIS_URL', None)  # None para desarrollo sin Redis
     SOCKETIO_ASYNC_MODE = 'threading'
