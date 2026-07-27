@@ -1,0 +1,1466 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Monitoreo - Sistema Electoral{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #mapa-monitoreo {
+        height: 600px;
+        width: 100%;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .stat-card h3 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 0;
+    }
+    
+    .stat-card p {
+        margin: 5px 0 0 0;
+        opacity: 0.9;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        margin-right: 10px;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .refresh-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-4">
+                        <i class="bi bi-radar"></i> Monitoreo en Tiempo Real
+                    </h1>
+                    <p class="lead text-muted">Seguimiento de testigos y coordinadores en el territorio</p>
+                </div>
+                <div>
+                    <button class="btn btn-outline-danger" onclick="logout()">
+                        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h3 id="stat-testigos-geo">0</h3>
+                <p>Testigos con Geolocalización</p>
+                <small id="stat-testigos-porcentaje">0% del total</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <h3 id="stat-testigos-presencia">0</h3>
+                <p>Testigos con Presencia Verificada</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <h3 id="stat-coordinadores-geo">0</h3>
+                <p>Coordinadores con Geolocalización</p>
+                <small id="stat-coordinadores-porcentaje">0% del total</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <h3 id="stat-formularios">0</h3>
+                <p>Formularios Recibidos</p>
+                <small id="stat-formularios-validados">0 validados</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-funnel"></i> Filtros
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Tipo de Usuario</label>
+                            <select class="form-select" id="filtro-tipo-usuario">
+                                <option value="">Todos</option>
+                                <option value="testigo_electoral">Solo Testigos</option>
+                                <option value="coordinadores">Solo Coordinadores</option>
+                                <option value="coordinador_departamental">Coordinadores Departamentales</option>
+                                <option value="coordinador_municipal">Coordinadores Municipales</option>
+                                <option value="coordinador_puesto">Coordinadores de Puesto</option>
+                                <option value="auditor_electoral">Auditores</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Departamento</label>
+                            <select class="form-select" id="filtro-departamento">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Municipio</label>
+                            <select class="form-select" id="filtro-municipio" disabled>
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Zona</label>
+                            <select class="form-select" id="filtro-zona" disabled>
+                                <option value="">Todas</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Puesto</label>
+                            <select class="form-select" id="filtro-puesto" disabled>
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button class="btn btn-secondary w-100" onclick="limpiarFiltros()">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="bi bi-exclamation-triangle-fill"></i> Alertas y Situaciones que Requieren Atención
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="alertas-container">
+                        <p class="text-muted">Cargando alertas...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mapa y Leyenda -->
+    <div class="row">
+        <div class="col-lg-9">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-geo-alt-fill"></i> Mapa de Geolocalización
+                    </h5>
+                    <div class="d-flex gap-2 align-items-center">
+                        <span class="badge bg-success" id="usuarios-activos-badge">0 usuarios activos</span>
+                        <button class="btn btn-sm btn-outline-primary" onclick="exportarReporte()">
+                            <i class="bi bi-download"></i> Exportar Reporte
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="mapa-monitoreo"></div>
+                </div>
+            </div>
+            
+            <!-- Actividad Reciente -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Actividad Reciente
+                    </h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    <div id="actividad-reciente-container">
+                        <p class="text-muted">Cargando actividad...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Leyenda
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #28a745;"></div>
+                        <span>Testigo con Presencia</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #ffc107;"></div>
+                        <span>Testigo sin Presencia</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #007bff;"></div>
+                        <span>Coordinador Puesto</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #6f42c1;"></div>
+                        <span>Coordinador Municipal</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #e83e8c;"></div>
+                        <span>Coordinador Departamental</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #17a2b8;"></div>
+                        <span>Auditor</span>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mt-3">
+                        <h6>Actualización Automática</h6>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="auto-refresh" checked>
+                            <label class="form-check-label" for="auto-refresh">
+                                Cada 30 segundos
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="bi bi-clock"></i> Última actualización:<br>
+                            <span id="ultima-actualizacion">-</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Nuevas Secciones de Métricas Avanzadas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3"><i class="bi bi-graph-up"></i> Métricas de Rendimiento</h2>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Actividad de Usuarios</h5>
+                    <canvas id="chart-usuarios-actividad"></canvas>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            Tasa de cambio: <span id="tasa-usuarios" class="badge bg-info">0%</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Formularios por Período</h5>
+                    <canvas id="chart-formularios-periodo"></canvas>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            Promedio/hora: <span id="promedio-formularios">0</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Tiempo de Respuesta</h5>
+                    <div class="text-center py-4">
+                        <h2 id="tiempo-respuesta" class="display-4">0</h2>
+                        <p class="text-muted">minutos promedio</p>
+                    </div>
+                    <small class="text-muted">
+                        Tiempo promedio de resolución de incidentes en las últimas 24 horas
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mapa de Calor -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3"><i class="bi bi-map"></i> Mapa de Calor por Departamento</h2>
+        </div>
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div id="mapa-calor-container" style="height: 400px; overflow-y: auto;">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Departamento</th>
+                                    <th>Usuarios</th>
+                                    <th>Formularios</th>
+                                    <th>Incidentes</th>
+                                    <th>Delitos</th>
+                                    <th>Índice de Actividad</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-mapa-calor">
+                                <tr>
+                                    <td colspan="6" class="text-center">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Cargando...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tendencias por Hora -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3"><i class="bi bi-clock-history"></i> Tendencias por Hora del Día</h2>
+        </div>
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <canvas id="chart-tendencias-hora"></canvas>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            Hora pico: <span id="hora-pico" class="badge bg-warning">-</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparativa de Departamentos -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3"><i class="bi bi-bar-chart"></i> Comparativa de Departamentos</h2>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Top 5 Departamentos</h5>
+                </div>
+                <div class="card-body">
+                    <div id="top-departamentos">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Departamentos que Necesitan Atención</h5>
+                </div>
+                <div class="card-body">
+                    <div id="bottom-departamentos">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-warning" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Predicciones -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-3"><i class="bi bi-graph-up-arrow"></i> Predicciones y Tendencias</h2>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Formularios</h5>
+                    <div class="row">
+                        <div class="col-6">
+                            <p class="text-muted mb-1">Últimas 24h</p>
+                            <h3 id="pred-formularios-24h">0</h3>
+                        </div>
+                        <div class="col-6">
+                            <p class="text-muted mb-1">Predicción próximas 24h</p>
+                            <h3 id="pred-formularios-prox">0</h3>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            Tendencia: <span id="pred-formularios-tendencia" class="badge">0%</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Incidentes</h5>
+                    <div class="row">
+                        <div class="col-6">
+                            <p class="text-muted mb-1">Últimas 24h</p>
+                            <h3 id="pred-incidentes-24h">0</h3>
+                        </div>
+                        <div class="col-6">
+                            <p class="text-muted mb-1">Predicción próximas 24h</p>
+                            <h3 id="pred-incidentes-prox">0</h3>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            Tendencia: <span id="pred-incidentes-tendencia" class="badge">0%</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Botón de actualización manual -->
+<button class="btn btn-primary btn-lg refresh-btn" onclick="cargarDatos()" title="Actualizar datos">
+    <i class="bi bi-arrow-clockwise"></i>
+</button>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- Script de geolocalización ya está cargado en base.html -->
+
+<!-- api-client.js ya está incluido en base.html -->
+<!-- Cargador de datos con manejo de errores -->
+<script src="{{ url_for('static', filename='js/dashboard-data-loader.js') }}"></script>
+<!-- Script de debugging -->
+<script src="{{ url_for('static', filename='js/monitoreo-dashboard-debug.js') }}"></script>
+<script>
+let mapa;
+let marcadores = [];
+let autoRefreshInterval;
+let todosLosUsuarios = []; // Cache de todos los usuarios
+let filtros = {
+    tipoUsuario: '',
+    departamento: '',
+    municipio: '',
+    zona: '',
+    puesto: ''
+};
+
+// Inicializar mapa
+function initMapa() {
+    // Centro de Colombia
+    mapa = L.map('mapa-monitoreo').setView([4.5709, -74.2973], 6);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(mapa);
+}
+
+// Cargar ubicaciones para filtros
+async function cargarUbicaciones() {
+    try {
+        // Cargar departamentos
+        const deptosResponse = await APIClient.get('/locations/departamentos');
+        const deptos = deptosResponse.data || [];
+        
+        const selectDepto = document.getElementById('filtro-departamento');
+        selectDepto.innerHTML = '<option value="">Todos</option>';
+        deptos.forEach(depto => {
+            const option = document.createElement('option');
+            option.value = depto.codigo;
+            option.textContent = depto.nombre;
+            selectDepto.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error cargando ubicaciones:', error);
+    }
+}
+
+// Manejar cambio de departamento
+async function onDepartamentoChange() {
+    const deptoSelect = document.getElementById('filtro-departamento');
+    const muniSelect = document.getElementById('filtro-municipio');
+    const zonaSelect = document.getElementById('filtro-zona');
+    const puestoSelect = document.getElementById('filtro-puesto');
+    
+    filtros.departamento = deptoSelect.value;
+    filtros.municipio = '';
+    filtros.zona = '';
+    filtros.puesto = '';
+    
+    muniSelect.innerHTML = '<option value="">Todos</option>';
+    zonaSelect.innerHTML = '<option value="">Todas</option>';
+    puestoSelect.innerHTML = '<option value="">Todos</option>';
+    
+    if (filtros.departamento) {
+        try {
+            const response = await APIClient.get(`/locations/municipios/${filtros.departamento}`);
+            const municipios = response.data || [];
+            
+            municipios.forEach(muni => {
+                const option = document.createElement('option');
+                option.value = muni.codigo;
+                option.textContent = muni.nombre;
+                muniSelect.appendChild(option);
+            });
+            
+            muniSelect.disabled = false;
+        } catch (error) {
+            console.error('Error cargando municipios:', error);
+        }
+    } else {
+        muniSelect.disabled = true;
+        zonaSelect.disabled = true;
+        puestoSelect.disabled = true;
+    }
+    
+    aplicarFiltros();
+}
+
+// Manejar cambio de municipio
+async function onMunicipioChange() {
+    const muniSelect = document.getElementById('filtro-municipio');
+    const zonaSelect = document.getElementById('filtro-zona');
+    const puestoSelect = document.getElementById('filtro-puesto');
+    
+    filtros.municipio = muniSelect.value;
+    filtros.zona = '';
+    filtros.puesto = '';
+    
+    zonaSelect.innerHTML = '<option value="">Todas</option>';
+    puestoSelect.innerHTML = '<option value="">Todos</option>';
+    
+    if (filtros.municipio) {
+        try {
+            const response = await APIClient.get(`/locations/zonas/${filtros.departamento}/${filtros.municipio}`);
+            const zonas = response.data || [];
+            
+            zonas.forEach(zona => {
+                const option = document.createElement('option');
+                option.value = zona.codigo;
+                option.textContent = `Zona ${zona.codigo}`;
+                zonaSelect.appendChild(option);
+            });
+            
+            zonaSelect.disabled = false;
+        } catch (error) {
+            console.error('Error cargando zonas:', error);
+        }
+    } else {
+        zonaSelect.disabled = true;
+        puestoSelect.disabled = true;
+    }
+    
+    aplicarFiltros();
+}
+
+// Manejar cambio de zona
+async function onZonaChange() {
+    const zonaSelect = document.getElementById('filtro-zona');
+    const puestoSelect = document.getElementById('filtro-puesto');
+    
+    filtros.zona = zonaSelect.value;
+    filtros.puesto = '';
+    
+    puestoSelect.innerHTML = '<option value="">Todos</option>';
+    
+    if (filtros.zona) {
+        try {
+            const response = await APIClient.get(`/locations/puestos/${filtros.departamento}/${filtros.municipio}/${filtros.zona}`);
+            const puestos = response.data || [];
+            
+            puestos.forEach(puesto => {
+                const option = document.createElement('option');
+                option.value = puesto.codigo;
+                option.textContent = puesto.nombre;
+                puestoSelect.appendChild(option);
+            });
+            
+            puestoSelect.disabled = false;
+        } catch (error) {
+            console.error('Error cargando puestos:', error);
+        }
+    } else {
+        puestoSelect.disabled = true;
+    }
+    
+    aplicarFiltros();
+}
+
+// Limpiar filtros
+function limpiarFiltros() {
+    filtros = {
+        tipoUsuario: '',
+        departamento: '',
+        municipio: '',
+        zona: '',
+        puesto: ''
+    };
+    
+    document.getElementById('filtro-tipo-usuario').value = '';
+    document.getElementById('filtro-departamento').value = '';
+    document.getElementById('filtro-municipio').value = '';
+    document.getElementById('filtro-zona').value = '';
+    document.getElementById('filtro-puesto').value = '';
+    
+    document.getElementById('filtro-municipio').disabled = true;
+    document.getElementById('filtro-zona').disabled = true;
+    document.getElementById('filtro-puesto').disabled = true;
+    
+    aplicarFiltros();
+}
+
+// Aplicar filtros
+function aplicarFiltros() {
+    let usuariosFiltrados = todosLosUsuarios;
+    
+    // Filtrar por tipo de usuario
+    if (filtros.tipoUsuario) {
+        if (filtros.tipoUsuario === 'coordinadores') {
+            usuariosFiltrados = usuariosFiltrados.filter(u => 
+                u.rol.includes('coordinador')
+            );
+        } else {
+            usuariosFiltrados = usuariosFiltrados.filter(u => 
+                u.rol === filtros.tipoUsuario
+            );
+        }
+    }
+    
+    // Filtrar por ubicación
+    if (filtros.departamento) {
+        usuariosFiltrados = usuariosFiltrados.filter(u => 
+            u.ubicacion && u.ubicacion.departamento_codigo === filtros.departamento
+        );
+    }
+    
+    if (filtros.municipio) {
+        usuariosFiltrados = usuariosFiltrados.filter(u => 
+            u.ubicacion && u.ubicacion.municipio_codigo === filtros.municipio
+        );
+    }
+    
+    if (filtros.zona) {
+        usuariosFiltrados = usuariosFiltrados.filter(u => 
+            u.ubicacion && u.ubicacion.zona_codigo === filtros.zona
+        );
+    }
+    
+    if (filtros.puesto) {
+        usuariosFiltrados = usuariosFiltrados.filter(u => 
+            u.ubicacion && u.ubicacion.puesto_codigo === filtros.puesto
+        );
+    }
+    
+    // Actualizar mapa con usuarios filtrados
+    actualizarMapa(usuariosFiltrados);
+}
+
+// Obtener color según rol y estado
+function getMarkerColor(usuario) {
+    if (usuario.rol === 'testigo_electoral') {
+        return usuario.presencia_verificada ? '#28a745' : '#ffc107';
+    } else if (usuario.rol === 'coordinador_puesto') {
+        return '#007bff';
+    } else if (usuario.rol === 'coordinador_municipal') {
+        return '#6f42c1';
+    } else if (usuario.rol === 'coordinador_departamental') {
+        return '#e83e8c';
+    } else if (usuario.rol === 'auditor_electoral') {
+        return '#17a2b8';
+    }
+    return '#6c757d';
+}
+
+// Obtener color del pin de puesto según porcentaje de avance
+function getPuestoColor(porcentaje) {
+    if (porcentaje === 0) {
+        return '#dc3545'; // Rojo - sin votos
+    } else if (porcentaje >= 100) {
+        return '#28a745'; // Verde - completado
+    } else {
+        return '#ffc107'; // Amarillo - en progreso
+    }
+}
+
+// Crear icono personalizado
+function createCustomIcon(color) {
+    return L.divIcon({
+        className: 'custom-marker',
+        html: `<div style="background-color: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+    });
+}
+
+// Actualizar mapa con usuarios
+function actualizarMapa(usuarios) {
+    // Limpiar marcadores anteriores
+    marcadores.forEach(m => mapa.removeLayer(m));
+    marcadores = [];
+    
+    // Agregar nuevos marcadores
+    usuarios.forEach(usuario => {
+        const color = getMarkerColor(usuario);
+        const icon = createCustomIcon(color);
+        
+        const marker = L.marker([usuario.latitud, usuario.longitud], { icon: icon })
+            .addTo(mapa);
+        
+        // Popup con información
+        let popupContent = `
+            <div style="min-width: 200px;">
+                <h6><strong>${usuario.nombre}</strong></h6>
+                <p class="mb-1"><small><strong>Rol:</strong> ${usuario.rol}</small></p>
+        `;
+        
+        if (usuario.ubicacion) {
+            popupContent += `<p class="mb-1"><small><strong>Ubicación:</strong> ${usuario.ubicacion.nombre_completo}</small></p>`;
+        }
+        
+        if (usuario.rol === 'testigo_electoral') {
+            popupContent += `<p class="mb-1"><small><strong>Presencia:</strong> ${usuario.presencia_verificada ? '✅ Verificada' : '⏳ Pendiente'}</small></p>`;
+        }
+        
+        if (usuario.ultima_actualizacion) {
+            const fecha = new Date(usuario.ultima_actualizacion);
+            popupContent += `<p class="mb-0"><small><strong>Actualizado:</strong> ${fecha.toLocaleString()}</small></p>`;
+        }
+        
+        popupContent += `</div>`;
+        
+        marker.bindPopup(popupContent);
+        marcadores.push(marker);
+    });
+    
+    document.getElementById('usuarios-activos-badge').textContent = `${usuarios.length} usuarios activos`;
+    
+    // Ajustar vista del mapa si hay usuarios
+    if (usuarios.length > 0) {
+        const bounds = L.latLngBounds(usuarios.map(u => [u.latitud, u.longitud]));
+        mapa.fitBounds(bounds, { padding: [50, 50] });
+    }
+}
+
+// Cargar alertas
+async function cargarAlertas() {
+    try {
+        const response = await APIClient.get('/monitoreo/alertas');
+        if (response.success) {
+            const alertas = response.data;
+            const container = document.getElementById('alertas-container');
+            
+            if (alertas.length === 0) {
+                container.innerHTML = '<p class="text-success mb-0"><i class="bi bi-check-circle"></i> No hay alertas en este momento. Todo funciona correctamente.</p>';
+                return;
+            }
+            
+            let html = '<div class="row g-2">';
+            alertas.forEach(alerta => {
+                const iconos = {
+                    'geolocalizacion': 'geo-alt',
+                    'presencia': 'person-check',
+                    'incidentes': 'exclamation-triangle',
+                    'delitos': 'shield-exclamation',
+                    'formularios': 'file-earmark-text',
+                    'actividad': 'activity'
+                };
+                
+                html += `
+                    <div class="col-md-6">
+                        <div class="alert alert-${alerta.tipo} mb-0">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-${iconos[alerta.categoria] || 'info-circle'} me-2" style="font-size: 1.5rem;"></i>
+                                <div class="flex-grow-1">
+                                    <strong>${alerta.titulo}</strong>
+                                    <p class="mb-0 small">${alerta.descripcion}</p>
+                                </div>
+                                <span class="badge bg-${alerta.tipo}">${alerta.cantidad}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            container.innerHTML = html;
+        }
+    } catch (error) {
+        console.error('Error cargando alertas:', error);
+    }
+}
+
+// Cargar actividad reciente
+async function cargarActividadReciente() {
+    try {
+        const response = await APIClient.get('/monitoreo/actividad-reciente', { limite: 15, horas: 24 });
+        if (response.success) {
+            const actividades = response.data;
+            const container = document.getElementById('actividad-reciente-container');
+            
+            if (actividades.length === 0) {
+                container.innerHTML = '<p class="text-muted">No hay actividad reciente.</p>';
+                return;
+            }
+            
+            let html = '<div class="list-group list-group-flush">';
+            actividades.forEach(act => {
+                const fecha = new Date(act.timestamp);
+                const tiempoRelativo = getRelativeTime(fecha);
+                
+                let badgeClass = 'secondary';
+                let badgeText = '';
+                
+                if (act.tipo === 'formulario') {
+                    badgeClass = act.estado === 'validado' ? 'success' : act.estado === 'pendiente' ? 'warning' : 'danger';
+                    badgeText = act.estado;
+                } else if (act.tipo === 'incidente') {
+                    badgeClass = act.severidad === 'critica' ? 'danger' : act.severidad === 'alta' ? 'warning' : 'info';
+                    badgeText = act.severidad;
+                } else if (act.tipo === 'delito') {
+                    badgeClass = 'danger';
+                    badgeText = act.gravedad;
+                }
+                
+                html += `
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-1">
+                                    <i class="bi bi-${act.icono} me-2 text-primary"></i>
+                                    <strong>${act.titulo}</strong>
+                                </div>
+                                <p class="mb-1 small text-muted">${act.descripcion}</p>
+                                <small class="text-muted">
+                                    <i class="bi bi-person"></i> ${act.usuario || 'Sistema'} • 
+                                    <i class="bi bi-clock"></i> ${tiempoRelativo}
+                                </small>
+                            </div>
+                            ${badgeText ? `<span class="badge bg-${badgeClass}">${badgeText}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            container.innerHTML = html;
+        }
+    } catch (error) {
+        console.error('Error cargando actividad reciente:', error);
+    }
+}
+
+// Función auxiliar para tiempo relativo
+function getRelativeTime(date) {
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000); // diferencia en segundos
+    
+    if (diff < 60) return 'Hace un momento';
+    if (diff < 3600) return `Hace ${Math.floor(diff / 60)} minutos`;
+    if (diff < 86400) return `Hace ${Math.floor(diff / 3600)} horas`;
+    return `Hace ${Math.floor(diff / 86400)} días`;
+}
+
+// Exportar reporte
+async function exportarReporte() {
+    try {
+        const response = await APIClient.get('/monitoreo/exportar-reporte');
+        if (response.success) {
+            const reporte = response.data;
+            
+            // Crear archivo JSON para descargar
+            const dataStr = JSON.stringify(reporte, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `reporte-monitoreo-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            alert('✅ Reporte exportado exitosamente');
+        }
+    } catch (error) {
+        console.error('Error exportando reporte:', error);
+        alert('❌ Error al exportar reporte');
+    }
+}
+
+// Cargar datos
+async function cargarDatos() {
+    console.log('[Monitoreo] Cargando datos principales...');
+    
+    try {
+        // Cargar estadísticas
+        console.log('[Monitoreo] Cargando estadísticas...');
+        try {
+            const statsResponse = await APIClient.get('/monitoreo/estadisticas');
+            if (statsResponse && statsResponse.success && statsResponse.data) {
+                const stats = statsResponse.data;
+                
+                document.getElementById('stat-testigos-geo').textContent = stats.testigos?.con_geolocalizacion || 0;
+                document.getElementById('stat-testigos-porcentaje').textContent = `${stats.testigos?.porcentaje_geo || 0}% del total`;
+                document.getElementById('stat-testigos-presencia').textContent = stats.testigos?.con_presencia_verificada || 0;
+                
+                document.getElementById('stat-coordinadores-geo').textContent = stats.coordinadores?.con_geolocalizacion || 0;
+                document.getElementById('stat-coordinadores-porcentaje').textContent = `${stats.coordinadores?.porcentaje_geo || 0}% del total`;
+                
+                document.getElementById('stat-formularios').textContent = stats.formularios?.total || 0;
+                document.getElementById('stat-formularios-validados').textContent = `${stats.formularios?.validados || 0} validados`;
+                
+                console.log('[Monitoreo] ✓ Estadísticas cargadas');
+            } else {
+                console.warn('[Monitoreo] Respuesta de estadísticas no válida');
+            }
+        } catch (error) {
+            console.error('[Monitoreo] Error cargando estadísticas:', error);
+        }
+        
+        // Cargar usuarios activos
+        console.log('[Monitoreo] Cargando usuarios activos...');
+        try {
+            const usuariosResponse = await APIClient.get('/monitoreo/usuarios-activos');
+            if (usuariosResponse && usuariosResponse.success && usuariosResponse.data) {
+                todosLosUsuarios = usuariosResponse.data;
+                aplicarFiltros();
+                console.log('[Monitoreo] ✓ Usuarios activos cargados:', todosLosUsuarios.length);
+            } else {
+                console.warn('[Monitoreo] Respuesta de usuarios no válida');
+                todosLosUsuarios = [];
+            }
+        } catch (error) {
+            console.error('[Monitoreo] Error cargando usuarios activos:', error);
+            todosLosUsuarios = [];
+        }
+        
+        // Cargar alertas
+        console.log('[Monitoreo] Cargando alertas...');
+        try {
+            await cargarAlertas();
+            console.log('[Monitoreo] ✓ Alertas cargadas');
+        } catch (error) {
+            console.error('[Monitoreo] Error cargando alertas:', error);
+        }
+        
+        // Cargar actividad reciente
+        console.log('[Monitoreo] Cargando actividad reciente...');
+        try {
+            await cargarActividadReciente();
+            console.log('[Monitoreo] ✓ Actividad reciente cargada');
+        } catch (error) {
+            console.error('[Monitoreo] Error cargando actividad reciente:', error);
+        }
+        
+        // Actualizar timestamp
+        document.getElementById('ultima-actualizacion').textContent = new Date().toLocaleString();
+        
+        console.log('[Monitoreo] ✓ Datos principales cargados');
+        
+    } catch (error) {
+        console.error('[Monitoreo] Error general cargando datos:', error);
+        throw error; // Re-lanzar para que el caller lo maneje
+    }
+}
+
+// Auto-refresh
+function setupAutoRefresh() {
+    const checkbox = document.getElementById('auto-refresh');
+    
+    checkbox.addEventListener('change', function() {
+        if (this.checked) {
+            autoRefreshInterval = setInterval(cargarDatos, 30000); // 30 segundos
+        } else {
+            clearInterval(autoRefreshInterval);
+        }
+    });
+    
+    // Iniciar auto-refresh
+    if (checkbox.checked) {
+        autoRefreshInterval = setInterval(cargarDatos, 30000);
+    }
+}
+
+// ============================================================================
+// NUEVAS FUNCIONES - MÉTRICAS AVANZADAS
+// ============================================================================
+
+// Variables para gráficos
+let chartUsuariosActividad = null;
+let chartFormulariosPeriodo = null;
+let chartTendenciasHora = null;
+
+// Cargar métricas de rendimiento
+async function cargarMetricasRendimiento() {
+    try {
+        const response = await APIClient.get('/monitoreo/metricas-rendimiento');
+        if (response && response.success && response.metricas) {
+            const metricas = response.metricas;
+            
+            // Actualizar tasa de usuarios
+            const tasaElement = document.getElementById('tasa-usuarios');
+            if (tasaElement && metricas.actividad_usuarios) {
+                tasaElement.textContent = `${metricas.actividad_usuarios.tasa_cambio}%`;
+                tasaElement.className = `badge ${metricas.actividad_usuarios.tasa_cambio >= 0 ? 'bg-success' : 'bg-danger'}`;
+            }
+            
+            // Actualizar promedio de formularios
+            const promedioElement = document.getElementById('promedio-formularios');
+            if (promedioElement && metricas.formularios) {
+                promedioElement.textContent = metricas.formularios.promedio_por_hora;
+            }
+            
+            // Actualizar tiempo de respuesta
+            const tiempoElement = document.getElementById('tiempo-respuesta');
+            if (tiempoElement && metricas.incidentes) {
+                tiempoElement.textContent = metricas.incidentes.tiempo_promedio_respuesta_minutos;
+            }
+            
+            // Actualizar gráficos
+            if (metricas.actividad_usuarios) {
+                actualizarChartUsuarios(metricas.actividad_usuarios);
+            }
+            
+            if (metricas.formularios) {
+                actualizarChartFormularios(metricas.formularios);
+            }
+        }
+    } catch (error) {
+        console.error('[Monitoreo] Error cargando métricas de rendimiento:', error);
+        throw error;
+    }
+}
+
+// Actualizar gráfico de usuarios
+function actualizarChartUsuarios(datos) {
+    const ctx = document.getElementById('chart-usuarios-actividad');
+    if (!ctx) return;
+    
+    if (chartUsuariosActividad) {
+        chartUsuariosActividad.destroy();
+    }
+    
+    chartUsuariosActividad = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['1h', '6h', '12h', '24h'],
+            datasets: [{
+                label: 'Usuarios Activos',
+                data: [
+                    datos.ultima_hora,
+                    datos.ultimas_6_horas,
+                    datos.ultimas_12_horas,
+                    datos.ultimas_24_horas
+                ],
+                backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                borderColor: 'rgba(102, 126, 234, 1)',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Actualizar gráfico de formularios
+function actualizarChartFormularios(datos) {
+    const ctx = document.getElementById('chart-formularios-periodo');
+    if (!ctx) return;
+    
+    if (chartFormulariosPeriodo) {
+        chartFormulariosPeriodo.destroy();
+    }
+    
+    chartFormulariosPeriodo = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['1h', '6h', '12h', '24h'],
+            datasets: [{
+                label: 'Formularios Recibidos',
+                data: [
+                    datos.ultima_hora,
+                    datos.ultimas_6_horas,
+                    datos.ultimas_12_horas,
+                    datos.ultimas_24_horas
+                ],
+                backgroundColor: 'rgba(67, 233, 123, 0.2)',
+                borderColor: 'rgba(67, 233, 123, 1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Cargar mapa de calor
+async function cargarMapaCalor() {
+    try {
+        const response = await APIClient.get('/monitoreo/mapa-calor');
+        if (response.success) {
+            const tbody = document.getElementById('tabla-mapa-calor');
+            tbody.innerHTML = '';
+            
+            response.mapa_calor.forEach((dept, index) => {
+                const intensidad = Math.min(dept.indice_actividad / 100, 1);
+                const color = `rgba(255, ${255 - Math.floor(intensidad * 200)}, 0, ${0.3 + intensidad * 0.7})`;
+                
+                const tr = document.createElement('tr');
+                tr.style.backgroundColor = color;
+                tr.innerHTML = `
+                    <td><strong>${dept.departamento_nombre}</strong></td>
+                    <td>${dept.usuarios}</td>
+                    <td>${dept.formularios}</td>
+                    <td>${dept.incidentes}</td>
+                    <td>${dept.delitos}</td>
+                    <td>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-warning" role="progressbar" 
+                                 style="width: ${Math.min(dept.indice_actividad, 100)}%">
+                                ${dept.indice_actividad}
+                            </div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    } catch (error) {
+        console.error('Error cargando mapa de calor:', error);
+    }
+}
+
+// Cargar tendencias por hora
+async function cargarTendencias() {
+    try {
+        const response = await APIClient.get('/monitoreo/tendencias');
+        if (response.success) {
+            const ctx = document.getElementById('chart-tendencias-hora');
+            if (!ctx) return;
+            
+            if (chartTendenciasHora) {
+                chartTendenciasHora.destroy();
+            }
+            
+            const labels = response.tendencias.map(t => `${t.hora}:00`);
+            const formularios = response.tendencias.map(t => t.formularios);
+            const incidentes = response.tendencias.map(t => t.incidentes);
+            const usuarios = response.tendencias.map(t => t.usuarios_activos);
+            
+            chartTendenciasHora = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Formularios',
+                            data: formularios,
+                            borderColor: 'rgba(67, 233, 123, 1)',
+                            backgroundColor: 'rgba(67, 233, 123, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Incidentes',
+                            data: incidentes,
+                            borderColor: 'rgba(245, 87, 108, 1)',
+                            backgroundColor: 'rgba(245, 87, 108, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Usuarios Activos',
+                            data: usuarios,
+                            borderColor: 'rgba(79, 172, 254, 1)',
+                            backgroundColor: 'rgba(79, 172, 254, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Actualizar hora pico
+            document.getElementById('hora-pico').textContent = `${response.hora_pico.hora}:00 (${response.hora_pico.actividad_total} eventos)`;
+        }
+    } catch (error) {
+        console.error('Error cargando tendencias:', error);
+    }
+}
+
+// Cargar comparativa de departamentos
+async function cargarComparativa() {
+    try {
+        const response = await APIClient.get('/monitoreo/comparativa-departamentos');
+        if (response.success) {
+            // Top 5
+            const topDiv = document.getElementById('top-departamentos');
+            topDiv.innerHTML = '';
+            
+            response.top_5.forEach((dept, index) => {
+                const div = document.createElement('div');
+                div.className = 'mb-3 p-3 border-start border-success border-4';
+                div.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">${index + 1}. ${dept.departamento_nombre}</h6>
+                            <small class="text-muted">
+                                ${dept.testigos.con_presencia}/${dept.testigos.total} testigos con presencia
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <h5 class="mb-0 text-success">${dept.score_rendimiento}</h5>
+                            <small class="text-muted">score</small>
+                        </div>
+                    </div>
+                    <div class="progress mt-2" style="height: 5px;">
+                        <div class="progress-bar bg-success" style="width: ${dept.score_rendimiento}%"></div>
+                    </div>
+                `;
+                topDiv.appendChild(div);
+            });
+            
+            // Bottom 5
+            const bottomDiv = document.getElementById('bottom-departamentos');
+            bottomDiv.innerHTML = '';
+            
+            response.bottom_5.forEach((dept, index) => {
+                const div = document.createElement('div');
+                div.className = 'mb-3 p-3 border-start border-warning border-4';
+                div.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">${dept.departamento_nombre}</h6>
+                            <small class="text-muted">
+                                ${dept.testigos.con_presencia}/${dept.testigos.total} testigos con presencia
+                            </small>
+                        </div>
+                        <div class="text-end">
+                            <h5 class="mb-0 text-warning">${dept.score_rendimiento}</h5>
+                            <small class="text-muted">score</small>
+                        </div>
+                    </div>
+                    <div class="progress mt-2" style="height: 5px;">
+                        <div class="progress-bar bg-warning" style="width: ${dept.score_rendimiento}%"></div>
+                    </div>
+                `;
+                bottomDiv.appendChild(div);
+            });
+        }
+    } catch (error) {
+        console.error('Error cargando comparativa:', error);
+    }
+}
+
+// Cargar predicciones
+async function cargarPredicciones() {
+    try {
+        const response = await APIClient.get('/monitoreo/predicciones');
+        if (response.success) {
+            const pred = response.predicciones;
+            
+            // Formularios
+            document.getElementById('pred-formularios-24h').textContent = pred.formularios.ultimas_24h;
+            document.getElementById('pred-formularios-prox').textContent = pred.formularios.prediccion_proximas_24h;
+            
+            const tendenciaForm = document.getElementById('pred-formularios-tendencia');
+            tendenciaForm.textContent = `${pred.formularios.tendencia_porcentaje}%`;
+            tendenciaForm.className = `badge ${pred.formularios.tendencia_porcentaje >= 0 ? 'bg-success' : 'bg-danger'}`;
+            
+            // Incidentes
+            document.getElementById('pred-incidentes-24h').textContent = pred.incidentes.ultimas_24h;
+            document.getElementById('pred-incidentes-prox').textContent = pred.incidentes.prediccion_proximas_24h;
+            
+            const tendenciaInc = document.getElementById('pred-incidentes-tendencia');
+            tendenciaInc.textContent = `${pred.incidentes.tendencia_porcentaje}%`;
+            tendenciaInc.className = `badge ${pred.incidentes.tendencia_porcentaje >= 0 ? 'bg-danger' : 'bg-success'}`;
+        }
+    } catch (error) {
+        console.error('Error cargando predicciones:', error);
+    }
+}
+
+// Cargar todas las nuevas métricas
+async function cargarMetricasAvanzadas() {
+    console.log('[Monitoreo] Cargando métricas avanzadas...');
+    
+    // Cargar cada métrica individualmente para no bloquear si una falla
+    const metricas = [
+        { nombre: 'Métricas de Rendimiento', fn: cargarMetricasRendimiento },
+        { nombre: 'Mapa de Calor', fn: cargarMapaCalor },
+        { nombre: 'Tendencias', fn: cargarTendencias },
+        { nombre: 'Comparativa', fn: cargarComparativa },
+        { nombre: 'Predicciones', fn: cargarPredicciones }
+    ];
+    
+    for (const metrica of metricas) {
+        try {
+            console.log(`[Monitoreo] Cargando ${metrica.nombre}...`);
+            await metrica.fn();
+            console.log(`[Monitoreo] ✓ ${metrica.nombre} cargadas`);
+        } catch (error) {
+            console.warn(`[Monitoreo] ⚠️ Error cargando ${metrica.nombre}:`, error);
+            // Continuar con la siguiente métrica
+        }
+    }
+    
+    console.log('[Monitoreo] Métricas avanzadas completadas');
+}
+
+// ============================================================================
+// INICIALIZACIÓN
+// ============================================================================
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('[Monitoreo] Inicializando dashboard...');
+    
+    try {
+        // 1. Inicializar mapa primero
+        console.log('[Monitoreo] Inicializando mapa...');
+        initMapa();
+        
+        // 2. Cargar ubicaciones para filtros
+        console.log('[Monitoreo] Cargando ubicaciones...');
+        await cargarUbicaciones();
+        
+        // 3. Cargar datos básicos
+        console.log('[Monitoreo] Cargando datos básicos...');
+        await cargarDatos();
+        
+        // 4. Configurar auto-refresh
+        console.log('[Monitoreo] Configurando auto-refresh...');
+        setupAutoRefresh();
+        
+        // 5. Cargar métricas avanzadas (en segundo plano, sin bloquear)
+        console.log('[Monitoreo] Cargando métricas avanzadas...');
+        setTimeout(() => {
+            cargarMetricasAvanzadas().catch(err => {
+                console.warn('[Monitoreo] Error cargando métricas avanzadas:', err);
+            });
+        }, 2000);
+        
+        // Event listeners para filtros
+        document.getElementById('filtro-tipo-usuario').addEventListener('change', function() {
+            filtros.tipoUsuario = this.value;
+            aplicarFiltros();
+        });
+        
+        document.getElementById('filtro-departamento').addEventListener('change', onDepartamentoChange);
+        document.getElementById('filtro-municipio').addEventListener('change', onMunicipioChange);
+        document.getElementById('filtro-zona').addEventListener('change', function() {
+            filtros.zona = this.value;
+            aplicarFiltros();
+        });
+        document.getElementById('filtro-puesto').addEventListener('change', function() {
+            filtros.puesto = this.value;
+            aplicarFiltros();
+        });
+        
+        console.log('[Monitoreo] ✓ Dashboard inicializado correctamente');
+        
+    } catch (error) {
+        console.error('[Monitoreo] ✗ Error inicializando dashboard:', error);
+        alert('Error al cargar el dashboard. Por favor, recarga la página.');
+    }
+});
+
+// Actualizar cargarDatos para incluir métricas avanzadas
+const cargarDatosOriginal = cargarDatos;
+cargarDatos = async function() {
+    await cargarDatosOriginal();
+    await cargarMetricasAvanzadas();
+};
+
+// Función de logout
+async function logout() {
+    try {
+        await APIClient.logout();
+    } catch (error) {
+        console.error('Error al cerrar sesión:', error);
+    } finally {
+        localStorage.clear();
+        window.location.href = '/auth/login';
+    }
+}
+</script>
+{% endblock %}

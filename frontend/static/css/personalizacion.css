@@ -1,0 +1,258 @@
+/**
+ * Estilos para el módulo de personalización del sistema
+ */
+
+/* Cards de fondos */
+.fondo-card {
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.fondo-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.fondo-preview {
+    height: 150px;
+    border-radius: 8px 8px 0 0;
+    position: relative;
+}
+
+.fondo-card-small {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.fondo-card-small:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.fondo-preview-small {
+    height: 80px;
+    border-radius: 8px 8px 0 0;
+}
+
+/* Preview containers */
+#gradiente-preview,
+#imagen-preview {
+    height: 150px;
+    border-radius: 8px;
+    border: 2px dashed #dee2e6;
+    display: none;
+    margin-top: 1rem;
+}
+
+#gradiente-preview.active,
+#imagen-preview.active {
+    display: block;
+}
+
+/* Color pickers */
+.color-picker-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.color-picker-group input[type="color"] {
+    width: 60px;
+    height: 40px;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.color-picker-group label {
+    margin: 0;
+    font-weight: 500;
+}
+
+/* File upload */
+.file-upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.file-upload-area:hover {
+    border-color: #0d6efd;
+    background: #f8f9fa;
+}
+
+.file-upload-area.dragover {
+    border-color: #0d6efd;
+    background: #e7f1ff;
+}
+
+.file-upload-icon {
+    font-size: 3rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+}
+
+/* Tabs personalizados */
+.personalizacion-tabs .nav-link {
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 0.75rem 1.5rem;
+}
+
+.personalizacion-tabs .nav-link:hover {
+    color: #0d6efd;
+    border-bottom-color: #0d6efd;
+}
+
+.personalizacion-tabs .nav-link.active {
+    color: #0d6efd;
+    border-bottom-color: #0d6efd;
+    background: transparent;
+}
+
+/* Sección de fondos */
+.fondos-section {
+    background: white;
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+}
+
+.fondos-section h5 {
+    margin-bottom: 1.5rem;
+    color: #2a5298;
+    font-weight: 600;
+}
+
+/* Botones de acción */
+.btn-crear-fondo {
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-crear-fondo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(13, 110, 253, 0.4);
+    color: white;
+}
+
+/* Modal personalizado */
+.modal-personalizar .modal-content {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-personalizar .modal-header {
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    color: white;
+    border-radius: 15px 15px 0 0;
+    padding: 1.5rem;
+}
+
+.modal-personalizar .modal-header .btn-close {
+    filter: brightness(0) invert(1);
+}
+
+/* Badges de estado */
+.badge-activo {
+    background: #198754;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.5s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .fondo-card {
+        margin-bottom: 1rem;
+    }
+    
+    .color-picker-group {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .fondos-section {
+        padding: 1rem;
+    }
+}
+
+/* Preview en tiempo real */
+.preview-realtime {
+    position: sticky;
+    top: 20px;
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.preview-realtime h6 {
+    margin-bottom: 1rem;
+    color: #2a5298;
+    font-weight: 600;
+}
+
+.preview-container {
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Indicador de carga */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.loading-spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #0d6efd;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

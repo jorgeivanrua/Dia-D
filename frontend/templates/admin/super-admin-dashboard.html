@@ -1,0 +1,1883 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Super Admin{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/personalizacion.css') }}?v=20251205g">
+<style>
+.super-admin-header {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    border-left: 4px solid #2a5298;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.8;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    margin-bottom: 2rem;
+}
+
+.quick-action-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.5rem;
+}
+
+.quick-action-btn {
+    width: 100%;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.quick-action-btn:hover {
+    transform: translateX(5px);
+}
+
+.alert-item {
+    padding: 1rem;
+    border-left: 4px solid;
+    margin-bottom: 0.75rem;
+    border-radius: 4px;
+    background: white;
+}
+
+.alert-critical { border-left-color: #dc3545; background: #fff5f5; }
+.alert-warning { border-left-color: #ffc107; background: #fffbf0; }
+.alert-info { border-left-color: #0dcaf0; background: #f0f9ff; }
+
+.activity-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.badge-role {
+    padding: 0.35rem 0.65rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.nav-tabs .nav-link {
+    color: #6c757d;
+    border: none;
+    border-bottom: 3px solid transparent;
+}
+
+.nav-tabs .nav-link.active {
+    color: #2a5298;
+    border-bottom-color: #2a5298;
+    background: none;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.system-health {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.health-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.health-good { background-color: #28a745; }
+.health-warning { background-color: #ffc107; }
+.health-critical { background-color: #dc3545; }
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@media (max-width: 768px) {
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+    
+    .chart-card {
+        padding: 1rem;
+    }
+}
+
+/* Estilos para optimizaciones */
+/* Lazy Loading */
+img.lazy-loading {
+    filter: blur(5px);
+    transition: filter 0.3s;
+}
+
+/* Estilos para Carga Masiva */
+.upload-area {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+    background-color: #f8f9fa;
+    border-color: #0d6efd !important;
+}
+
+.upload-area.border-primary {
+    background-color: #e7f1ff;
+}
+
+.list-group-item.active {
+    background-color: #e7f1ff !important;
+    border-color: #0d6efd !important;
+}
+
+.upload-step {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+img.lazy-loaded {
+    filter: blur(0);
+}
+
+img.lazy-error {
+    opacity: 0.5;
+    background-color: #f0f0f0;
+}
+
+/* Ordenamiento de tablas */
+th.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+th.sortable:hover {
+    background-color: #f8f9fa;
+}
+
+.sort-icon {
+    font-size: 0.8em;
+    margin-left: 5px;
+    opacity: 0.5;
+}
+
+th.sortable:hover .sort-icon {
+    opacity: 1;
+}
+
+/* Paginación */
+.pagination {
+    margin-bottom: 0;
+}
+
+/* Animaciones suaves */
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* SOBRESCRIBIR MODERN-DASHBOARD.CSS PARA TODAS LAS TABLAS */
+.chart-card {
+    background-color: white !important;
+    color: #212529 !important;
+}
+
+.chart-card .table-responsive {
+    background-color: white !important;
+}
+
+.chart-card table {
+    background-color: white !important;
+    color: #212529 !important;
+}
+
+.chart-card table thead th {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+    border-bottom: 2px solid #dee2e6 !important;
+}
+
+.chart-card table tbody {
+    background-color: white !important;
+}
+
+.chart-card table tbody tr {
+    background-color: white !important;
+}
+
+.chart-card table tbody td {
+    color: #212529 !important;
+    background-color: white !important;
+    border-bottom: 1px solid #dee2e6 !important;
+}
+
+.chart-card table tbody td strong {
+    color: #212529 !important;
+}
+
+.chart-card table tbody td small {
+    color: #6c757d !important;
+}
+
+.chart-card .badge {
+    color: white !important;
+}
+
+.chart-card .badge.bg-light {
+    color: #212529 !important;
+}
+
+.chart-card .text-muted {
+    color: #6c757d !important;
+}
+
+.chart-card .form-control,
+.chart-card .form-select {
+    background-color: white !important;
+    color: #212529 !important;
+    border-color: #dee2e6 !important;
+}
+
+
+#usersTable tbody td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+}
+
+/* Badges mejorados */
+.badge {
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+/* Botones de acción mejorados */
+.btn-group-sm .btn {
+    transition: all 0.2s ease;
+}
+
+.btn-group-sm .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Input de búsqueda mejorado */
+#searchUser:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Selectores mejorados */
+.form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Badge de contador mejorado */
+.bg-gradient {
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+}
+
+.bg-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="super-admin-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2"><i class="bi bi-shield-check"></i> Dashboard Super Admin</h2>
+                <p class="mb-0" id="userInfo">Cargando información...</p>
+                <div class="system-health mt-2">
+                    <span class="health-indicator health-good" id="systemHealthIndicator"></span>
+                    <small id="systemHealthText">Sistema operando normalmente</small>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-outline-light me-2" onclick="window.syncManager && window.syncManager.syncAll()">
+                    <i class="bi bi-arrow-repeat"></i> Sincronizar
+                </button>
+                <button class="btn btn-light" onclick="logout()">
+                    <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas Críticas -->
+    <div id="criticalAlertsContainer" class="mb-4" style="display: none;">
+        <div class="alert alert-danger">
+            <h5><i class="bi bi-exclamation-triangle-fill"></i> Alertas Críticas</h5>
+            <div id="criticalAlertsList"></div>
+        </div>
+    </div>
+
+    <!-- Estadísticas Principales -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon text-primary"><i class="bi bi-people-fill"></i></div>
+                <h3 id="totalUsuarios" class="mb-1">0</h3>
+                <p class="text-muted mb-0">Usuarios Activos</p>
+                <small class="text-success"><i class="bi bi-arrow-up"></i> <span id="usuariosChange">0</span> hoy</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon text-info"><i class="bi bi-geo-alt-fill"></i></div>
+                <h3 id="totalPuestos" class="mb-1">0</h3>
+                <p class="text-muted mb-0">Puestos Electorales</p>
+                <small class="text-muted"><span id="totalMesas">0</span> mesas</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon text-warning"><i class="bi bi-file-earmark-text-fill"></i></div>
+                <h3 id="totalFormularios" class="mb-1">0</h3>
+                <p class="text-muted mb-0">Formularios E-14</p>
+                <small class="text-info"><span id="formulariosPendientes">0</span> pendientes</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <div class="stat-icon text-success"><i class="bi bi-check-circle-fill"></i></div>
+                <h3 id="totalValidados" class="mb-1">0</h3>
+                <p class="text-muted mb-0">Validados</p>
+                <small class="text-success"><span id="porcentajeValidados">0</span>% completado</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs de Navegación -->
+    <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">
+                <i class="bi bi-speedometer2"></i> Vista General
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button">
+                <i class="bi bi-people"></i> Usuarios
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button">
+                <i class="bi bi-gear"></i> Configuración
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="monitoring-tab" data-bs-toggle="tab" data-bs-target="#monitoring" type="button">
+                <i class="bi bi-activity"></i> Monitoreo
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="audit-tab" data-bs-toggle="tab" data-bs-target="#audit" type="button">
+                <i class="bi bi-journal-text"></i> Auditoría
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="incidents-tab" data-bs-toggle="tab" data-bs-target="#incidents" type="button">
+                <i class="bi bi-exclamation-triangle"></i> Incidentes
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="campanas-tab" data-bs-toggle="tab" data-bs-target="#campanas" type="button">
+                <i class="bi bi-calendar-event"></i> Campañas
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="import-tab" data-bs-toggle="tab" data-bs-target="#import" type="button">
+                <i class="bi bi-upload"></i> Importar Datos
+            </button>
+        </li>
+    </ul>
+
+    <!-- Contenido de Tabs -->
+    <div class="tab-content" id="adminTabsContent">
+        
+        <!-- Tab: Vista General -->
+        <div class="tab-pane fade show active" id="overview" role="tabpanel">
+            <div class="row">
+                <!-- Gráficos -->
+                <div class="col-md-8">
+                    <div class="chart-card">
+                        <h5 class="mb-3">Progreso Nacional de Recolección</h5>
+                        <canvas id="progressChart" height="80"></canvas>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <h5 class="mb-3">Actividad del Sistema (Últimas 24h)</h5>
+                        <canvas id="activityChart" height="80"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Panel Lateral -->
+                <div class="col-md-4">
+                    <!-- Acciones Rápidas -->
+                    <div class="quick-action-card">
+                        <h5 class="mb-3">Acciones Rápidas</h5>
+                        <button class="btn btn-primary quick-action-btn" onclick="showCreateUserModal()">
+                            <i class="bi bi-person-plus"></i> Crear Usuario
+                        </button>
+                        <button class="btn btn-info quick-action-btn" onclick="showConfigModal()">
+                            <i class="bi bi-gear"></i> Configurar Sistema
+                        </button>
+                    </div>
+                    
+                    <!-- 🆕 Backup y Restauración de Base de Datos -->
+                    <div class="quick-action-card">
+                        <h5 class="mb-3"><i class="bi bi-database"></i> Base de Datos</h5>
+                        <div class="mb-3 p-2 bg-light rounded">
+                            <small class="text-muted d-block mb-1">Estadísticas:</small>
+                            <div id="dbStats" class="small">
+                                <div class="d-flex justify-content-between">
+                                    <span>Usuarios:</span>
+                                    <strong id="statUsers">-</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Ubicaciones:</span>
+                                    <strong id="statLocations">-</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Formularios:</span>
+                                    <strong id="statFormularios">-</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-success quick-action-btn" onclick="exportDatabase()">
+                            <i class="bi bi-download"></i> Exportar Base de Datos
+                        </button>
+                        <button class="btn btn-warning quick-action-btn" onclick="showImportModal()">
+                            <i class="bi bi-upload"></i> Importar Base de Datos
+                        </button>
+                        <button class="btn btn-outline-info quick-action-btn" onclick="loadDatabaseStats()">
+                            <i class="bi bi-arrow-clockwise"></i> Actualizar Estadísticas
+                        </button>
+                    </div>
+                    
+                    <!-- Testing y Auditoría -->
+                    <div class="quick-action-card">
+                        <h5 class="mb-3"><i class="bi bi-bug"></i> Testing & Diagnóstico</h5>
+                        <button class="btn btn-outline-success quick-action-btn" onclick="initElectoralData()">
+                            <i class="bi bi-flag-fill"></i> Inicializar Datos Electorales
+                        </button>
+                        <button class="btn btn-outline-info quick-action-btn" onclick="initCaquetaData()">
+                            <i class="bi bi-geo-alt-fill"></i> Cargar Datos del Caquetá
+                        </button>
+                        <button class="btn btn-outline-primary quick-action-btn" onclick="loadTestData()">
+                            <i class="bi bi-database-add"></i> Cargar Datos de Prueba
+                        </button>
+                        <button class="btn btn-outline-info quick-action-btn" onclick="runSystemAudit()">
+                            <i class="bi bi-clipboard-check"></i> Auditoría del Sistema
+                        </button>
+                        <button class="btn btn-outline-success quick-action-btn" onclick="runDiagnostico()">
+                            <i class="bi bi-heart-pulse"></i> Diagnóstico del Sistema
+                        </button>
+                        <button class="btn btn-outline-warning quick-action-btn" onclick="fixRoles()">
+                            <i class="bi bi-person-badge"></i> Corregir Roles
+                        </button>
+                        <button class="btn btn-outline-warning quick-action-btn" onclick="fixPasswords()">
+                            <i class="bi bi-key"></i> Arreglar Contraseñas
+                        </button>
+                        <button class="btn btn-outline-danger quick-action-btn" onclick="resetDatabase()">
+                            <i class="bi bi-arrow-clockwise"></i> Resetear Base de Datos
+                        </button>
+                    </div>
+                    
+                    <!-- Actividad Reciente -->
+                    <div class="chart-card">
+                        <h5 class="mb-3">Actividad Reciente</h5>
+                        <div id="recentActivity" style="max-height: 400px; overflow-y: auto;">
+                            <p class="text-muted text-center">Cargando actividad...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Usuarios -->
+        <div class="tab-pane fade" id="users" role="tabpanel">
+            {% include 'admin/usuarios-tab.html' %}
+        </div>
+
+        <!-- Tab: Configuración -->
+        <div class="tab-pane fade" id="config" role="tabpanel">
+            
+            <!-- Sub-tabs de Configuración -->
+            <ul class="nav nav-pills mb-4" id="configSubTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="partidos-subtab" data-bs-toggle="pill" data-bs-target="#partidos-content" type="button">
+                        <i class="bi bi-flag-fill"></i> Partidos Políticos
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="candidatos-subtab" data-bs-toggle="pill" data-bs-target="#candidatos-content" type="button">
+                        <i class="bi bi-person-badge-fill"></i> Candidatos
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tipos-subtab" data-bs-toggle="pill" data-bs-target="#tipos-content" type="button">
+                        <i class="bi bi-list-check"></i> Tipos de Elección
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="carga-subtab" data-bs-toggle="pill" data-bs-target="#carga-content" type="button">
+                        <i class="bi bi-cloud-upload"></i> Carga Masiva
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="configSubTabsContent">
+                
+                <!-- Sub-tab: Partidos Políticos -->
+                <div class="tab-pane fade show active" id="partidos-content" role="tabpanel">
+                    {% include 'admin/partidos-tab.html' %}
+                </div>
+
+                <!-- Sub-tab: Candidatos -->
+                <div class="tab-pane fade" id="candidatos-content" role="tabpanel">
+                    {% include 'admin/candidatos-tab.html' %}
+                </div>
+
+                <!-- Sub-tab: Tipos de Elección -->
+                <div class="tab-pane fade" id="tipos-content" role="tabpanel">
+                    <div class="chart-card">
+                        <h5 class="mb-3"><i class="bi bi-list-check"></i> Gestión de Tipos de Elección</h5>
+                        <button class="btn btn-primary mb-3" onclick="createTipoEleccion()">
+                            <i class="bi bi-plus-circle"></i> Nuevo Tipo
+                        </button>
+                        <div id="electionTypesList">
+                            <p class="text-muted">Cargando tipos de elección...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sub-tab: Carga Masiva -->
+                <div class="tab-pane fade" id="carga-content" role="tabpanel">
+            
+            <!-- Sección de Carga Masiva CSV -->
+            <div class="chart-card mb-4">
+                <h5 class="mb-3"><i class="bi bi-cloud-upload"></i> Carga Masiva de Datos</h5>
+                <p class="text-muted">Cargue datos masivamente desde archivos CSV según el tipo de elección</p>
+                
+                <!-- Accesos Rápidos -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="text-muted mb-2">Accesos Rápidos:</h6>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-primary btn-sm w-100" onclick="quickSelectUploadType('partidos')">
+                            <i class="bi bi-flag-fill"></i> Partidos
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-danger btn-sm w-100" onclick="quickSelectUploadType('candidatos_lista_cerrada')">
+                            <i class="bi bi-person-badge-fill"></i> Candidatos
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-success btn-sm w-100" onclick="quickSelectUploadType('ubicaciones')">
+                            <i class="bi bi-geo-alt-fill"></i> DIVIPOLA
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-warning btn-sm w-100" onclick="quickSelectUploadType('coaliciones')">
+                            <i class="bi bi-people"></i> Coaliciones
+                        </button>
+                    </div>
+                </div>
+                
+                <hr class="my-4">
+                
+                <!-- Wizard de Carga Masiva -->
+                <div id="bulkUploadWizard">
+                    
+                    <!-- Paso 1: Seleccionar Tipo -->
+                    <div id="step1" class="upload-step">
+                        <h6 class="mb-3">Paso 1: Seleccione el tipo de datos a cargar</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="list-group">
+                                    <label class="list-group-item list-group-item-action">
+                                        <input class="form-check-input me-2" type="radio" name="uploadType" value="partidos">
+                                        <strong>Partidos Políticos</strong>
+                                        <small class="d-block text-muted">Cargar partidos, colores y logos</small>
+                                    </label>
+                                    <label class="list-group-item list-group-item-action">
+                                        <input class="form-check-input me-2" type="radio" name="uploadType" value="candidatos_uninominal">
+                                        <strong>Candidatos - Elección Uninominal</strong>
+                                        <small class="d-block text-muted">Presidencia, Gobernación, Alcaldía</small>
+                                    </label>
+                                    <label class="list-group-item list-group-item-action">
+                                        <input class="form-check-input me-2" type="radio" name="uploadType" value="candidatos_lista_cerrada">
+                                        <strong>Candidatos - Lista Cerrada</strong>
+                                        <small class="d-block text-muted">Senado, Cámara, Asamblea, Concejo</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="list-group">
+                                    <label class="list-group-item list-group-item-action">
+                                        <input class="form-check-input me-2" type="radio" name="uploadType" value="candidatos_lista_abierta">
+                                        <strong>Candidatos - Lista Abierta</strong>
+                                        <small class="d-block text-muted">Con voto preferente</small>
+                                    </label>
+                                    <label class="list-group-item list-group-item-action">
+                                        <input class="form-check-input me-2" type="radio" name="uploadType" value="coaliciones">
+                                        <strong>Coaliciones de Partidos</strong>
+                                        <small class="d-block text-muted">Agrupaciones de partidos</small>
+                                    </label>
+                                    <label class="list-group-item list-group-item-action">
+                                        <input class="form-check-input me-2" type="radio" name="uploadType" value="ubicaciones">
+                                        <strong>Ubicaciones Geográficas</strong>
+                                        <small class="d-block text-muted">Departamentos, municipios, puestos</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-primary" onclick="nextUploadStep()" disabled id="btnNextStep1">
+                                Continuar <i class="bi bi-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Paso 2: Configuración -->
+                    <div id="step2" class="upload-step d-none">
+                        <h6 class="mb-3">Paso 2: Configurar parámetros de carga</h6>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label class="form-label">Tipo de Elección</label>
+                                <select class="form-select" id="uploadTipoEleccion">
+                                    <option value="">Seleccionar...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Departamento</label>
+                                <select class="form-select" id="uploadDepartamento">
+                                    <option value="">Seleccionar...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Municipio</label>
+                                <select class="form-select" id="uploadMunicipio">
+                                    <option value="">Seleccionar...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <h6>Opciones de carga:</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="validateBeforeUpload" checked>
+                                    <label class="form-check-label" for="validateBeforeUpload">
+                                        Validar datos antes de cargar
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="createPartiesIfNotExist">
+                                    <label class="form-check-label" for="createPartiesIfNotExist">
+                                        Crear partidos si no existen
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="overwriteExisting">
+                                    <label class="form-check-label" for="overwriteExisting">
+                                        Sobrescribir datos existentes
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-secondary" onclick="prevUploadStep()">
+                                <i class="bi bi-arrow-left"></i> Atrás
+                            </button>
+                            <button class="btn btn-primary" onclick="nextUploadStep()" id="btnNextStep2">
+                                Continuar <i class="bi bi-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Paso 3: Cargar Archivo -->
+                    <div id="step3" class="upload-step d-none">
+                        <h6 class="mb-3">Paso 3: Cargar archivo CSV</h6>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="upload-area border-2 border-dashed rounded p-4 text-center" id="csvDropZone">
+                                    <i class="bi bi-file-earmark-spreadsheet fs-1 text-muted mb-3"></i>
+                                    <h6>Arrastre el archivo CSV aquí</h6>
+                                    <p class="text-muted small">o haga clic para seleccionar</p>
+                                    <input type="file" class="form-control" accept=".csv" id="csvFileInput" style="display:none">
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            📄 Formato: CSV (UTF-8) | 📏 Tamaño máximo: 10 MB
+                                        </small>
+                                    </div>
+                                </div>
+                                <div id="fileInfo" class="mt-3 d-none">
+                                    <div class="alert alert-info">
+                                        <strong>Archivo seleccionado:</strong> <span id="fileName"></span><br>
+                                        <strong>Tamaño:</strong> <span id="fileSize"></span><br>
+                                        <strong>Registros:</strong> <span id="fileRecords"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <h6>Plantilla CSV</h6>
+                                <p class="text-muted small">Descargue la plantilla correspondiente:</p>
+                                <button class="btn btn-outline-primary btn-sm w-100" onclick="downloadTemplate()">
+                                    <i class="bi bi-download"></i> Descargar Plantilla
+                                </button>
+                                <div class="mt-3">
+                                    <h6 class="small">Configuración actual:</h6>
+                                    <ul class="list-unstyled small text-muted" id="currentConfig">
+                                        <!-- Se llena dinámicamente -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-secondary" onclick="prevUploadStep()">
+                                <i class="bi bi-arrow-left"></i> Atrás
+                            </button>
+                            <button class="btn btn-primary" onclick="validateUpload()" disabled id="btnValidate">
+                                <i class="bi bi-check-circle"></i> Validar Archivo
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Paso 4: Validación -->
+                    <div id="step4" class="upload-step d-none">
+                        <h6 class="mb-3">Paso 4: Validación de datos</h6>
+                        <div id="validationResults">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-secondary" onclick="prevUploadStep()">
+                                <i class="bi bi-arrow-left"></i> Corregir Archivo
+                            </button>
+                            <button class="btn btn-success" onclick="confirmUpload()" disabled id="btnConfirm">
+                                <i class="bi bi-upload"></i> Confirmar Carga
+                            </button>
+                        </div>
+                    </div>
+                    
+                </div><!-- Fin del wizard -->
+            </div><!-- Fin del chart-card de carga masiva -->
+            
+                </div><!-- Fin del sub-tab de carga masiva -->
+                
+            </div><!-- Fin de configSubTabsContent -->
+        </div><!-- Fin del tab de Configuración -->
+
+        <!-- Tab: Monitoreo -->
+        <div class="tab-pane fade" id="monitoring" role="tabpanel">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <h6 class="text-muted">Usuarios Conectados</h6>
+                        <h2 id="connectedUsers">0</h2>
+                        <small class="text-muted">En tiempo real</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <h6 class="text-muted">Requests/min</h6>
+                        <h2 id="requestsPerMin">0</h2>
+                        <small class="text-muted">Promedio últimos 5 min</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <h6 class="text-muted">Tiempo de Respuesta</h6>
+                        <h2 id="avgResponseTime">0ms</h2>
+                        <small class="text-muted">Promedio</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <h5 class="mb-3">Métricas del Sistema</h5>
+                <canvas id="systemMetricsChart" height="80"></canvas>
+            </div>
+            
+            <!-- Mapa de Geolocalización -->
+            <div class="chart-card">
+                <h5 class="mb-3"><i class="bi bi-geo-alt"></i> Mapa de Geolocalización en Tiempo Real</h5>
+                <p class="text-muted small">Ubicación de usuarios y puestos de votación en el sistema</p>
+                
+                <!-- Controles de Búsqueda y Filtros -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" id="busqueda-puesto" 
+                                   placeholder="Buscar por código, municipio o nombre de puesto...">
+                            <button class="btn btn-primary" type="button" id="btn-buscar-puesto">
+                                Buscar
+                            </button>
+                        </div>
+                        <small class="text-muted" id="resultado-busqueda"></small>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="btn-group" role="group" aria-label="Filtros de mapa">
+                            <input type="checkbox" class="btn-check" id="filtro-incidentes" autocomplete="off">
+                            <label class="btn btn-outline-danger btn-sm" for="filtro-incidentes">
+                                <i class="bi bi-exclamation-triangle"></i> Incidentes
+                            </label>
+                            
+                            <input type="checkbox" class="btn-check" id="filtro-delitos" autocomplete="off">
+                            <label class="btn btn-outline-warning btn-sm" for="filtro-delitos">
+                                <i class="bi bi-shield-exclamation"></i> Delitos
+                            </label>
+                            
+                            <input type="checkbox" class="btn-check" id="filtro-pendientes" autocomplete="off">
+                            <label class="btn btn-outline-info btn-sm" for="filtro-pendientes">
+                                <i class="bi bi-hourglass-split"></i> Pendientes
+                            </label>
+                            
+                            <input type="checkbox" class="btn-check" id="filtro-completados" autocomplete="off">
+                            <label class="btn btn-outline-success btn-sm" for="filtro-completados">
+                                <i class="bi bi-check-circle"></i> Completados
+                            </label>
+                            
+                            <button class="btn btn-outline-secondary btn-sm" id="btn-limpiar-filtros">
+                                <i class="bi bi-x-circle"></i> Limpiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contador de puestos -->
+                <div class="mb-2">
+                    <small class="text-muted" id="contador-puestos-visibles">Cargando puestos...</small>
+                </div>
+                
+                <!-- Leyenda de colores -->
+                <div class="mb-3">
+                    <small class="text-muted me-3">
+                        <span class="badge" style="background-color: #dc3545;">●</span> Sin votos
+                    </small>
+                    <small class="text-muted me-3">
+                        <span class="badge" style="background-color: #ffc107;">●</span> En progreso
+                    </small>
+                    <small class="text-muted me-3">
+                        <span class="badge" style="background-color: #28a745;">●</span> Completado
+                    </small>
+                    <small class="text-muted">
+                        <span style="font-size: 18px;">⚠️</span> Alertas
+                    </small>
+                </div>
+                
+                <div id="mapa-geolocalizacion" style="height: 500px; border-radius: 8px;"></div>
+            </div>
+            
+            <div class="chart-card">
+                <h5 class="mb-3">Sesiones Activas</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Rol</th>
+                                <th>IP</th>
+                                <th>Inicio Sesión</th>
+                                <th>Última Actividad</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activeSessionsTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <p class="text-muted">Cargando sesiones...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Auditoría -->
+        <div class="tab-pane fade" id="audit" role="tabpanel">
+            <div class="chart-card">
+                <h5 class="mb-3">Logs de Auditoría</h5>
+                
+                <!-- Filtros -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <select class="form-select" id="auditFilterUser" onchange="filterAuditLogs()">
+                            <option value="">Todos los usuarios</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="auditFilterAction" onchange="filterAuditLogs()">
+                            <option value="">Todas las acciones</option>
+                            <option value="login">Login</option>
+                            <option value="logout">Logout</option>
+                            <option value="create">Crear</option>
+                            <option value="update">Actualizar</option>
+                            <option value="delete">Eliminar</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" class="form-control" id="auditFilterDate" onchange="filterAuditLogs()">
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-primary w-100" onclick="exportAuditLogs()">
+                            <i class="bi bi-download"></i> Exportar
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Tabla de Logs -->
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <thead>
+                            <tr>
+                                <th>Fecha/Hora</th>
+                                <th>Usuario</th>
+                                <th>Acción</th>
+                                <th>Recurso</th>
+                                <th>Detalles</th>
+                                <th>IP</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditLogsTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <p class="text-muted">Cargando logs...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Incidentes -->
+        <div class="tab-pane fade" id="incidents" role="tabpanel">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="chart-card">
+                        <h5 class="mb-3">Incidentes y Delitos Reportados</h5>
+                        
+                        <!-- Sub-tabs -->
+                        <ul class="nav nav-pills mb-3">
+                            <li class="nav-item">
+                                <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#incidentsList">
+                                    Incidentes (<span id="incidentsCount">0</span>)
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-bs-toggle="pill" data-bs-target="#crimesList">
+                                    Delitos (<span id="crimesCount">0</span>)
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content">
+                            <div class="tab-pane fade show active" id="incidentsList">
+                                <div id="incidentsContainer">
+                                    <p class="text-muted">Cargando incidentes...</p>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="crimesList">
+                                <div id="crimesContainer">
+                                    <p class="text-muted">Cargando delitos...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="chart-card">
+                        <h5 class="mb-3">Estadísticas</h5>
+                        <canvas id="incidentsStatsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Campañas -->
+        <div class="tab-pane fade" id="campanas" role="tabpanel">
+            <div class="chart-card mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0"><i class="bi bi-calendar-event"></i> Gestión de Campañas</h5>
+                    <button class="btn btn-primary" onclick="showCreateCampanaModal()">
+                        <i class="bi bi-plus-circle"></i> Nueva Campaña
+                    </button>
+                </div>
+                <p class="text-muted">Gestione múltiples campañas electorales independientes. Solo una campaña puede estar activa a la vez.</p>
+                
+                <div id="campanasContainer">
+                    <p class="text-center text-muted">Cargando campañas...</p>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <h5 class="mb-3"><i class="bi bi-palette"></i> Temas y Colores</h5>
+                <p class="text-muted">Configure temas visuales por rol o tipo de elección.</p>
+                
+                <button class="btn btn-sm btn-primary mb-3" onclick="showCreateTemaModal()">
+                    <i class="bi bi-plus-circle"></i> Nuevo Tema
+                </button>
+                
+                <div id="temasContainer">
+                    <p class="text-center text-muted">Cargando temas...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ⭐ NUEVA TAB: Importar Datos -->
+        <div class="tab-pane fade" id="import" role="tabpanel">
+            <div class="row">
+                <!-- Importar Partidos -->
+                <div class="col-md-6 mb-4">
+                    <div class="chart-card">
+                        <h5 class="mb-3">
+                            <i class="bi bi-flag"></i> Importar Partidos Políticos
+                        </h5>
+                        <p class="text-muted">Cargue partidos desde archivo CSV con información territorial.</p>
+                        
+                        <div class="mb-3">
+                            <button class="btn btn-outline-primary btn-sm" onclick="descargarTemplatePartidos()">
+                                <i class="bi bi-download"></i> Descargar Plantilla CSV
+                            </button>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Archivo CSV de Partidos:</label>
+                            <input type="file" class="form-control" id="filePartidos" accept=".csv">
+                        </div>
+                        
+                        <button class="btn btn-success" onclick="importarPartidos()">
+                            <i class="bi bi-upload"></i> Importar Partidos
+                        </button>
+                        
+                        <div id="resultadoPartidos" class="mt-3"></div>
+                    </div>
+                </div>
+
+                <!-- Importar Candidatos -->
+                <div class="col-md-6 mb-4">
+                    <div class="chart-card">
+                        <h5 class="mb-3">
+                            <i class="bi bi-person-badge"></i> Importar Candidatos
+                        </h5>
+                        <p class="text-muted">Cargue candidatos por tipo de elección y territorio.</p>
+                        
+                        <div class="mb-3">
+                            <button class="btn btn-outline-primary btn-sm" onclick="descargarTemplateCandidatos()">
+                                <i class="bi bi-download"></i> Descargar Plantilla CSV
+                            </button>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Archivo CSV de Candidatos:</label>
+                            <input type="file" class="form-control" id="fileCandidatos" accept=".csv">
+                        </div>
+                        
+                        <button class="btn btn-success" onclick="importarCandidatos()">
+                            <i class="bi bi-upload"></i> Importar Candidatos
+                        </button>
+                        
+                        <div id="resultadoCandidatos" class="mt-3"></div>
+                    </div>
+                </div>
+
+                <!-- Subir Logos de Partidos -->
+                <div class="col-md-6 mb-4">
+                    <div class="chart-card">
+                        <h5 class="mb-3">
+                            <i class="bi bi-image"></i> Logos de Partidos
+                        </h5>
+                        <p class="text-muted">Suba logos de partidos (PNG, JPG, GIF).</p>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Código del Partido:</label>
+                            <input type="text" class="form-control" id="codigoPartidoLogo" placeholder="Ej: PART001">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Logo del Partido:</label>
+                            <input type="file" class="form-control" id="logoPartido" accept="image/*">
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="subirLogoPartido()">
+                            <i class="bi bi-upload"></i> Subir Logo
+                        </button>
+                        
+                        <div id="resultadoLogo" class="mt-3"></div>
+                    </div>
+                </div>
+
+                <!-- Subir Fotos de Candidatos -->
+                <div class="col-md-6 mb-4">
+                    <div class="chart-card">
+                        <h5 class="mb-3">
+                            <i class="bi bi-person-square"></i> Fotos de Candidatos
+                        </h5>
+                        <p class="text-muted">Suba fotos de candidatos (PNG, JPG, GIF).</p>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Código del Candidato:</label>
+                            <input type="text" class="form-control" id="codigoCandidatoFoto" placeholder="Ej: CAND001">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Foto del Candidato:</label>
+                            <input type="file" class="form-control" id="fotoCandidato" accept="image/*">
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="subirFotoCandidato()">
+                            <i class="bi bi-upload"></i> Subir Foto
+                        </button>
+                        
+                        <div id="resultadoFoto" class="mt-3"></div>
+                    </div>
+                </div>
+
+                <!-- Guía de Uso -->
+                <div class="col-12">
+                    <div class="chart-card">
+                        <h5 class="mb-3">
+                            <i class="bi bi-info-circle"></i> Guía de Uso
+                        </h5>
+                        
+                        <div class="accordion" id="guiaAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#guiaPartidos">
+                                        Importar Partidos
+                                    </button>
+                                </h2>
+                                <div id="guiaPartidos" class="accordion-collapse collapse" data-bs-parent="#guiaAccordion">
+                                    <div class="accordion-body">
+                                        <p><strong>Campos del CSV:</strong></p>
+                                        <ul>
+                                            <li><code>codigo</code>: Código único del partido (Ej: PART001)</li>
+                                            <li><code>nombre</code>: Nombre completo del partido</li>
+                                            <li><code>sigla</code>: Sigla o abreviatura</li>
+                                            <li><code>color_hex</code>: Color en formato hexadecimal (Ej: #FF0000)</li>
+                                            <li><code>activo</code>: SI o NO</li>
+                                            <li><code>tipo_eleccion_codigo</code>: Código del tipo de elección</li>
+                                            <li><code>ambito_territorial</code>: nacional, departamental, municipal</li>
+                                        </ul>
+                                        <p><strong>Ejemplo:</strong></p>
+                                        <code>PART001,Partido Liberal,PL,#FF0000,SI,PRES,nacional</code>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#guiaCandidatos">
+                                        Importar Candidatos
+                                    </button>
+                                </h2>
+                                <div id="guiaCandidatos" class="accordion-collapse collapse" data-bs-parent="#guiaAccordion">
+                                    <div class="accordion-body">
+                                        <p><strong>Campos del CSV:</strong></p>
+                                        <ul>
+                                            <li><code>codigo</code>: Código único del candidato</li>
+                                            <li><code>nombre</code>: Nombre completo</li>
+                                            <li><code>partido_codigo</code>: Código del partido</li>
+                                            <li><code>tipo_eleccion_codigo</code>: Tipo de elección</li>
+                                            <li><code>numero_lista</code>: Número en la lista</li>
+                                            <li><code>ambito_territorial</code>: nacional, departamental, municipal</li>
+                                            <li><code>departamento_codigo</code>: Código del departamento (si aplica)</li>
+                                            <li><code>municipio_codigo</code>: Código del municipio (si aplica)</li>
+                                            <li><code>activo</code>: SI o NO</li>
+                                        </ul>
+                                        <p><strong>Ejemplo Municipal:</strong></p>
+                                        <code>CAND001,Juan Pérez,PART001,CONC_MUN,5,municipal,18,001,SI</code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+        <!-- ⭐ TAB: Personalización -->
+        <div class="tab-pane fade" id="personalizacion" role="tabpanel">
+            
+            <!-- Header -->
+            <div class="fondos-section">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="mb-2"><i class="bi bi-palette"></i> Personalización del Sistema</h4>
+                        <p class="text-muted mb-0">Personaliza la apariencia de la página de login</p>
+                    </div>
+                    <button class="btn btn-crear-fondo" onclick="personalizacion.mostrarFormularioCrear()">
+                        <i class="bi bi-plus-circle"></i> Crear Nuevo Fondo
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fondos Actuales -->
+            <div class="fondos-section">
+                <h5><i class="bi bi-images"></i> Fondos Actuales</h5>
+                <div class="row" id="fondos-actuales">
+                    <div class="col-12 text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Cargando fondos...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fondos Predefinidos -->
+            <div class="fondos-section">
+                <h5><i class="bi bi-star"></i> Fondos Predefinidos</h5>
+                <p class="text-muted small">Selecciona un fondo predefinido para usar rápidamente</p>
+                <div class="row" id="fondos-predefinidos">
+                    <div class="col-12 text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Cargando fondos predefinidos...</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal: Crear Fondo -->
+<div class="modal fade modal-personalizar" id="crearFondoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Crear Nuevo Fondo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                
+                <!-- Tabs para tipos de fondo -->
+                <ul class="nav nav-tabs personalizacion-tabs mb-4" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="tab-gradiente" data-bs-toggle="tab" data-bs-target="#crear-gradiente" type="button">
+                            <i class="bi bi-palette"></i> Gradiente
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-imagen" data-bs-toggle="tab" data-bs-target="#crear-imagen" type="button">
+                            <i class="bi bi-image"></i> Imagen
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-solido" data-bs-toggle="tab" data-bs-target="#crear-solido" type="button">
+                            <i class="bi bi-square-fill"></i> Color Sólido
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    
+                    <!-- Crear Gradiente -->
+                    <div class="tab-pane fade show active" id="crear-gradiente" role="tabpanel">
+                        <form id="form-gradiente">
+                            <div class="mb-3">
+                                <label class="form-label">Nombre del Fondo</label>
+                                <input type="text" class="form-control" id="gradiente-nombre" placeholder="Ej: Mi Gradiente Personalizado" required>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="color-picker-group">
+                                        <label>Color 1:</label>
+                                        <input type="color" class="form-control" id="gradiente-color1" value="#FCD116">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="color-picker-group">
+                                        <label>Color 2:</label>
+                                        <input type="color" class="form-control" id="gradiente-color2" value="#003893">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="color-picker-group">
+                                        <label>Color 3:</label>
+                                        <input type="color" class="form-control" id="gradiente-color3" value="#CE1126">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Dirección</label>
+                                <select class="form-select" id="gradiente-direccion">
+                                    <option value="180deg">Vertical (↓)</option>
+                                    <option value="0deg">Vertical (↑)</option>
+                                    <option value="90deg">Horizontal (→)</option>
+                                    <option value="270deg">Horizontal (←)</option>
+                                    <option value="135deg">Diagonal (↘)</option>
+                                    <option value="45deg">Diagonal (↗)</option>
+                                </select>
+                            </div>
+
+                            <!-- Preview -->
+                            <div id="gradiente-preview" style="height: 150px; border-radius: 8px; margin-top: 1rem;"></div>
+
+                            <button type="button" class="btn btn-primary w-100 mt-3" onclick="personalizacion.crearFondoGradiente()">
+                                <i class="bi bi-check-circle"></i> Crear Fondo con Gradiente
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Subir Imagen -->
+                    <div class="tab-pane fade" id="crear-imagen" role="tabpanel">
+                        <form id="form-imagen">
+                            <div class="mb-3">
+                                <label class="form-label">Nombre del Fondo</label>
+                                <input type="text" class="form-control" id="imagen-nombre" placeholder="Ej: Paisaje de Colombia" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Seleccionar Imagen</label>
+                                <input type="file" class="form-control" id="imagen-file" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" required>
+                                <small class="text-muted">Formatos: PNG, JPG, GIF, WEBP. Máximo 5MB</small>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Posición</label>
+                                        <select class="form-select" id="imagen-posicion">
+                                            <option value="center">Centro</option>
+                                            <option value="top">Arriba</option>
+                                            <option value="bottom">Abajo</option>
+                                            <option value="left">Izquierda</option>
+                                            <option value="right">Derecha</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Tamaño</label>
+                                        <select class="form-select" id="imagen-tamano">
+                                            <option value="cover">Cubrir (Cover)</option>
+                                            <option value="contain">Contener (Contain)</option>
+                                            <option value="auto">Automático</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Preview -->
+                            <div id="imagen-preview" style="height: 200px; border-radius: 8px; background-size: cover; background-position: center; display: none; margin-top: 1rem;"></div>
+
+                            <button type="button" class="btn btn-primary w-100 mt-3" onclick="personalizacion.subirImagenFondo()">
+                                <i class="bi bi-upload"></i> Subir Imagen
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Color Sólido -->
+                    <div class="tab-pane fade" id="crear-solido" role="tabpanel">
+                        <form id="form-solido">
+                            <div class="mb-3">
+                                <label class="form-label">Nombre del Fondo</label>
+                                <input type="text" class="form-control" id="solido-nombre" placeholder="Ej: Azul Institucional" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Seleccionar Color</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <input type="color" class="form-control" id="solido-color" value="#003893" style="width: 100px; height: 60px;">
+                                    <input type="text" class="form-control" id="solido-color-hex" value="#003893" placeholder="#000000">
+                                </div>
+                            </div>
+
+                            <!-- Preview -->
+                            <div id="solido-preview" style="height: 150px; border-radius: 8px; background: #003893; margin-top: 1rem;"></div>
+
+                            <button type="button" class="btn btn-primary w-100 mt-3" onclick="personalizacion.crearFondoSolido()">
+                                <i class="bi bi-check-circle"></i> Crear Fondo con Color Sólido
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modales se agregarán aquí -->
+
+<!-- 🆕 Modal de Importación de Base de Datos -->
+<div class="modal fade" id="importDatabaseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="bi bi-upload"></i> Importar Base de Datos
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>¡Atención!</strong> Esta acción importará datos desde un archivo JSON.
+                    Los datos existentes no se eliminarán, pero se agregarán los nuevos.
+                </div>
+                
+                <div class="mb-3">
+                    <label for="databaseFile" class="form-label">Seleccionar archivo JSON:</label>
+                    <input type="file" class="form-control" id="databaseFile" accept=".json">
+                    <small class="text-muted">
+                        Archivo generado con "Exportar Base de Datos"
+                    </small>
+                </div>
+                
+                <div id="importProgress" class="d-none">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" style="width: 100%"></div>
+                    </div>
+                    <p class="text-center mt-2">Importando datos...</p>
+                </div>
+                
+                <div id="importResult" class="d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="confirmImportDatabase()">
+                    <i class="bi bi-upload"></i> Importar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- Leaflet para mapas -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Script de geolocalización ya está cargado en base.html -->
+
+<!-- Cargador de datos con manejo de errores -->
+<script src="{{ url_for('static', filename='js/dashboard-data-loader.js') }}?v=20251201"></script>
+<!-- Script principal del dashboard -->
+<script src="{{ url_for('static', filename='js/super-admin-dashboard.js') }}?v=20251205d"></script>
+<script src="{{ url_for('static', filename='js/personalizacion-sistema.js') }}?v=20251201"></script>
+<!-- Script de carga masiva CSV -->
+<script src="{{ url_for('static', filename='js/bulk-upload.js') }}?v=20251201"></script>
+<!-- Scripts de gestión de partidos y candidatos -->
+<script src="{{ url_for('static', filename='js/partidos-manager.js') }}?v=20251202"></script>
+<script src="{{ url_for('static', filename='js/candidatos-manager.js') }}?v=20251202"></script>
+<!-- Script de debugging -->
+<script src="{{ url_for('static', filename='js/super-admin-dashboard-debug.js') }}?v=20251201"></script>
+<script src="{{ url_for('static', filename='js/force-usuarios-render.js') }}?v=20251205"></script>
+<script src="{{ url_for('static', filename='js/fix-partidos-render.js') }}?v=20251205"></script>
+<script src="{{ url_for('static', filename='js/debug-partidos.js') }}?v=20251205"></script>
+<script src="{{ url_for('static', filename='js/debug-candidatos.js') }}?v=20251205"></script>
+<script src="{{ url_for('static', filename='js/fix-candidatos-render.js') }}?v=20251205"></script>
+<script>
+// Inicializar dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    initSuperAdminDashboard();
+    
+    // Inicializar SyncManager
+    if (window.syncManager) {
+        window.syncManager.init();
+    }
+    
+    // Inicializar módulo de personalización cuando se abre la pestaña
+    const personalizacionTab = document.getElementById('personalizacion-tab');
+    if (personalizacionTab) {
+        personalizacionTab.addEventListener('shown.bs.tab', function() {
+            if (window.personalizacion && !window.personalizacion.initialized) {
+                window.personalizacion.init();
+                window.personalizacion.initialized = true;
+            }
+        });
+    }
+    
+    // Inicializar mapa de geolocalización cuando se abre la pestaña de monitoreo
+    const monitoringTab = document.getElementById('monitoring-tab');
+    if (monitoringTab) {
+        monitoringTab.addEventListener('shown.bs.tab', function() {
+            if (!window.mapaGeolocalizacion) {
+                console.log('Inicializando mapa de geolocalización...');
+                window.mapaGeolocalizacion = new MapaGeolocalizacion('mapa-geolocalizacion', {
+                    center: [1.6144, -75.6062], // Caquetá, Colombia
+                    zoom: 8,
+                    autoUpdate: true,
+                    updateInterval: 30000, // 30 segundos
+                    showPuestos: true,
+                    showUsuarios: true
+                });
+                window.mapaGeolocalizacion.init();
+                
+                // Configurar controles de filtros
+                setupMapFilters();
+                
+                // Configurar búsqueda
+                setupMapSearch();
+            }
+        });
+    }
+    
+    // Función para configurar filtros del mapa
+    function setupMapFilters() {
+        const filtroIncidentes = document.getElementById('filtro-incidentes');
+        const filtroDelitos = document.getElementById('filtro-delitos');
+        const filtroPendientes = document.getElementById('filtro-pendientes');
+        const filtroCompletados = document.getElementById('filtro-completados');
+        const btnLimpiarFiltros = document.getElementById('btn-limpiar-filtros');
+        
+        if (filtroIncidentes) {
+            filtroIncidentes.addEventListener('change', function() {
+                if (window.mapaGeolocalizacion) {
+                    window.mapaGeolocalizacion.setFiltro('incidentes', this.checked);
+                }
+            });
+        }
+        
+        if (filtroDelitos) {
+            filtroDelitos.addEventListener('change', function() {
+                if (window.mapaGeolocalizacion) {
+                    window.mapaGeolocalizacion.setFiltro('delitos', this.checked);
+                }
+            });
+        }
+        
+        if (filtroPendientes) {
+            filtroPendientes.addEventListener('change', function() {
+                if (window.mapaGeolocalizacion) {
+                    window.mapaGeolocalizacion.setFiltro('pendientes', this.checked);
+                }
+            });
+        }
+        
+        if (filtroCompletados) {
+            filtroCompletados.addEventListener('change', function() {
+                if (window.mapaGeolocalizacion) {
+                    window.mapaGeolocalizacion.setFiltro('completados', this.checked);
+                }
+            });
+        }
+        
+        if (btnLimpiarFiltros) {
+            btnLimpiarFiltros.addEventListener('click', function() {
+                if (window.mapaGeolocalizacion) {
+                    window.mapaGeolocalizacion.limpiarFiltros();
+                    // Desmarcar checkboxes
+                    if (filtroIncidentes) filtroIncidentes.checked = false;
+                    if (filtroDelitos) filtroDelitos.checked = false;
+                    if (filtroPendientes) filtroPendientes.checked = false;
+                    if (filtroCompletados) filtroCompletados.checked = false;
+                }
+            });
+        }
+    }
+    
+    // Función para configurar búsqueda del mapa
+    function setupMapSearch() {
+        const inputBusqueda = document.getElementById('busqueda-puesto');
+        const btnBuscar = document.getElementById('btn-buscar-puesto');
+        const resultadoBusqueda = document.getElementById('resultado-busqueda');
+        
+        if (btnBuscar && inputBusqueda) {
+            btnBuscar.addEventListener('click', async function() {
+                const termino = inputBusqueda.value.trim();
+                
+                if (!termino) {
+                    if (resultadoBusqueda) {
+                        resultadoBusqueda.textContent = 'Ingrese un término de búsqueda';
+                        resultadoBusqueda.className = 'text-warning';
+                    }
+                    return;
+                }
+                
+                if (window.mapaGeolocalizacion) {
+                    const resultado = await window.mapaGeolocalizacion.buscarPuesto(termino);
+                    
+                    if (resultadoBusqueda) {
+                        resultadoBusqueda.textContent = resultado.message;
+                        resultadoBusqueda.className = resultado.success ? 'text-success' : 'text-danger';
+                    }
+                }
+            });
+            
+            // Permitir búsqueda con Enter
+            inputBusqueda.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    btnBuscar.click();
+                }
+            });
+        }
+    }
+    
+    // Sincronizar color picker con input hex para color sólido
+    const solidoColor = document.getElementById('solido-color');
+    const solidoColorHex = document.getElementById('solido-color-hex');
+    const solidoPreview = document.getElementById('solido-preview');
+    
+    if (solidoColor && solidoColorHex && solidoPreview) {
+        solidoColor.addEventListener('input', function() {
+            solidoColorHex.value = this.value;
+            solidoPreview.style.background = this.value;
+        });
+        
+        solidoColorHex.addEventListener('input', function() {
+            if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+                solidoColor.value = this.value;
+                solidoPreview.style.background = this.value;
+            }
+        });
+    }
+});
+</script>
+
+<!-- Scripts de debug -->
+<script src="{{ url_for('static', filename='js/debug-partidos.js') }}?v=20251205"></script>
+<script src="{{ url_for('static', filename='js/debug-candidatos.js') }}?v=20251205"></script>
+
+<!-- 🆕 Funciones de Backup y Restauración de Base de Datos -->
+<script>
+/**
+ * Cargar estadísticas de la base de datos
+ */
+async function loadDatabaseStats() {
+    try {
+        const response = await APIClient.get('/database/stats');
+        
+        if (response.success) {
+            document.getElementById('statUsers').textContent = response.data.users;
+            document.getElementById('statLocations').textContent = response.data.locations;
+            document.getElementById('statFormularios').textContent = response.data.formularios;
+        }
+    } catch (error) {
+        console.error('Error loading database stats:', error);
+    }
+}
+
+/**
+ * Exportar base de datos
+ */
+async function exportDatabase() {
+    if (!confirm('¿Deseas exportar toda la base de datos a un archivo JSON?\n\nEsto incluirá usuarios, ubicaciones, formularios, incidentes y delitos.')) {
+        return;
+    }
+    
+    try {
+        Utils.showInfo('Exportando base de datos...');
+        
+        const response = await fetch('/api/database/export', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Error al exportar base de datos');
+        }
+        
+        // Descargar archivo
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `database_backup_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        Utils.showSuccess('✅ Base de datos exportada exitosamente');
+        
+    } catch (error) {
+        console.error('Error exporting database:', error);
+        Utils.showError('Error al exportar base de datos: ' + error.message);
+    }
+}
+
+/**
+ * Mostrar modal de importación
+ */
+function showImportModal() {
+    // Limpiar formulario
+    document.getElementById('databaseFile').value = '';
+    document.getElementById('importProgress').classList.add('d-none');
+    document.getElementById('importResult').classList.add('d-none');
+    
+    // Mostrar modal
+    const modal = new bootstrap.Modal(document.getElementById('importDatabaseModal'));
+    modal.show();
+}
+
+/**
+ * Confirmar importación de base de datos
+ */
+async function confirmImportDatabase() {
+    const fileInput = document.getElementById('databaseFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        Utils.showError('Por favor selecciona un archivo JSON');
+        return;
+    }
+    
+    if (!file.name.endsWith('.json')) {
+        Utils.showError('El archivo debe ser un JSON');
+        return;
+    }
+    
+    if (!confirm('¿Estás seguro de importar esta base de datos?\n\nLos datos se agregarán a la base de datos actual.')) {
+        return;
+    }
+    
+    try {
+        // Mostrar progreso
+        document.getElementById('importProgress').classList.remove('d-none');
+        document.getElementById('importResult').classList.add('d-none');
+        
+        // Crear FormData
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        // Enviar archivo
+        const response = await fetch('/api/database/import', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+            },
+            body: formData
+        });
+        
+        // Verificar si la respuesta es JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            throw new Error(`Respuesta no es JSON. Status: ${response.status}. Respuesta: ${text.substring(0, 200)}`);
+        }
+        
+        const data = await response.json();
+        
+        // Ocultar progreso
+        document.getElementById('importProgress').classList.add('d-none');
+        
+        if (data.success) {
+            // Mostrar resultado
+            const resultHtml = `
+                <div class="alert alert-success">
+                    <h6><i class="bi bi-check-circle"></i> Importación Exitosa</h6>
+                    <ul class="mb-0">
+                        <li>Usuarios: ${data.stats.users_imported}</li>
+                        <li>Ubicaciones: ${data.stats.locations_imported}</li>
+                        <li>Formularios: ${data.stats.formularios_imported}</li>
+                        <li>Votos: ${data.stats.votos_imported}</li>
+                        <li>Incidentes: ${data.stats.incidentes_imported}</li>
+                        <li>Delitos: ${data.stats.delitos_imported}</li>
+                    </ul>
+                    <p class="mt-2 mb-0">
+                        <strong>⚠️ Importante:</strong> Los usuarios importados tienen contraseña temporal: <code>test123</code>
+                    </p>
+                </div>
+            `;
+            document.getElementById('importResult').innerHTML = resultHtml;
+            document.getElementById('importResult').classList.remove('d-none');
+            
+            // Actualizar estadísticas
+            setTimeout(() => {
+                loadDatabaseStats();
+                loadStats();
+            }, 1000);
+            
+        } else {
+            throw new Error(data.error || 'Error desconocido');
+        }
+        
+    } catch (error) {
+        console.error('Error importing database:', error);
+        document.getElementById('importProgress').classList.add('d-none');
+        
+        const errorHtml = `
+            <div class="alert alert-danger">
+                <h6><i class="bi bi-x-circle"></i> Error en la Importación</h6>
+                <p class="mb-0">${error.message}</p>
+            </div>
+        `;
+        document.getElementById('importResult').innerHTML = errorHtml;
+        document.getElementById('importResult').classList.remove('d-none');
+    }
+}
+
+// Cargar estadísticas al iniciar
+document.addEventListener('DOMContentLoaded', function() {
+    loadDatabaseStats();
+});
+</script>
+
+{% endblock %}
+

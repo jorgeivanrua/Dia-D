@@ -1,0 +1,112 @@
+/**
+ * Estilos para componente de captura de fotos
+ */
+
+.foto-capture-component {
+    width: 100%;
+}
+
+.foto-capture-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.foto-capture-buttons .btn {
+    flex: 1;
+    min-width: 150px;
+}
+
+.foto-previews {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.foto-preview-item {
+    position: relative;
+}
+
+.foto-preview-item .card {
+    height: 100%;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.foto-preview-item .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.foto-preview-item .card-img-top {
+    height: 150px;
+    object-fit: cover;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.foto-preview-item .card-body {
+    padding: 8px !important;
+}
+
+.foto-preview-item .btn-remove-foto {
+    padding: 2px 6px;
+    font-size: 12px;
+}
+
+.foto-info {
+    padding: 8px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border-left: 3px solid #0d6efd;
+}
+
+.foto-info small {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .foto-capture-buttons {
+        flex-direction: column;
+    }
+    
+    .foto-capture-buttons .btn {
+        width: 100%;
+    }
+    
+    .foto-previews {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+    }
+    
+    .foto-preview-item .card-img-top {
+        height: 120px;
+    }
+}
+
+/* Loading state */
+.foto-capture-component.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.foto-capture-component.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #0d6efd;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}

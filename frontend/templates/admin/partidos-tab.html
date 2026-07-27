@@ -1,0 +1,329 @@
+<!-- Tab de Partidos Políticos -->
+<div class="chart-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="mb-1">Gestión de Partidos Políticos</h5>
+            <p class="text-muted small mb-0">Administre los partidos políticos del sistema</p>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-primary" id="btn-nuevo-partido">
+                <i class="bi bi-plus-circle"></i> Nuevo Partido
+            </button>
+            <button class="btn btn-outline-secondary" onclick="partidosManager.exportarPartidos()">
+                <i class="bi bi-download"></i> Exportar
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtros y Búsqueda -->
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <input type="text" class="form-control" id="search-partidos" placeholder="🔍 Buscar partido...">
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="filtro-activo-partidos">
+                <option value="todos">Todos los estados</option>
+                <option value="activos">Activos</option>
+                <option value="inactivos">Inactivos</option>
+            </select>
+        </div>
+        <div class="col-md-5 text-end">
+            <span class="badge bg-primary fs-6">
+                <i class="bi bi-flag-fill"></i> <span id="partidos-count">0</span> partidos
+            </span>
+        </div>
+    </div>
+
+    <!-- Tabla de Partidos -->
+    <div class="table-responsive" style="display: block !important; overflow-x: auto !important;">
+        <table class="table table-hover align-middle" style="display: table !important; width: 100% !important; table-layout: auto !important;">
+            <thead class="table-light" style="display: table-header-group !important;">
+                <tr style="display: table-row !important;">
+                    <th style="width: 60px; display: table-cell !important;">Logo</th>
+                    <th style="display: table-cell !important;">Nombre</th>
+                    <th style="width: 100px; display: table-cell !important;">Sigla</th>
+                    <th style="width: 120px; display: table-cell !important;">Color</th>
+                    <th style="width: 100px; display: table-cell !important;">Estado</th>
+                    <th style="width: 120px; display: table-cell !important;" class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="partidos-lista" style="display: table-row-group !important;">
+                <tr style="display: table-row !important;">
+                    <td colspan="6" class="text-center py-4" style="display: table-cell !important;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="text-muted mt-2">Cargando partidos...</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de Partido -->
+<div class="modal fade" id="modalPartido" tabindex="-1" aria-labelledby="modal-partido-title" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modal-partido-title">
+                    <i class="bi bi-flag-fill"></i> Nuevo Partido
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-partido">
+                    <div class="row">
+                        <!-- Columna Izquierda: Datos Básicos -->
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="partido-nombre" class="form-label">
+                                    Nombre Completo <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="partido-nombre" name="nombre" 
+                                       placeholder="Ej: Partido Liberal Colombiano" required>
+                                <div class="invalid-feedback">
+                                    El nombre es obligatorio
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="partido-sigla" class="form-label">
+                                    Sigla <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="partido-sigla" name="sigla" 
+                                       placeholder="Ej: PL" maxlength="10" required>
+                                <div class="invalid-feedback">
+                                    La sigla es obligatoria
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="partido-color" class="form-label">
+                                    Color del Partido <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="color" class="form-control form-control-color" 
+                                           id="partido-color" name="color" value="#000000" required>
+                                    <input type="text" class="form-control" id="partido-color-hex" 
+                                           placeholder="#000000" maxlength="7" pattern="^#[0-9A-Fa-f]{6}$">
+                                    <div class="invalid-feedback">
+                                        Ingrese un color hexadecimal válido
+                                    </div>
+                                </div>
+                                <small class="text-muted">Seleccione el color representativo del partido</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="partido-descripcion" class="form-label">Descripción</label>
+                                <textarea class="form-control" id="partido-descripcion" name="descripcion" 
+                                          rows="3" placeholder="Descripción opcional del partido"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="partido-activo" 
+                                           name="activo" checked>
+                                    <label class="form-check-label" for="partido-activo">
+                                        Partido Activo
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Columna Derecha: Logo y Preview -->
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Logo del Partido</label>
+                                <div class="text-center">
+                                    <!-- Preview del Logo -->
+                                    <div id="logo-preview-container" class="mb-3 p-3 border rounded" 
+                                         style="min-height: 150px; background-color: #f8f9fa;">
+                                        <div id="logo-preview" class="d-flex align-items-center justify-content-center" 
+                                             style="height: 120px;">
+                                            <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Botón de Upload -->
+                                    <input type="file" id="partido-logo-input" accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml" 
+                                           style="display: none;">
+                                    <button type="button" class="btn btn-outline-primary btn-sm w-100 mb-2" 
+                                            onclick="document.getElementById('partido-logo-input').click()">
+                                        <i class="bi bi-upload"></i> Seleccionar Logo
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm w-100" 
+                                            id="btn-remove-logo" style="display: none;">
+                                        <i class="bi bi-trash"></i> Eliminar Logo
+                                    </button>
+                                    <small class="text-muted d-block mt-2">
+                                        Formatos: PNG, JPG, WEBP, SVG<br>
+                                        Tamaño máximo: 5MB
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Preview del Color -->
+                            <div class="mb-3">
+                                <label class="form-label">Preview del Color</label>
+                                <div class="p-3 border rounded text-center" id="color-preview" 
+                                     style="background-color: #000000; min-height: 80px;">
+                                    <div class="badge bg-light text-dark mt-3">
+                                        <span id="color-preview-text">Partido</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="partidosManager.guardarPartido()">
+                    <i class="bi bi-check-circle"></i> Guardar Partido
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Estilos específicos para el tab de partidos */
+#logo-preview-container {
+    transition: all 0.3s ease;
+}
+
+#logo-preview-container:hover {
+    background-color: #e9ecef !important;
+}
+
+#logo-preview img {
+    max-width: 100%;
+    max-height: 120px;
+    object-fit: contain;
+}
+
+#color-preview {
+    transition: background-color 0.3s ease;
+}
+
+.form-control-color {
+    width: 60px;
+    height: 38px;
+}
+
+.table-hover tbody tr {
+    cursor: pointer;
+}
+
+.badge {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.6rem;
+}
+</style>
+
+<script>
+// Sincronizar selector de color con input de texto
+document.addEventListener('DOMContentLoaded', function() {
+    const colorPicker = document.getElementById('partido-color');
+    const colorHex = document.getElementById('partido-color-hex');
+    const colorPreview = document.getElementById('color-preview');
+    const colorPreviewText = document.getElementById('color-preview-text');
+    const logoInput = document.getElementById('partido-logo-input');
+    const logoPreview = document.getElementById('logo-preview');
+    const btnRemoveLogo = document.getElementById('btn-remove-logo');
+
+    // Sincronizar color picker con input hex
+    if (colorPicker && colorHex) {
+        colorPicker.addEventListener('input', function() {
+            colorHex.value = this.value.toUpperCase();
+            updateColorPreview(this.value);
+        });
+
+        colorHex.addEventListener('input', function() {
+            if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) {
+                colorPicker.value = this.value;
+                updateColorPreview(this.value);
+            }
+        });
+    }
+
+    // Actualizar preview del color
+    function updateColorPreview(color) {
+        if (colorPreview) {
+            colorPreview.style.backgroundColor = color;
+            // Calcular si el color es claro u oscuro para ajustar el texto
+            const rgb = parseInt(color.slice(1), 16);
+            const r = (rgb >> 16) & 0xff;
+            const g = (rgb >>  8) & 0xff;
+            const b = (rgb >>  0) & 0xff;
+            const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            
+            if (colorPreviewText) {
+                const badge = colorPreviewText.parentElement;
+                if (luma < 128) {
+                    badge.classList.remove('bg-light', 'text-dark');
+                    badge.classList.add('bg-dark', 'text-white');
+                } else {
+                    badge.classList.remove('bg-dark', 'text-white');
+                    badge.classList.add('bg-light', 'text-dark');
+                }
+            }
+        }
+    }
+
+    // Manejar upload de logo
+    if (logoInput) {
+        logoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validar tamaño (5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('El archivo es demasiado grande. Tamaño máximo: 5MB');
+                    this.value = '';
+                    return;
+                }
+
+                // Validar tipo
+                const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/svg+xml'];
+                if (!validTypes.includes(file.type)) {
+                    alert('Formato no válido. Use PNG, JPG, WEBP o SVG');
+                    this.value = '';
+                    return;
+                }
+
+                // Mostrar preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    logoPreview.innerHTML = `<img src="${e.target.result}" alt="Logo Preview">`;
+                    btnRemoveLogo.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // Remover logo
+    if (btnRemoveLogo) {
+        btnRemoveLogo.addEventListener('click', function() {
+            logoInput.value = '';
+            logoPreview.innerHTML = '<i class="bi bi-image text-muted" style="font-size: 3rem;"></i>';
+            this.style.display = 'none';
+        });
+    }
+
+    // Limpiar modal al cerrar
+    const modalPartido = document.getElementById('modalPartido');
+    if (modalPartido) {
+        modalPartido.addEventListener('hidden.bs.modal', function() {
+            document.getElementById('form-partido').reset();
+            logoPreview.innerHTML = '<i class="bi bi-image text-muted" style="font-size: 3rem;"></i>';
+            btnRemoveLogo.style.display = 'none';
+            colorHex.value = '#000000';
+            updateColorPreview('#000000');
+        });
+    }
+});
+</script>

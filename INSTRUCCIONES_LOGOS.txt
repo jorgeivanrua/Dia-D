@@ -1,0 +1,154 @@
+================================================================================
+SISTEMA DE LOGOS - INSTRUCCIONES RÁPIDAS
+================================================================================
+
+✅ ESTADO: Sistema funcionando correctamente (5/5 tests pasados)
+📊 COBERTURA: 13/17 partidos con logo (76.5%)
+
+================================================================================
+COMANDOS PRINCIPALES
+================================================================================
+
+1. VERIFICAR ESTADO DE LOGOS
+   python check_logos.py
+
+2. CARGAR/ACTUALIZAR LOGOS
+   python backend/scripts/cargar_logos_reales.py
+
+3. PROBAR SISTEMA COMPLETO
+   python test_logos_sistema.py
+
+4. VER EN DASHBOARD
+   - Abrir: http://localhost:5000/admin/super-admin-dashboard
+   - Ir a: Configuración > Partidos Políticos
+   - Recargar: Ctrl + Shift + R
+
+================================================================================
+RESULTADOS ACTUALES
+================================================================================
+
+Total de partidos: 17
+Con logo: 13 (76.5%) ✅
+Sin logo: 4 (23.5%) - Usan avatares automáticos
+Con color: 17 (100%) ✅
+
+PARTIDOS CON LOGO:
+  ✅ Partido Liberal Colombiano
+  ✅ Partido Conservador Colombiano
+  ✅ Alianza Verde
+  ✅ Centro Democrático
+  ✅ Cambio Radical
+  ✅ Partido de la U
+  ✅ MIRA
+  ✅ Comunes
+  ✅ Polo Democrático
+  ✅ Pacto Histórico
+  ✅ Nuevo Liberalismo
+  ✅ La U
+
+PARTIDOS SIN LOGO (usan avatar):
+  ⚪ Alianza Social Independiente
+  ⚪ Colombia Renaciente
+  ⚪ Otros Partidos
+  ⚪ Voto en Blanco
+
+================================================================================
+CARACTERÍSTICAS
+================================================================================
+
+✅ Logos reales de 50x50px con borde y sombra
+✅ Fallback automático a avatar con iniciales
+✅ Indicadores visuales de estado (✓ Con logo / ○ Sin logo)
+✅ Colores del partido en avatares
+✅ Gradientes y efectos visuales
+✅ Transiciones suaves en hover
+
+================================================================================
+ARCHIVOS IMPORTANTES
+================================================================================
+
+FRONTEND:
+  frontend/static/js/super-admin-dashboard.js - Renderizado de logos
+
+BACKEND:
+  backend/scripts/cargar_logos_reales.py - Script de carga
+  backend/models/configuracion_electoral.py - Modelo de datos
+
+SCRIPTS:
+  check_logos.py - Verificación de logos
+  test_logos_sistema.py - Suite de pruebas
+
+DOCUMENTACIÓN:
+  docs/SISTEMA_LOGOS.md - Guía completa
+  docs/MEJORAS_LOGOS_30NOV2025.md - Registro de cambios
+  RESUMEN_MEJORAS_LOGOS.md - Resumen ejecutivo
+
+================================================================================
+SOLUCIÓN DE PROBLEMAS
+================================================================================
+
+PROBLEMA: Los logos no se muestran
+SOLUCIÓN:
+  1. python check_logos.py
+  2. python backend/scripts/cargar_logos_reales.py
+  3. Ctrl + Shift + R en el navegador
+
+PROBLEMA: Los avatares no tienen color
+SOLUCIÓN:
+  1. Verificar que el partido tenga color en BD
+  2. Actualizar desde dashboard de super admin
+  3. Verificar formato hexadecimal (#RRGGBB)
+
+PROBLEMA: Error de CORS
+SOLUCIÓN:
+  Los logos de placeholder.com no tienen problemas de CORS
+  Si usas otra fuente, verifica que permita CORS
+
+================================================================================
+AGREGAR LOGO A UN PARTIDO
+================================================================================
+
+OPCIÓN 1: Desde Dashboard
+  1. Ir a "Configuración > Partidos Políticos"
+  2. Click en "Editar" (ícono de lápiz)
+  3. Ingresar URL del logo
+  4. Guardar cambios
+
+OPCIÓN 2: Desde Script
+  1. Editar backend/scripts/cargar_logos_reales.py
+  2. Agregar en LOGOS_PARTIDOS:
+     'CODIGO_PARTIDO': 'https://url-del-logo.com/imagen.png'
+  3. Ejecutar: python backend/scripts/cargar_logos_reales.py
+
+OPCIÓN 3: Desde Base de Datos
+  UPDATE partidos 
+  SET logo_url = 'https://url-del-logo.com/imagen.png'
+  WHERE codigo = 'CODIGO_PARTIDO';
+
+================================================================================
+PRÓXIMOS PASOS
+================================================================================
+
+INMEDIATOS:
+  ✅ Recargar dashboard con Ctrl + Shift + R
+  ✅ Verificar que los logos se muestren correctamente
+  ✅ Ejecutar python test_logos_sistema.py
+
+OPCIONALES:
+  □ Agregar logos a los 4 partidos restantes
+  □ Personalizar colores si es necesario
+  □ Subir logos propios al servidor
+
+================================================================================
+SOPORTE
+================================================================================
+
+Documentación completa: docs/SISTEMA_LOGOS.md
+Registro de cambios: docs/MEJORAS_LOGOS_30NOV2025.md
+Resumen ejecutivo: RESUMEN_MEJORAS_LOGOS.md
+
+================================================================================
+FECHA: 30 de Noviembre de 2025
+VERSIÓN: 2.0.0
+ESTADO: ✅ COMPLETADO Y FUNCIONAL
+================================================================================

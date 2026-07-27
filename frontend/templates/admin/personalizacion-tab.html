@@ -1,0 +1,205 @@
+        <!-- ⭐ TAB: Personalización -->
+        <div class="tab-pane fade" id="personalizacion" role="tabpanel">
+            
+            <!-- Header -->
+            <div class="fondos-section">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="mb-2"><i class="bi bi-palette"></i> Personalización del Sistema</h4>
+                        <p class="text-muted mb-0">Personaliza la apariencia de la página de login</p>
+                    </div>
+                    <button class="btn btn-crear-fondo" onclick="personalizacion.mostrarFormularioCrear()">
+                        <i class="bi bi-plus-circle"></i> Crear Nuevo Fondo
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fondos Actuales -->
+            <div class="fondos-section">
+                <h5><i class="bi bi-images"></i> Fondos Actuales</h5>
+                <div class="row" id="fondos-actuales">
+                    <div class="col-12 text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Cargando fondos...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fondos Predefinidos -->
+            <div class="fondos-section">
+                <h5><i class="bi bi-star"></i> Fondos Predefinidos</h5>
+                <p class="text-muted small">Selecciona un fondo predefinido para usar rápidamente</p>
+                <div class="row" id="fondos-predefinidos">
+                    <div class="col-12 text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Cargando fondos predefinidos...</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Modal: Crear Fondo -->
+        <div class="modal fade modal-personalizar" id="crearFondoModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Crear Nuevo Fondo</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        
+                        <!-- Tabs para tipos de fondo -->
+                        <ul class="nav nav-tabs personalizacion-tabs mb-4" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="tab-gradiente" data-bs-toggle="tab" data-bs-target="#crear-gradiente" type="button">
+                                    <i class="bi bi-palette"></i> Gradiente
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="tab-imagen" data-bs-toggle="tab" data-bs-target="#crear-imagen" type="button">
+                                    <i class="bi bi-image"></i> Imagen
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="tab-solido" data-bs-toggle="tab" data-bs-target="#crear-solido" type="button">
+                                    <i class="bi bi-square-fill"></i> Color Sólido
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            
+                            <!-- Crear Gradiente -->
+                            <div class="tab-pane fade show active" id="crear-gradiente" role="tabpanel">
+                                <form id="form-gradiente">
+                                    <div class="mb-3">
+                                        <label class="form-label">Nombre del Fondo</label>
+                                        <input type="text" class="form-control" id="gradiente-nombre" placeholder="Ej: Mi Gradiente Personalizado" required>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="color-picker-group">
+                                                <label>Color 1:</label>
+                                                <input type="color" class="form-control" id="gradiente-color1" value="#FCD116">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="color-picker-group">
+                                                <label>Color 2:</label>
+                                                <input type="color" class="form-control" id="gradiente-color2" value="#003893">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="color-picker-group">
+                                                <label>Color 3:</label>
+                                                <input type="color" class="form-control" id="gradiente-color3" value="#CE1126">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Dirección</label>
+                                        <select class="form-select" id="gradiente-direccion">
+                                            <option value="180deg">Vertical (↓)</option>
+                                            <option value="0deg">Vertical (↑)</option>
+                                            <option value="90deg">Horizontal (→)</option>
+                                            <option value="270deg">Horizontal (←)</option>
+                                            <option value="135deg">Diagonal (↘)</option>
+                                            <option value="45deg">Diagonal (↗)</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Preview -->
+                                    <div id="gradiente-preview" style="height: 150px; border-radius: 8px; margin-top: 1rem;"></div>
+
+                                    <button type="button" class="btn btn-primary w-100 mt-3" onclick="personalizacion.crearFondoGradiente()">
+                                        <i class="bi bi-check-circle"></i> Crear Fondo con Gradiente
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Subir Imagen -->
+                            <div class="tab-pane fade" id="crear-imagen" role="tabpanel">
+                                <form id="form-imagen">
+                                    <div class="mb-3">
+                                        <label class="form-label">Nombre del Fondo</label>
+                                        <input type="text" class="form-control" id="imagen-nombre" placeholder="Ej: Paisaje de Colombia" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Seleccionar Imagen</label>
+                                        <input type="file" class="form-control" id="imagen-file" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" required>
+                                        <small class="text-muted">Formatos: PNG, JPG, GIF, WEBP. Máximo 5MB</small>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Posición</label>
+                                                <select class="form-select" id="imagen-posicion">
+                                                    <option value="center">Centro</option>
+                                                    <option value="top">Arriba</option>
+                                                    <option value="bottom">Abajo</option>
+                                                    <option value="left">Izquierda</option>
+                                                    <option value="right">Derecha</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Tamaño</label>
+                                                <select class="form-select" id="imagen-tamano">
+                                                    <option value="cover">Cubrir (Cover)</option>
+                                                    <option value="contain">Contener (Contain)</option>
+                                                    <option value="auto">Automático</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Preview -->
+                                    <div id="imagen-preview" style="height: 200px; border-radius: 8px; background-size: cover; background-position: center; display: none; margin-top: 1rem;"></div>
+
+                                    <button type="button" class="btn btn-primary w-100 mt-3" onclick="personalizacion.subirImagenFondo()">
+                                        <i class="bi bi-upload"></i> Subir Imagen
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Color Sólido -->
+                            <div class="tab-pane fade" id="crear-solido" role="tabpanel">
+                                <form id="form-solido">
+                                    <div class="mb-3">
+                                        <label class="form-label">Nombre del Fondo</label>
+                                        <input type="text" class="form-control" id="solido-nombre" placeholder="Ej: Azul Institucional" required>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Seleccionar Color</label>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <input type="color" class="form-control" id="solido-color" value="#003893" style="width: 100px; height: 60px;">
+                                            <input type="text" class="form-control" id="solido-color-hex" value="#003893" placeholder="#000000">
+                                        </div>
+                                    </div>
+
+                                    <!-- Preview -->
+                                    <div id="solido-preview" style="height: 150px; border-radius: 8px; background: #003893; margin-top: 1rem;"></div>
+
+                                    <button type="button" class="btn btn-primary w-100 mt-3" onclick="personalizacion.crearFondoSolido()">
+                                        <i class="bi bi-check-circle"></i> Crear Fondo con Color Sólido
+                                    </button>
+                                </form>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>

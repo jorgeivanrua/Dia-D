@@ -1,0 +1,803 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Testigo Electoral{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-universal-v2.css') }}">
+<style>
+.image-preview {
+    min-height: 150px;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    background: #f8f9fa;
+}
+
+.image-preview img {
+    max-width: 100%;
+    max-height: 250px;
+    border-radius: 4px;
+}
+
+.form-section {
+    margin-bottom: 1rem;
+}
+
+.form-section h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+    font-size: 0.95rem;
+}
+
+/* Optimización para móviles */
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+    
+    .form-section h6 {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-label {
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .card {
+        margin-bottom: 0.75rem !important;
+    }
+    
+    .card-header h6 {
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .input-group-text {
+        font-size: 0.85rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .badge {
+        font-size: 0.8rem;
+    }
+}
+
+/* Cards de partidos más compactos */
+.card-header {
+    padding: 0.75rem;
+}
+
+.card-body {
+    padding: 0.75rem;
+}
+
+/* FORZAR color blanco en pestañas activas de partidos */
+#votacionContainer #partidosTabs .nav-link.active,
+#votacionContainer #partidosTabs button.nav-link.active {
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+}
+
+#votacionContainer #partidosTabs .nav-link.active span,
+#votacionContainer #partidosTabs .nav-link.active small,
+#votacionContainer #partidosTabs button.nav-link.active span,
+#votacionContainer #partidosTabs button.nav-link.active small {
+    color: #ffffff !important;
+}
+
+/* Color oscuro en pestañas inactivas */
+#votacionContainer #partidosTabs .nav-link:not(.active),
+#votacionContainer #partidosTabs button.nav-link:not(.active) {
+    color: #495057 !important;
+    background-color: transparent !important;
+}
+
+#votacionContainer #partidosTabs .nav-link:not(.active) span,
+#votacionContainer #partidosTabs .nav-link:not(.active) small,
+#votacionContainer #partidosTabs button.nav-link:not(.active) span,
+#votacionContainer #partidosTabs button.nav-link:not(.active) small {
+    color: #495057 !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3 pb-5 pb-md-3">
+    <!-- Contenedor de alertas -->
+    <div id="alert-container" class="mb-3"></div>
+    
+    <!-- Header Mejorado -->
+    <div class="dashboard-header">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h2><i class="bi bi-person-check"></i> Testigo Electoral</h2>
+                <p class="mb-0">Mesa: <span id="mesaInfo">Seleccione una mesa</span></p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-primary btn-sm d-none d-md-inline-flex" onclick="window.syncManager && window.syncManager.syncAll()" title="Sincronizar datos">
+                    <i class="bi bi-arrow-repeat"></i> Sincronizar
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="logout()" title="Cerrar sesión">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span class="d-none d-md-inline"> Cerrar Sesión</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards Mejoradas -->
+    <div class="stats-grid">
+        <div class="stat-card success">
+            <h6>Estado</h6>
+            <h3 id="statEstado">-</h3>
+            <small id="statEstadoTexto">Sin verificar</small>
+        </div>
+        <div class="stat-card primary">
+            <h6>Formularios</h6>
+            <h3 id="statFormularios">0</h3>
+            <small>Enviados</small>
+        </div>
+        <div class="stat-card warning">
+            <h6>Incidentes</h6>
+            <h3 id="statIncidentes">0</h3>
+            <small>Reportados</small>
+        </div>
+        <div class="stat-card info">
+            <h6>Votantes</h6>
+            <h3 id="statVotantes">0</h3>
+            <small>Registrados</small>
+        </div>
+    </div>
+
+    <!-- Tabs Desktop (ocultos en móvil) -->
+    <ul class="nav nav-tabs mb-3 d-none d-md-flex" id="testigoTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="formularios-tab" data-bs-toggle="tab" data-bs-target="#formularios" type="button" role="tab">
+                <i class="bi bi-file-earmark-text"></i> Formularios E-14
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="incidentes-tab" data-bs-toggle="tab" data-bs-target="#incidentes" type="button" role="tab">
+                <i class="bi bi-exclamation-triangle"></i> Incidentes
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="delitos-tab" data-bs-toggle="tab" data-bs-target="#delitos" type="button" role="tab">
+                <i class="bi bi-shield-exclamation"></i> Delitos
+            </button>
+        </li>
+    </ul>
+
+    <!-- Contenido de las pestañas -->
+    <div class="tab-content" id="testigoTabsContent">
+        
+        <!-- Tab 1: Formularios E-14 -->
+        <div class="tab-pane fade show active" id="formularios" role="tabpanel">
+            <!-- Selector de Mesa y Verificación de Presencia -->
+            <div class="row mb-3">
+                <div class="col-md-6 mb-3">
+                    <div class="form-group-touch">
+                        <label class="form-label-touch">Mesa</label>
+                        <select class="form-control-touch" id="mesa" required onchange="cambiarMesa()">
+                            <option value="">Seleccione mesa...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="form-group-touch">
+                        <label class="form-label-touch">Verificación de Presencia</label>
+                        <div id="presenciaContainer">
+                            <button class="btn-touch btn-success-touch btn-touch-block" id="btnVerificarPresencia" onclick="verificarPresenciaSimple()">
+                                <i class="bi bi-check-circle"></i> Verificar Mi Presencia
+                            </button>
+                            <div class="alert alert-success mt-2 d-none" id="alertaPresenciaVerificada">
+                                <i class="bi bi-check-circle-fill"></i> Presencia verificada
+                                <br><small id="presenciaFecha"></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- Botón Nuevo Formulario para Móvil -->
+            <div class="d-md-none mb-3">
+                <button class="btn-touch btn-primary-touch btn-touch-block" id="btnNuevoFormularioMobile" onclick="showCreateForm()" disabled title="Debe seleccionar una mesa y verificar presencia primero">
+                    <i class="bi bi-camera"></i>
+                    Capturar Formulario E-14
+                </button>
+            </div>
+
+            <div class="row">
+                <!-- Tabla de Formularios -->
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Mis Formularios E-14</h5>
+                            <button class="btn btn-primary" id="btnNuevoFormulario" onclick="showCreateForm()" disabled title="Debe seleccionar una mesa y verificar presencia primero">
+                                <i class="bi bi-plus-circle"></i> Nuevo Formulario
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <!-- Vista de Cards para Móvil -->
+                            <div class="d-md-none" id="formsCardsMobile">
+                                <div class="text-center py-4 text-muted">
+                                    <i class="bi bi-file-earmark-text" style="font-size: 3rem;"></i>
+                                    <p class="mt-2">No hay formularios registrados</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Vista de Tabla para Desktop -->
+                            <div class="table-responsive d-none d-md-block">
+                                <table class="table table-striped" id="formsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Mesa</th>
+                                            <th>Tipo Elección</th>
+                                            <th>Estado</th>
+                                            <th>Total Votos</th>
+                                            <th>Fecha</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4">
+                                                <p class="text-muted">No hay formularios registrados</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Panel Lateral -->
+                <div class="col-md-4">
+                    <!-- ⭐ MEJORADO: Panel de Mesas del Puesto -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="bi bi-table"></i> Mesas del Puesto
+                                <span class="badge bg-primary ms-2" id="totalMesasPuesto">0</span>
+                            </h6>
+                        </div>
+                        <div class="card-body p-2" style="max-height: 400px; overflow-y: auto;">
+                            <div id="panelMesasPuesto">
+                                <p class="text-muted text-center py-3">Cargando mesas...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Instrucciones -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="mb-0">Instrucciones</h5>
+                        </div>
+                        <div class="card-body">
+                            <ol>
+                                <li>Tome una foto clara del formulario E-14</li>
+                                <li>Digite todos los datos del formulario</li>
+                                <li>Verifique que los totales coincidan</li>
+                                <li>Envíe el formulario para revisión</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab Formularios -->
+
+        <!-- Tab 2: Incidentes y Problemas -->
+        <div class="tab-pane fade" id="incidentes" role="tabpanel">
+            <!-- Botón de acción rápida móvil -->
+            <div class="d-md-none mb-3">
+                <button class="btn-touch btn-warning-touch btn-touch-block" onclick="reportarIncidente()">
+                    <i class="bi bi-plus-circle"></i> Reportar Incidente
+                </button>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Incidentes Reportados</h5>
+                            <button class="btn btn-warning" onclick="reportarIncidente()">
+                                <i class="bi bi-plus-circle"></i> Reportar Incidente
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="incidentesLista">
+                                <div class="text-center py-4 text-muted">
+                                    <i class="bi bi-exclamation-triangle" style="font-size: 3rem;"></i>
+                                    <p class="mt-2">No hay incidentes reportados</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 d-none d-md-block">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Tipos de Incidentes</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="bi bi-check-circle text-warning"></i> Retraso en apertura</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-warning"></i> Falta de material electoral</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-warning"></i> Problemas técnicos</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-warning"></i> Irregularidades en el proceso</li>
+                                <li class="mb-2"><i class="bi bi-check-circle text-warning"></i> Otros</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab Incidentes -->
+
+        <!-- Tab 3: Reporte de Delitos -->
+        <div class="tab-pane fade" id="delitos" role="tabpanel">
+            <!-- Botón de acción rápida móvil -->
+            <div class="d-md-none mb-3">
+                <button class="btn-touch btn-danger-touch btn-touch-block" onclick="reportarDelito()">
+                    <i class="bi bi-plus-circle"></i> Reportar Delito Electoral
+                </button>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Delitos Electorales Reportados</h5>
+                            <button class="btn btn-danger" onclick="reportarDelito()">
+                                <i class="bi bi-plus-circle"></i> Reportar Delito
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                <strong>Importante:</strong> Los delitos electorales son graves. Reporte solo situaciones que constituyan una violación clara de la ley electoral.
+                            </div>
+                            <div id="delitosLista">
+                                <div class="text-center py-4 text-muted">
+                                    <i class="bi bi-shield-exclamation" style="font-size: 3rem;"></i>
+                                    <p class="mt-2">No hay delitos reportados</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 d-none d-md-block">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Tipos de Delitos</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                <li class="mb-2"><i class="bi bi-x-circle text-danger"></i> Compra de votos</li>
+                                <li class="mb-2"><i class="bi bi-x-circle text-danger"></i> Coacción al votante</li>
+                                <li class="mb-2"><i class="bi bi-x-circle text-danger"></i> Fraude electoral</li>
+                                <li class="mb-2"><i class="bi bi-x-circle text-danger"></i> Suplantación de identidad</li>
+                                <li class="mb-2"><i class="bi bi-x-circle text-danger"></i> Alteración de resultados</li>
+                                <li class="mb-2"><i class="bi bi-x-circle text-danger"></i> Otros delitos</li>
+                            </ul>
+                            <hr>
+                            <p class="small text-muted">
+                                <i class="bi bi-info-circle"></i>
+                                Si presencia un delito electoral, repórtelo inmediatamente y contacte a las autoridades competentes.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab Delitos -->
+
+    </div>
+    <!-- Fin Tab Content -->
+</div>
+
+<!-- Bottom Navigation (Solo Móvil) -->
+<nav class="bottom-nav d-md-none">
+    <a href="#formularios" class="bottom-nav-item active" data-bs-toggle="tab" data-tab="formularios">
+        <i class="bi bi-file-earmark-text-fill"></i>
+        <span>Formularios</span>
+    </a>
+    <a href="#incidentes" class="bottom-nav-item" data-bs-toggle="tab" data-tab="incidentes">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>Incidentes</span>
+    </a>
+    <a href="#delitos" class="bottom-nav-item" data-bs-toggle="tab" data-tab="delitos">
+        <i class="bi bi-shield-fill-exclamation"></i>
+        <span>Delitos</span>
+    </a>
+    <a href="#" class="bottom-nav-item" onclick="logout()">
+        <i class="bi bi-box-arrow-right"></i>
+        <span>Salir</span>
+    </a>
+</nav>
+
+<!-- Modal para crear/editar formulario E-14 -->
+<div class="modal fade" id="formModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Formulario E-14</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <form id="e14Form" enctype="multipart/form-data">
+                    <!-- Información Básica -->
+                    <div class="form-section">
+                        <h6>📋 Información Básica</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Mesa *</label>
+                                <select class="form-select" id="mesaFormulario" name="mesa_id" required onchange="cambiarMesaFormulario()">
+                                    <option value="">Seleccione mesa...</option>
+                                </select>
+                                <small class="text-muted">Puedes cambiar de mesa si cubres varias</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Tipo de Elección *</label>
+                                <select class="form-select" id="tipoEleccion" name="tipo_eleccion" required onchange="cargarPartidosYCandidatos()">
+                                    <option value="">Seleccione...</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Foto del Formulario -->
+                    <div class="form-section">
+                        <h6>📸 Foto del Formulario E-14</h6>
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <input type="file" class="form-control d-none" id="imagen" name="imagen" accept="image/*">
+                                <button type="button" class="btn btn-primary w-100 mb-2" onclick="abrirCamara()">
+                                    <i class="bi bi-camera-fill"></i> Tomar Foto del Formulario
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary w-100" onclick="document.getElementById('imagen').click()">
+                                    <i class="bi bi-image"></i> Seleccionar desde Galería
+                                </button>
+                                <small class="text-muted d-block mt-1">Tome una foto clara del formulario completo</small>
+                            </div>
+                            <div class="col-12">
+                                <div class="image-preview" id="imagePreview">
+                                    <p class="text-muted">Toque el botón para tomar una foto</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Datos de Votación -->
+                    <div class="form-section">
+                        <h6>🗳️ Datos de Votación</h6>
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-2">
+                                <div class="row g-2">
+                                    <div class="col-6 col-md-3">
+                                        <div class="p-2 bg-primary bg-opacity-10 rounded">
+                                            <label class="form-label small mb-1 text-primary fw-bold">📊 Votantes Registrados</label>
+                                            <input type="number" class="form-control form-control-sm border-primary bg-light" name="total_votantes_registrados" id="votantesRegistrados" min="0" value="0" readonly>
+                                            <small class="text-muted">Automático</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="p-2 bg-danger bg-opacity-10 rounded">
+                                            <label class="form-label small mb-1 text-danger fw-bold">❌ Votos Nulos</label>
+                                            <input type="number" class="form-control form-control-sm border-danger" name="votos_nulos" id="votosNulos" min="0" value="0" onchange="calcularTotales()" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="p-2 bg-secondary bg-opacity-10 rounded">
+                                            <label class="form-label small mb-1 text-secondary fw-bold">⬜ Votos en Blanco</label>
+                                            <input type="number" class="form-control form-control-sm border-secondary" name="votos_blanco" id="votosBlanco" min="0" value="0" onchange="calcularTotales()" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 col-md-3">
+                                        <div class="p-2 bg-warning bg-opacity-10 rounded">
+                                            <label class="form-label small mb-1 text-warning fw-bold">📄 Tarjetas No Marcadas</label>
+                                            <input type="number" class="form-control form-control-sm border-warning" name="tarjetas_no_marcadas" id="tarjetasNoMarcadas" min="0" value="0" onchange="calcularTotales()" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row g-2 mt-2">
+                                    <div class="col-4">
+                                        <div class="p-2 bg-success bg-opacity-10 rounded">
+                                            <label class="form-label small mb-1 text-success fw-bold">✅ Votos Válidos</label>
+                                            <input type="number" class="form-control form-control-sm border-success bg-light" name="votos_validos" id="votosValidos" min="0" value="0" readonly>
+                                            <small class="text-muted">Automático</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-2 bg-info bg-opacity-10 rounded">
+                                            <label class="form-label small mb-1 text-info fw-bold">📈 Total Votos</label>
+                                            <input type="number" class="form-control form-control-sm border-info bg-light" name="total_votos" id="totalVotos" min="0" value="0" readonly>
+                                            <small class="text-muted">Automático</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-2 bg-dark bg-opacity-10 rounded">
+                                            <label class="form-label small mb-1 text-dark fw-bold">📋 Total Tarjetas</label>
+                                            <input type="number" class="form-control form-control-sm border-dark bg-light" name="total_tarjetas" id="totalTarjetas" value="0" readonly>
+                                            <small class="text-muted">Automático</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Votos por Partido y Candidatos -->
+                    <div class="form-section">
+                        <h6>🗳️ Votos por Partido y Candidatos</h6>
+                        <div id="votacionContainer">
+                            <p class="text-muted">Seleccione un tipo de elección para cargar los partidos y candidatos</p>
+                        </div>
+                    </div>
+
+                    <!-- Resumen Automático -->
+                    <div class="form-section">
+                        <h6>📊 Resumen de esta Mesa</h6>
+                        <div class="alert alert-info">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Total Votos en esta Mesa:</strong> <span id="resumenTotal">0</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Partido con más votos:</strong> <span id="partidoGanador">-</span>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-12">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle"></i> 
+                                        El candidato ganador se calcula a nivel municipal consolidando todos los E-14 (formulario E-24)
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div class="form-section">
+                        <h6>📝 Observaciones</h6>
+                        <textarea class="form-control" name="observaciones" rows="3" placeholder="Ingrese cualquier observación relevante sobre el proceso de votación..."></textarea>
+                    </div>
+                    
+                    <div class="validation-errors" id="validationErrors"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="saveForm('borrador')">
+                    <i class="bi bi-save"></i> Guardar Borrador
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveForm('enviar')">
+                    <i class="bi bi-send"></i> Enviar para Revisión
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para reportar incidente -->
+<div class="modal fade" id="incidenteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reportar Incidente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Información de la mesa verificada -->
+                <div class="alert alert-info" id="alertMesaIncidente">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Mesa:</strong> <span id="mesaInfoIncidente">-</span>
+                    <br><small>Este incidente se reportará para la mesa verificada actualmente</small>
+                </div>
+                
+                <form id="formIncidente" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Incidente *</label>
+                        <select class="form-select" id="tipoIncidente" name="tipo_incidente" required>
+                            <option value="">Seleccione tipo de incidente...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Título *</label>
+                        <input type="text" class="form-control" name="titulo" required placeholder="Ej: Falta de boletas en mesa 123">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Severidad *</label>
+                        <select class="form-select" name="severidad" required>
+                            <option value="baja">Baja</option>
+                            <option value="media" selected>Media</option>
+                            <option value="alta">Alta</option>
+                            <option value="critica">Crítica</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción *</label>
+                        <textarea class="form-control" name="descripcion" rows="4" required placeholder="Describa el incidente con el mayor detalle posible..."></textarea>
+                    </div>
+                    
+                    <!-- Evidencia Fotográfica -->
+                    <div class="mb-3">
+                        <label class="form-label">📸 Evidencia Fotográfica (opcional)</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="fotoIncidente" name="foto" accept="image/*" capture="environment">
+                            <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('fotoIncidente').click()">
+                                <i class="bi bi-camera"></i> Tomar Foto
+                            </button>
+                        </div>
+                        <small class="text-muted">Puede adjuntar una foto como evidencia del incidente</small>
+                        <div id="previewIncidente" class="mt-2" style="display: none;">
+                            <img id="imgPreviewIncidente" src="" alt="Vista previa" class="img-fluid rounded" style="max-height: 200px;">
+                            <button type="button" class="btn btn-sm btn-danger mt-2" onclick="limpiarFotoIncidente()">
+                                <i class="bi bi-trash"></i> Eliminar foto
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Hora del incidente -->
+                    <div class="mb-3">
+                        <label class="form-label">Hora del Incidente *</label>
+                        <input type="time" class="form-control" name="hora_incidente" required>
+                        <small class="text-muted">Hora aproximada en que ocurrió el incidente</small>
+                    </div>
+                    
+                    <!-- Personas involucradas -->
+                    <div class="mb-3">
+                        <label class="form-label">Personas Involucradas (opcional)</label>
+                        <input type="text" class="form-control" name="personas_involucradas" placeholder="Nombres o descripción de las personas involucradas">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="guardarIncidente()">
+                    <i class="bi bi-send"></i> Reportar Incidente
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para reportar delito -->
+<div class="modal fade" id="delitoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Reportar Delito Electoral</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Información de la mesa verificada -->
+                <div class="alert alert-info" id="alertMesaDelito">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Mesa:</strong> <span id="mesaInfoDelito">-</span>
+                    <br><small>Este delito se reportará para la mesa verificada actualmente</small>
+                </div>
+                
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Advertencia:</strong> Este reporte será enviado a las autoridades electorales competentes.
+                </div>
+                <form id="formDelito" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Delito *</label>
+                        <select class="form-select" id="tipoDelito" name="tipo_delito" required>
+                            <option value="">Seleccione tipo de delito...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Título *</label>
+                        <input type="text" class="form-control" name="titulo" required placeholder="Ej: Intento de compra de votos">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Gravedad *</label>
+                        <select class="form-select" name="gravedad" required>
+                            <option value="leve">Leve</option>
+                            <option value="media" selected>Media</option>
+                            <option value="grave">Grave</option>
+                            <option value="muy_grave">Muy Grave</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción Detallada *</label>
+                        <textarea class="form-control" name="descripcion" rows="5" required placeholder="Describa el delito con el mayor detalle posible: qué ocurrió, quiénes estuvieron involucrados, cuándo sucedió, etc."></textarea>
+                    </div>
+                    
+                    <!-- Evidencia Fotográfica -->
+                    <div class="mb-3">
+                        <label class="form-label">📸 Evidencia Fotográfica (opcional pero recomendada)</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="fotoDelito" name="foto" accept="image/*" capture="environment">
+                            <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('fotoDelito').click()">
+                                <i class="bi bi-camera"></i> Tomar Foto
+                            </button>
+                        </div>
+                        <small class="text-muted">La evidencia fotográfica fortalece el reporte ante las autoridades</small>
+                        <div id="previewDelito" class="mt-2" style="display: none;">
+                            <img id="imgPreviewDelito" src="" alt="Vista previa" class="img-fluid rounded" style="max-height: 200px;">
+                            <button type="button" class="btn btn-sm btn-danger mt-2" onclick="limpiarFotoDelito()">
+                                <i class="bi bi-trash"></i> Eliminar foto
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Hora del delito -->
+                    <div class="mb-3">
+                        <label class="form-label">Hora del Delito *</label>
+                        <input type="time" class="form-control" name="hora_delito" required>
+                        <small class="text-muted">Hora aproximada en que ocurrió el delito</small>
+                    </div>
+                    
+                    <!-- Personas involucradas -->
+                    <div class="mb-3">
+                        <label class="form-label">Personas Involucradas *</label>
+                        <textarea class="form-control" name="personas_involucradas" rows="2" required placeholder="Descripción de las personas involucradas (nombres, características físicas, vestimenta, etc.)"></textarea>
+                    </div>
+                    
+                    <!-- Testigos adicionales -->
+                    <div class="mb-3">
+                        <label class="form-label">Testigos Adicionales (opcional)</label>
+                        <input type="text" class="form-control" name="testigos_adicionales" placeholder="Nombres y contactos de otros testigos presenciales">
+                    </div>
+                    
+                    <!-- Ubicación específica -->
+                    <div class="mb-3">
+                        <label class="form-label">Ubicación Específica (opcional)</label>
+                        <input type="text" class="form-control" name="ubicacion_especifica" placeholder="Ej: Entrada principal del puesto, fila de votación, etc.">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="guardarDelito()">
+                    <i class="bi bi-send"></i> Reportar Delito
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- API Client ya está cargado en base.html -->
+
+<!-- Script de verificación SIMPLE (se carga primero) -->
+<script src="{{ url_for('static', filename='js/testigo-verificacion-simple.js') }}"></script>
+
+<!-- Script de depuración -->
+<script src="{{ url_for('static', filename='js/testigo-debug-buttons.js') }}"></script>
+
+<!-- Script para habilitar botones automáticamente -->
+<script src="{{ url_for('static', filename='js/testigo-enable-buttons.js') }}"></script>
+
+<!-- Script para forzar verificación manualmente -->
+<script src="{{ url_for('static', filename='js/testigo-force-verification.js') }}"></script>
+
+<!-- Módulos independientes -->
+<script src="{{ url_for('static', filename='js/incidentes-delitos.js') }}"></script>
+
+<!-- Dashboard principal (incluye toda la funcionalidad) -->
+<script src="{{ url_for('static', filename='js/testigo-dashboard-v2.js') }}"></script>
+
+<!-- Fix de visibilidad de botones - DESHABILITADO porque causa conflictos -->
+<!-- <script src="{{ url_for('static', filename='js/testigo-fix-buttons-visibility.js') }}"></script> -->
+{% endblock %}

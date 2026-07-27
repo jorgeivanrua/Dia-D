@@ -1,0 +1,293 @@
+/**
+ * Tema "Día D" - Sistema Electoral
+ * Colores de la bandera de Colombia
+ */
+
+:root {
+    /* Colores de Colombia */
+    --colombia-amarillo: #FCD116;
+    --colombia-azul: #003893;
+    --colombia-rojo: #CE1126;
+    
+    /* Variaciones */
+    --azul-oscuro: #001f5c;
+    --azul-claro: #0056d6;
+    --amarillo-claro: #ffe566;
+    --rojo-oscuro: #a00e1e;
+    
+    /* Grises */
+    --gris-claro: #f8f9fa;
+    --gris-medio: #6c757d;
+    --gris-oscuro: #343a40;
+}
+
+/* Logo Día D - Reutilizable */
+.logo-dia-d-small {
+    font-size: 1.5rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--colombia-amarillo) 0%, var(--colombia-azul) 50%, var(--colombia-rojo) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.05em;
+    font-family: 'Arial Black', sans-serif;
+    display: inline-block;
+}
+
+/* Botones con tema Colombia */
+.btn-colombia-primary {
+    background: linear-gradient(135deg, var(--colombia-azul) 0%, var(--azul-oscuro) 100%);
+    border: none;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-colombia-primary:hover {
+    background: linear-gradient(135deg, var(--azul-oscuro) 0%, var(--colombia-azul) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 56, 147, 0.4);
+}
+
+.btn-colombia-secondary {
+    background: linear-gradient(135deg, var(--colombia-amarillo) 0%, var(--amarillo-claro) 100%);
+    border: none;
+    color: var(--colombia-azul);
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-colombia-secondary:hover {
+    background: linear-gradient(135deg, var(--amarillo-claro) 0%, var(--colombia-amarillo) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(252, 209, 22, 0.4);
+}
+
+.btn-colombia-danger {
+    background: linear-gradient(135deg, var(--colombia-rojo) 0%, var(--rojo-oscuro) 100%);
+    border: none;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-colombia-danger:hover {
+    background: linear-gradient(135deg, var(--rojo-oscuro) 0%, var(--colombia-rojo) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(206, 17, 38, 0.4);
+}
+
+/* Badges con tema Colombia */
+.badge-colombia-amarillo {
+    background-color: var(--colombia-amarillo);
+    color: var(--colombia-azul);
+    font-weight: 600;
+}
+
+.badge-colombia-azul {
+    background-color: var(--colombia-azul);
+    color: white;
+    font-weight: 600;
+}
+
+.badge-colombia-rojo {
+    background-color: var(--colombia-rojo);
+    color: white;
+    font-weight: 600;
+}
+
+/* Cards con tema Colombia */
+.card-colombia {
+    border: 2px solid rgba(0, 56, 147, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.card-colombia:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 56, 147, 0.15);
+}
+
+.card-colombia .card-header {
+    background: linear-gradient(135deg, rgba(252, 209, 22, 0.1) 0%, rgba(0, 56, 147, 0.05) 100%);
+    border-bottom: 2px solid var(--colombia-amarillo);
+    font-weight: 600;
+    color: var(--colombia-azul);
+}
+
+/* Navbar con tema Colombia */
+.navbar-colombia {
+    background: linear-gradient(90deg, var(--colombia-azul) 0%, var(--azul-oscuro) 100%);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-colombia .navbar-brand {
+    color: white !important;
+    font-weight: 700;
+}
+
+.navbar-colombia .nav-link {
+    color: rgba(255, 255, 255, 0.9) !important;
+    transition: all 0.3s ease;
+}
+
+.navbar-colombia .nav-link:hover {
+    color: var(--colombia-amarillo) !important;
+}
+
+/* Alerts con tema Colombia */
+.alert-colombia-info {
+    background: linear-gradient(135deg, rgba(252, 209, 22, 0.15) 0%, rgba(252, 209, 22, 0.05) 100%);
+    border: 2px solid var(--colombia-amarillo);
+    color: var(--colombia-azul);
+    border-radius: 10px;
+}
+
+.alert-colombia-success {
+    background: linear-gradient(135deg, rgba(0, 200, 83, 0.15) 0%, rgba(0, 200, 83, 0.05) 100%);
+    border: 2px solid #00c853;
+    color: #00701f;
+    border-radius: 10px;
+}
+
+.alert-colombia-danger {
+    background: linear-gradient(135deg, rgba(206, 17, 38, 0.15) 0%, rgba(206, 17, 38, 0.05) 100%);
+    border: 2px solid var(--colombia-rojo);
+    color: var(--rojo-oscuro);
+    border-radius: 10px;
+}
+
+/* Tabs con tema Colombia */
+.nav-tabs-colombia .nav-link {
+    color: var(--gris-medio);
+    border: none;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs-colombia .nav-link:hover {
+    color: var(--colombia-azul);
+    border-bottom-color: var(--colombia-amarillo);
+}
+
+.nav-tabs-colombia .nav-link.active {
+    color: var(--colombia-azul);
+    background: transparent;
+    border-bottom-color: var(--colombia-azul);
+    font-weight: 600;
+}
+
+/* Progress bar con tema Colombia */
+.progress-colombia {
+    height: 25px;
+    border-radius: 12px;
+    background-color: var(--gris-claro);
+}
+
+.progress-colombia .progress-bar {
+    background: linear-gradient(90deg, var(--colombia-amarillo) 0%, var(--colombia-azul) 50%, var(--colombia-rojo) 100%);
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+/* Spinner con tema Colombia */
+.spinner-colombia {
+    border: 3px solid rgba(0, 56, 147, 0.1);
+    border-top-color: var(--colombia-azul);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Footer con tema Colombia */
+.footer-colombia {
+    background: linear-gradient(90deg, var(--azul-oscuro) 0%, var(--colombia-azul) 100%);
+    color: white;
+    padding: 1rem 0;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.footer-colombia a {
+    color: var(--colombia-amarillo);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.footer-colombia a:hover {
+    color: var(--amarillo-claro);
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.slide-in-right {
+    animation: slideInRight 0.6s ease-out;
+}
+
+/* Utilidades */
+.text-colombia-azul {
+    color: var(--colombia-azul) !important;
+}
+
+.text-colombia-amarillo {
+    color: var(--colombia-amarillo) !important;
+}
+
+.text-colombia-rojo {
+    color: var(--colombia-rojo) !important;
+}
+
+.bg-colombia-azul {
+    background-color: var(--colombia-azul) !important;
+}
+
+.bg-colombia-amarillo {
+    background-color: var(--colombia-amarillo) !important;
+}
+
+.bg-colombia-rojo {
+    background-color: var(--colombia-rojo) !important;
+}
+
+.border-colombia-azul {
+    border-color: var(--colombia-azul) !important;
+}
+
+.border-colombia-amarillo {
+    border-color: var(--colombia-amarillo) !important;
+}
+
+.border-colombia-rojo {
+    border-color: var(--colombia-rojo) !important;
+}

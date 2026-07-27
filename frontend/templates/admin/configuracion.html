@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Configuración Electoral{% endblock %}
+
+{% block extra_css %}
+<style>
+.config-card {
+    background: white;
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.item-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.item-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.item-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.color-preview {
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    display: inline-block;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>⚙️ Configuración Electoral</h2>
+            <p class="text-muted">Gestiona tipos de elección, partidos, candidatos y coaliciones</p>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4" id="configTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tipos-tab" data-bs-toggle="tab" data-bs-target="#tipos" type="button">
+                📋 Tipos de Elección
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="partidos-tab" data-bs-toggle="tab" data-bs-target="#partidos" type="button">
+                🏛️ Partidos
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="candidatos-tab" data-bs-toggle="tab" data-bs-target="#candidatos" type="button">
+                👤 Candidatos
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="coaliciones-tab" data-bs-toggle="tab" data-bs-target="#coaliciones" type="button">
+                🤝 Coaliciones
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="configTabsContent">
+        <!-- Tab: Tipos de Elección -->
+        <div class="tab-pane fade show active" id="tipos" role="tabpanel">
+            <div class="config-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4>Tipos de Elección</h4>
+                    <button class="btn btn-primary" onclick="showModalTipoEleccion()">
+                        <i class="bi bi-plus-circle"></i> Nuevo Tipo
+                    </button>
+                </div>
+                <div id="tiposContainer" class="item-list">
+                    <p class="text-center text-muted">Cargando...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Partidos -->
+        <div class="tab-pane fade" id="partidos" role="tabpanel">
+            <div class="config-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4>Partidos Políticos</h4>
+                    <button class="btn btn-primary" onclick="showModalPartido()">
+                        <i class="bi bi-plus-circle"></i> Nuevo Partido
+                    </button>
+                </div>
+                <div id="partidosContainer" class="item-list">
+                    <p class="text-center text-muted">Cargando...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Candidatos -->
+        <div class="tab-pane fade" id="candidatos" role="tabpanel">
+            <div class="config-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4>Candidatos</h4>
+                    <button class="btn btn-primary" onclick="showModalCandidato()">
+                        <i class="bi bi-plus-circle"></i> Nuevo Candidato
+                    </button>
+                </div>
+                <div id="candidatosContainer" class="item-list">
+                    <p class="text-center text-muted">Cargando...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Coaliciones -->
+        <div class="tab-pane fade" id="coaliciones" role="tabpanel">
+            <div class="config-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4>Coaliciones</h4>
+                    <button class="btn btn-primary" onclick="showModalCoalicion()">
+                        <i class="bi bi-plus-circle"></i> Nueva Coalición
+                    </button>
+                </div>
+                <div id="coalicionesContainer" class="item-list">
+                    <p class="text-center text-muted">Cargando...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tipo de Elección -->
+<div class="modal fade" id="modalTipoEleccion" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tipo de Elección</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formTipoEleccion">
+                    <div class="mb-3">
+                        <label class="form-label">Código *</label>
+                        <input type="text" class="form-control" name="codigo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nombre *</label>
+                        <input type="text" class="form-control" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" name="descripcion" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Orden</label>
+                        <input type="number" class="form-control" name="orden" value="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveTipoEleccion()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Partido -->
+<div class="modal fade" id="modalPartido" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Partido Político</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formPartido">
+                    <div class="mb-3">
+                        <label class="form-label">Código *</label>
+                        <input type="text" class="form-control" name="codigo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nombre Completo *</label>
+                        <input type="text" class="form-control" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nombre Corto</label>
+                        <input type="text" class="form-control" name="nombre_corto">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Color</label>
+                        <input type="color" class="form-control" name="color" value="#000000">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Orden</label>
+                        <input type="number" class="form-control" name="orden" value="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="savePartido()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Candidato -->
+<div class="modal fade" id="modalCandidato" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Candidato</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formCandidato">
+                    <div class="mb-3">
+                        <label class="form-label">Código *</label>
+                        <input type="text" class="form-control" name="codigo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nombre Completo *</label>
+                        <input type="text" class="form-control" name="nombre_completo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Elección *</label>
+                        <select class="form-select" name="tipo_eleccion_id" id="tipoEleccionSelect" required>
+                            <option value="">Seleccione...</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Partido</label>
+                        <select class="form-select" name="partido_id" id="partidoSelect">
+                            <option value="">Independiente</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Número de Lista</label>
+                        <input type="number" class="form-control" name="numero_lista">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="es_independiente" id="esIndependiente">
+                            <label class="form-check-label" for="esIndependiente">
+                                Es Independiente
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveCandidato()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/admin-configuracion.js') }}"></script>
+{% endblock %}

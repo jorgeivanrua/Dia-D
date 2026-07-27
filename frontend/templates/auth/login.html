@@ -1,0 +1,533 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Sistema Electoral{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-universal-v2.css') }}">
+<style>
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    /* Fondo dinámico - se carga desde la configuración */
+    background: linear-gradient(180deg, 
+        #FCD116 0%, 
+        #FCD116 50%, 
+        #003893 50%, 
+        #003893 75%, 
+        #CE1126 75%, 
+        #CE1126 100%
+    );
+    position: relative;
+    overflow: hidden;
+    transition: background 0.5s ease;
+}
+
+/* Efecto de overlay para suavizar el fondo */
+.login-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(2px);
+}
+
+.login-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    padding: 2rem;
+    width: 100%;
+    max-width: 500px;
+    position: relative;
+    z-index: 1;
+    border: 3px solid rgba(252, 209, 22, 0.3);
+}
+
+@media (max-width: 576px) {
+    .login-card {
+        padding: 1.5rem;
+        border-radius: 16px;
+        margin: 0.5rem;
+    }
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+/* Logo Día D */
+.logo-container {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.logo-dia-d {
+    font-size: 4rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #FCD116 0%, #003893 50%, #CE1126 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.05em;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    line-height: 1;
+    font-family: 'Arial Black', sans-serif;
+}
+
+.logo-subtitle {
+    font-size: 0.9rem;
+    color: #003893;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.login-header h1 {
+    color: #003893;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+}
+
+.login-header p {
+    color: #666;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+/* Bandera decorativa */
+.bandera-decorativa {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, 
+        #FCD116 0%, 
+        #FCD116 50%, 
+        #003893 50%, 
+        #003893 75%, 
+        #CE1126 75%, 
+        #CE1126 100%
+    );
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    border: 3px solid white;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.form-select, .form-control {
+    border-radius: 10px;
+    border: 2px solid #e1e5e9;
+    padding: 0.85rem 1rem;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    min-height: 48px; /* Táctil optimizado */
+}
+
+.form-select:focus, .form-control:focus {
+    border-color: #003893;
+    box-shadow: 0 0 0 0.25rem rgba(0, 56, 147, 0.15);
+    outline: none;
+}
+
+@media (max-width: 576px) {
+    .form-select, .form-control {
+        font-size: 16px; /* Evita zoom en iOS */
+        padding: 0.9rem 1rem;
+    }
+}
+
+.location-section {
+    background: linear-gradient(135deg, rgba(252, 209, 22, 0.1) 0%, rgba(0, 56, 147, 0.05) 100%);
+    border-radius: 10px;
+    padding: 1.2rem;
+    margin: 1rem 0;
+    border: 2px solid rgba(0, 56, 147, 0.1);
+}
+
+.btn-login {
+    background: linear-gradient(135deg, #003893 0%, #001f5c 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 1rem 2rem;
+    font-weight: 700;
+    width: 100%;
+    transition: all 0.3s ease;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 1rem;
+    min-height: 52px; /* Táctil optimizado */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 56, 147, 0.4);
+    background: linear-gradient(135deg, #001f5c 0%, #003893 100%);
+    color: white;
+}
+
+.btn-login:active {
+    transform: translateY(0);
+}
+
+@media (max-width: 576px) {
+    .btn-login {
+        padding: 1.1rem 2rem;
+        font-size: 1.05rem;
+        min-height: 56px;
+    }
+}
+
+.alert {
+    border-radius: 8px;
+    border: none;
+}
+
+.location-section {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.location-section h6 {
+    color: #495057;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.input-group .btn-outline-secondary {
+    border-color: #e1e5e9;
+    color: #666;
+}
+
+.input-group .btn-outline-secondary:hover {
+    background-color: #f8f9fa;
+    border-color: #003893;
+    color: #003893;
+}
+
+.input-group .form-control {
+    border-right: none;
+}
+
+.input-group .btn-outline-secondary {
+    border-left: none;
+}
+
+/* Animación de entrada */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.login-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Efecto hover en selects */
+.form-select:hover, .form-control:hover {
+    border-color: #FCD116;
+}
+
+/* Estilo para el título de ubicación */
+.location-section h6 {
+    color: #003893;
+    margin-bottom: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.85rem;
+}
+
+/* Mejora visual del alert */
+.alert {
+    border-radius: 10px;
+    border: none;
+}
+
+/* Spinner del botón */
+#loginSpinner {
+    margin-left: 0.5rem;
+}
+
+/* Botón de mostrar/ocultar contraseña */
+.input-group .btn-outline-secondary {
+    border-color: #e1e5e9;
+    color: #666;
+    min-height: 48px;
+    border-radius: 0 10px 10px 0;
+}
+
+.input-group .btn-outline-secondary:hover {
+    background-color: #f8f9fa;
+    border-color: #003893;
+    color: #003893;
+}
+
+.input-group .form-control {
+    border-right: none;
+    border-radius: 10px 0 0 10px;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .logo-dia-d {
+        font-size: 3rem;
+    }
+    
+    .login-header h1 {
+        font-size: 1.2rem;
+    }
+    
+    .logo-subtitle {
+        font-size: 0.8rem;
+    }
+    
+    .bandera-decorativa {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .location-section {
+        padding: 1rem;
+    }
+    
+    .alert {
+        font-size: 0.8rem;
+    }
+}
+
+/* Efecto de pulso en el logo */
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.logo-dia-d:hover {
+    animation: pulse 1s ease-in-out;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <!-- Bandera decorativa -->
+        <div class="bandera-decorativa"></div>
+        
+        <div class="login-header">
+            <!-- Logo Día D -->
+            <div class="logo-container">
+                <div class="logo-dia-d">DÍA D</div>
+                <div class="logo-subtitle">Sistema Electoral</div>
+            </div>
+            
+            <h1>🗳️ Formularios E-14 / E-24</h1>
+            <p>Departamento del Caquetá</p>
+        </div>
+        
+        <!-- Información de Testing -->
+        <div class="alert" style="
+            font-size: 0.85rem; 
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, rgba(252, 209, 22, 0.15) 0%, rgba(252, 209, 22, 0.05) 100%);
+            border: 2px solid #FCD116;
+            border-radius: 10px;
+            color: #003893;
+        ">
+            <strong>🔐 Contraseña de Testing:</strong><br>
+            <small>
+                Todos los usuarios del sistema usan la contraseña: <strong style="color: #CE1126;">test123</strong><br>
+                <em>Seleccione su rol y ubicación correspondiente para acceder</em>
+            </small>
+        </div>
+        
+        <div id="alert-container"></div>
+        
+        <form id="loginForm">
+            <!-- Rol -->
+            <div class="form-group">
+                <label for="rol" class="form-label">
+                    <i class="bi bi-person-badge"></i> Rol
+                </label>
+                <select class="form-select" id="rol" name="rol" required>
+                    <option value="">Seleccione su rol</option>
+                    <option value="super_admin">🔐 Super Administrador</option>
+                    <option value="admin_departamental">🏛️ Admin Departamental</option>
+                    <option value="admin_municipal">🏢 Admin Municipal</option>
+                    <option value="coordinador_departamental">🗺️ Coordinador Departamental</option>
+                    <option value="coordinador_municipal">🏛️ Coordinador Municipal</option>
+                    <option value="coordinador_puesto">📍 Coordinador de Puesto</option>
+                    <option value="testigo_electoral">👤 Testigo Electoral</option>
+                    <option value="auditor_electoral">🔍 Auditor Electoral</option>
+                    <option value="monitoreo">📊 Monitoreo</option>
+                </select>
+            </div>
+            
+            <!-- Ubicación Jerárquica -->
+            <div class="location-section" id="locationSection" style="display: none;">
+                <h6>Ubicación</h6>
+                
+                <!-- Departamento -->
+                <div class="form-group" id="departamentoGroup" style="display: none;">
+                    <label for="departamento" class="form-label">Departamento</label>
+                    <select class="form-select" id="departamento" name="departamento">
+                        <option value="">Cargando...</option>
+                    </select>
+                </div>
+                
+                <!-- Municipio -->
+                <div class="form-group" id="municipioGroup" style="display: none;">
+                    <label for="municipio" class="form-label">Municipio</label>
+                    <select class="form-select disabled" id="municipio" name="municipio">
+                        <option value="">Seleccione departamento primero</option>
+                    </select>
+                </div>
+                
+                <!-- Zona -->
+                <div class="form-group" id="zonaGroup" style="display: none;">
+                    <label for="zona" class="form-label">Zona</label>
+                    <select class="form-select disabled" id="zona" name="zona">
+                        <option value="">Seleccione municipio primero</option>
+                    </select>
+                </div>
+                
+                <!-- Puesto -->
+                <div class="form-group" id="puestoGroup" style="display: none;">
+                    <label for="puesto" class="form-label">Puesto Electoral</label>
+                    <select class="form-select disabled" id="puesto" name="puesto">
+                        <option value="">Seleccione zona primero</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Contraseña -->
+            <div class="form-group">
+                <label for="password" class="form-label">
+                    <i class="bi bi-lock"></i> Contraseña
+                </label>
+                <div class="input-group">
+                    <input type="password" class="form-control" id="password" name="password" 
+                           placeholder="Ingrese su contraseña" required autocomplete="current-password">
+                    <button class="btn btn-outline-secondary" type="button" id="togglePassword" 
+                            aria-label="Mostrar/Ocultar contraseña">
+                        <i class="bi bi-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Botón Login -->
+            <button type="submit" class="btn btn-primary btn-login" id="loginBtn">
+                <i class="bi bi-box-arrow-in-right"></i>
+                <span id="loginText">Iniciar Sesión</span>
+                <span id="loginSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/login-fixed.js') }}"></script>
+<!-- Mejoras UI/UX Mobile-First -->
+<script src="{{ url_for('static', filename='js/login-mejoras.js') }}"></script>
+<script>
+// Cargar fondo dinámico desde la configuración
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        const response = await fetch('/api/config-sistema/fondos/activo');
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+            const fondo = data.data;
+            const container = document.querySelector('.login-container');
+            
+            if (fondo.tipo === 'gradient') {
+                const colors = [];
+                if (fondo.color1) {
+                    colors.push(`${fondo.color1} 0%`);
+                    colors.push(`${fondo.color1} 50%`);
+                }
+                if (fondo.color2) {
+                    colors.push(`${fondo.color2} 50%`);
+                    colors.push(`${fondo.color2} 75%`);
+                }
+                if (fondo.color3) {
+                    colors.push(`${fondo.color3} 75%`);
+                    colors.push(`${fondo.color3} 100%`);
+                }
+                
+                container.style.background = `linear-gradient(${fondo.direccion}, ${colors.join(', ')})`;
+                
+            } else if (fondo.tipo === 'image') {
+                container.style.backgroundImage = `url('${fondo.imagen_url}')`;
+                container.style.backgroundPosition = fondo.imagen_posicion;
+                container.style.backgroundSize = fondo.imagen_tamano;
+                container.style.backgroundRepeat = 'no-repeat';
+                
+            } else if (fondo.tipo === 'solid') {
+                container.style.background = fondo.color_solido;
+            }
+            
+            // Aplicar overlay si existe
+            if (fondo.overlay_color && fondo.overlay_opacity) {
+                const overlay = container.querySelector('::before') || container;
+                if (overlay) {
+                    overlay.style.background = `rgba(${hexToRgb(fondo.overlay_color)}, ${fondo.overlay_opacity})`;
+                }
+            }
+        }
+    } catch (error) {
+        console.log('Usando fondo predeterminado');
+    }
+});
+
+// Helper para convertir hex a rgb
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? 
+        `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : 
+        '255, 255, 255';
+}
+</script>
+{% endblock %}

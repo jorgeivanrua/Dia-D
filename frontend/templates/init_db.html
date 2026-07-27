@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicializar Base de Datos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .init-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 600px;
+            width: 100%;
+        }
+        .spinner-border {
+            display: none;
+        }
+        .spinner-border.show {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="init-card">
+        <h2 class="text-center mb-4">🚀 Inicializar Base de Datos</h2>
+        
+        <div class="alert alert-info">
+            <strong>ℹ️ Información:</strong>
+            <p class="mb-0">Este proceso cargará todos los datos de prueba necesarios para el sistema:</p>
+            <ul class="mb-0 mt-2">
+                <li>Ubicaciones (Departamentos, Municipios, Zonas, Puestos, Mesas)</li>
+                <li>Usuarios de prueba (Admin, Testigos, Coordinadores)</li>
+                <li>Partidos políticos y candidatos</li>
+                <li>Tipos de elección</li>
+            </ul>
+        </div>
+        
+        <div id="status" class="alert alert-secondary">
+            <strong>Estado:</strong> Listo para inicializar
+        </div>
+        
+        <div id="result" style="display: none;"></div>
+        
+        <div class="d-grid gap-2">
+            <button id="initBtn" class="btn btn-primary btn-lg" onclick="initDatabase()">
+                <span class="spinner-border spinner-border-sm me-2" id="spinner"></span>
+                Inicializar Base de Datos
+            </button>
+            <a href="/auth/login" class="btn btn-outline-secondary">Ir al Login</a>
+        </div>
+        
+        <div class="mt-4">
+            <h5>🔑 Credenciales de Prueba:</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>Super Admin:</strong><br>
+                    Usuario: <code>admin</code><br>
+                    Contraseña: <code>admin123</code>
+                </div>
+                <div class="col-md-6">
+                    <strong>Testigo:</strong><br>
+                    Usuario: <code>testigo1</code><br>
+                    Contraseña: <code>test123</code>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        async function initDatabase() {
+            const btn = document.getElementById('initBtn');
+            const spinner = document.getElementById('spinner');
+            const status = document.getElementById('status');
+            const result = document.getElementById('result');
+            
+            // Deshabilitar botón y mostrar spinner
+            btn.disabled = true;
+            spinner.classList.add('show');
+            status.className = 'alert alert-info';
+            status.innerHTML = '<strong>⏳ Procesando...</strong> Esto puede tardar 1-2 minutos.';
+            result.style.display = 'none';
+            
+            try {
+                const response = await fetch('/init-database-secret-endpoint-2024', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    status.className = 'alert alert-success';
+                    status.innerHTML = '<strong>✅ Éxito!</strong> ' + data.message;
+                    
+                    if (data.already_initialized) {
+                        result.className = 'alert alert-warning';
+                        result.innerHTML = '<strong>ℹ️ Nota:</strong> La base de datos ya estaba inicializada.';
+                    } else {
+                        result.className = 'alert alert-success';
+                        result.innerHTML = `
+                            <strong>🎉 Base de datos inicializada correctamente!</strong>
+                            <p class="mb-0 mt-2">Departamentos cargados: ${data.departamentos || 'N/A'}</p>
+                            <p class="mb-0">Ahora puedes ir al login y usar las credenciales de prueba.</p>
+                        `;
+                    }
+                    result.style.display = 'block';
+                    
+                    // Cambiar texto del botón
+                    btn.innerHTML = '✅ Base de Datos Inicializada';
+                    
+                    // Redirigir al login después de 3 segundos
+                    setTimeout(() => {
+                        window.location.href = '/auth/login';
+                    }, 3000);
+                } else {
+                    status.className = 'alert alert-danger';
+                    status.innerHTML = '<strong>❌ Error:</strong> ' + data.error;
+                    
+                    result.className = 'alert alert-danger';
+                    result.innerHTML = '<pre>' + (data.trace || 'Sin detalles') + '</pre>';
+                    result.style.display = 'block';
+                    
+                    btn.disabled = false;
+                    btn.innerHTML = 'Reintentar';
+                }
+            } catch (error) {
+                status.className = 'alert alert-danger';
+                status.innerHTML = '<strong>❌ Error de conexión:</strong> ' + error.message;
+                
+                btn.disabled = false;
+                btn.innerHTML = 'Reintentar';
+            } finally {
+                spinner.classList.remove('show');
+            }
+        }
+    </script>
+</body>
+</html>

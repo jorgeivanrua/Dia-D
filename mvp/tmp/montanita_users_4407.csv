@@ -1,0 +1,14 @@
+id,nombre,rol,ubicacion_id,activo
+15,admin.mun.4407,admin_municipal,204,True
+16,coord.mun.4407,coordinador_municipal,204,True
+17,coord.puesto.44070000,coordinador_puesto,206,True
+18,testigo.44070000.01,testigo_electoral,206,True
+19,testigo.44070000.02,testigo_electoral,206,True
+20,coord.puesto.44079903,coordinador_puesto,210,True
+21,testigo.44079903.01,testigo_electoral,210,True
+22,coord.puesto.44079905,coordinador_puesto,212,True
+23,testigo.44079905.01,testigo_electoral,212,True
+24,coord.puesto.44079945,coordinador_puesto,214,True
+25,testigo.44079945.01,testigo_electoral,214,True
+26,coord.puesto.44079950,coordinador_puesto,216,True
+27,testigo.44079950.01,testigo_electoral,216,True

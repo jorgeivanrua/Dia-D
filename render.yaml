@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: dia-d
+    runtime: python
+    plan: free
+    buildCommand: |
+      pip install -r requirements.txt &&
+      python render_setup.py
+    startCommand: "gunicorn run:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: RENDER
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: dia-d-db
+          property: connectionString
+
+databases:
+  - name: dia-d-db
+    databaseName: dia_d
+    user: dia_d_user
+    plan: free

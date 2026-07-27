@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistema Electoral - Recolección de Datos Electorales en Tiempo Real">
+    <meta name="keywords" content="sistema electoral, testigos electorales, formularios E-14, monitoreo electoral">
+    <title>Sistema Electoral - Inicio</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <style>
+        :root {
+            --primary-color: #1e3c72;
+            --secondary-color: #2a5298;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Animación de fondo */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255,255,255,0.1) 0%, transparent 50%);
+            animation: pulse 15s ease-in-out infinite;
+            pointer-events: none;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        
+        .landing-container {
+            max-width: 900px;
+            width: 100%;
+            padding: 2rem;
+        }
+        
+        .campaign-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .campaign-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+        
+        .campaign-logo {
+            width: 120px;
+            height: 120px;
+            background: white;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .campaign-logo i {
+            font-size: 4rem;
+            color: var(--primary-color);
+        }
+        
+        .campaign-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .campaign-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .campaign-body {
+            padding: 3rem 2rem;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-item:hover {
+            transform: translateX(10px);
+        }
+        
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 1.5rem;
+        }
+        
+        .btn-access {
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-access:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+        
+        .campaign-footer {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            text-align: center;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        .testing-mode {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.2);
+        }
+        
+        .testing-mode h6 {
+            color: #856404;
+            font-weight: bold;
+        }
+        
+        .role-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            margin: 0.25rem;
+            background: white;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        
+        .role-badge:hover {
+            transform: scale(1.05);
+        }
+        
+        .stats-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        /* Animación de entrada para features */
+        .feature-item {
+            animation: slideIn 0.5s ease-out forwards;
+            opacity: 0;
+        }
+        
+        .feature-item:nth-child(1) { animation-delay: 0.1s; }
+        .feature-item:nth-child(2) { animation-delay: 0.2s; }
+        .feature-item:nth-child(3) { animation-delay: 0.3s; }
+        .feature-item:nth-child(4) { animation-delay: 0.4s; }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        /* Efecto de brillo en el botón */
+        .btn-access {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-access::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-access:hover::before {
+            left: 100%;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .campaign-title {
+                font-size: 2rem;
+            }
+            
+            .campaign-subtitle {
+                font-size: 1rem;
+            }
+            
+            .stats-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .btn-access {
+                padding: 0.75rem 2rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="landing-container">
+        <div class="campaign-card">
+            <!-- Header -->
+            <div class="campaign-header" id="campaignHeader">
+                <div class="campaign-logo" id="campaignLogo">
+                    <i class="bi bi-check2-circle"></i>
+                </div>
+                <h1 class="campaign-title" id="campaignTitle">Sistema Electoral</h1>
+                <p class="campaign-subtitle" id="campaignSubtitle">Recolección de Datos Electorales</p>
+            </div>
+            
+            <!-- Body -->
+            <div class="campaign-body">
+                <!-- Estadísticas -->
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <span class="stat-number" id="stat-users">0</span>
+                        <span class="stat-label">Usuarios Activos</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="stat-forms">0</span>
+                        <span class="stat-label">Formularios E-14</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="stat-locations">0</span>
+                        <span class="stat-label">Ubicaciones</span>
+                    </div>
+                </div>
+                
+                <!-- Características -->
+                <h5 class="text-center mb-4 text-primary">
+                    <i class="bi bi-star-fill"></i> Características Principales
+                </h5>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                            <div>
+                                <strong>Seguro y Confiable</strong>
+                                <br><small class="text-muted">Datos encriptados y protegidos con JWT</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="bi bi-wifi-off"></i>
+                            </div>
+                            <div>
+                                <strong>Modo Offline</strong>
+                                <br><small class="text-muted">Funciona sin conexión</small>
+                                <br><small class="text-muted">Sincronización automática al reconectar</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="bi bi-people"></i>
+                            </div>
+                            <div>
+                                <strong>Sistema Multi-Rol</strong>
+                                <br><small class="text-muted">Testigos, coordinadores y auditores</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="bi bi-graph-up"></i>
+                            </div>
+                            <div>
+                                <strong>Monitoreo en Tiempo Real</strong>
+                                <br><small class="text-muted">Dashboard con métricas avanzadas</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="bi bi-geo-alt"></i>
+                            </div>
+                            <div>
+                                <strong>Geolocalización</strong>
+                                <br><small class="text-muted">Seguimiento de testigos en el territorio</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="bi bi-file-earmark-check"></i>
+                            </div>
+                            <div>
+                                <strong>Formularios E-14</strong>
+                                <br><small class="text-muted">Registro digital de actas de escrutinio</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <a href="/auth/login" class="btn btn-primary btn-access">
+                        <i class="bi bi-box-arrow-in-right"></i> Acceder al Sistema
+                    </a>
+                </div>
+                
+                <!-- Testing Mode Info -->
+                <div class="testing-mode">
+                    <h6 class="mb-3">
+                        <i class="bi bi-info-circle-fill"></i> Modo de Prueba - Usuarios Disponibles
+                    </h6>
+                    
+                    <div class="alert alert-warning mb-3" role="alert">
+                        <i class="bi bi-key-fill"></i> 
+                        <strong>Contraseña para todos:</strong> <code>test123</code>
+                    </div>
+                    
+                    <p class="small text-muted mb-3">
+                        <i class="bi bi-arrow-right-circle"></i> 
+                        Use el sistema de login estándar seleccionando el rol correspondiente
+                    </p>
+                    
+                    <div class="text-center">
+                        <span class="role-badge">
+                            <i class="bi bi-radar text-primary"></i> Monitoreo
+                        </span>
+                        <span class="role-badge">
+                            <i class="bi bi-eye text-info"></i> Auditor Electoral
+                        </span>
+                        <span class="role-badge">
+                            <i class="bi bi-building text-success"></i> Coord. Departamental
+                        </span>
+                        <span class="role-badge">
+                            <i class="bi bi-geo-alt text-warning"></i> Coord. Municipal
+                        </span>
+                        <span class="role-badge">
+                            <i class="bi bi-house text-secondary"></i> Coord. de Puesto
+                        </span>
+                        <span class="role-badge">
+                            <i class="bi bi-person-check text-danger"></i> Testigo Electoral
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="campaign-footer">
+                <p class="mb-0 text-muted">
+                    <i class="bi bi-calendar-event"></i> 
+                    <span id="campaignDates">Campaña Electoral</span>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Animación de números
+        function animateNumber(element, target, duration = 2000) {
+            const start = 0;
+            const increment = target / (duration / 16);
+            let current = start;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    element.textContent = target;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(current);
+                }
+            }, 16);
+        }
+        
+        // Cargar estadísticas públicas
+        async function loadPublicStats() {
+            try {
+                // Simular estadísticas (puedes crear un endpoint real si lo deseas)
+                const stats = {
+                    users: 150,
+                    forms: 500,
+                    locations: 1200
+                };
+                
+                // Animar números
+                animateNumber(document.getElementById('stat-users'), stats.users);
+                animateNumber(document.getElementById('stat-forms'), stats.forms);
+                animateNumber(document.getElementById('stat-locations'), stats.locations);
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        // Cargar información de la campaña activa
+        async function loadCampaignInfo() {
+            try {
+                const response = await fetch('/api/public/campaign-info');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.data) {
+                        const campaign = data.data;
+                        
+                        // Actualizar colores
+                        if (campaign.color_primario) {
+                            document.documentElement.style.setProperty('--primary-color', campaign.color_primario);
+                        }
+                        if (campaign.color_secundario) {
+                            document.documentElement.style.setProperty('--secondary-color', campaign.color_secundario);
+                        }
+                        
+                        // Actualizar textos
+                        if (campaign.nombre) {
+                            document.getElementById('campaignTitle').textContent = campaign.nombre;
+                        }
+                        if (campaign.descripcion) {
+                            document.getElementById('campaignSubtitle').textContent = campaign.descripcion;
+                        }
+                        
+                        // Actualizar fechas
+                        if (campaign.fecha_inicio && campaign.fecha_fin) {
+                            const inicio = new Date(campaign.fecha_inicio).toLocaleDateString('es-CO');
+                            const fin = new Date(campaign.fecha_fin).toLocaleDateString('es-CO');
+                            document.getElementById('campaignDates').textContent = `${inicio} - ${fin}`;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading campaign info:', error);
+                // Usar valores por defecto
+                document.getElementById('campaignDates').textContent = 'Sistema Electoral';
+            }
+        }
+        
+        // Efecto de parallax suave en el scroll
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const parallax = document.querySelector('.campaign-header');
+            if (parallax) {
+                parallax.style.transform = `translateY(${scrolled * 0.5}px)`;
+            }
+        });
+        
+        // Cargar al iniciar
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCampaignInfo();
+            loadPublicStats();
+            
+            // Agregar efecto de hover a las feature items
+            document.querySelectorAll('.feature-item').forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    this.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)';
+                });
+                item.addEventListener('mouseleave', function() {
+                    this.style.background = '#f8f9fa';
+                });
+            });
+        });
+    </script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

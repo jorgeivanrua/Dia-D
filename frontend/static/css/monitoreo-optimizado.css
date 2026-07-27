@@ -1,0 +1,284 @@
+/**
+ * ESTILOS OPTIMIZADOS PARA DASHBOARD DE MONITOREO
+ * Incluye skeleton loaders y clustering
+ */
+
+/* ============================================================================
+   SKELETON LOADERS
+   ============================================================================ */
+
+.skeleton-item {
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.skeleton-line {
+    height: 12px;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.skeleton-line.short {
+    width: 60%;
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* ============================================================================
+   MARKER CLUSTERING
+   ============================================================================ */
+
+.marker-cluster-custom {
+    background: transparent;
+}
+
+.marker-cluster {
+    background-color: rgba(110, 204, 57, 0.6);
+    border-radius: 50%;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(110, 204, 57, 0.8);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.marker-cluster:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.marker-cluster-small {
+    background-color: rgba(110, 204, 57, 0.6);
+    border-color: rgba(110, 204, 57, 0.8);
+}
+
+.marker-cluster-medium {
+    background-color: rgba(241, 211, 87, 0.6);
+    border-color: rgba(241, 211, 87, 0.8);
+}
+
+.marker-cluster-large {
+    background-color: rgba(253, 156, 115, 0.6);
+    border-color: rgba(253, 156, 115, 0.8);
+}
+
+/* ============================================================================
+   CUSTOM MARKERS
+   ============================================================================ */
+
+.custom-marker {
+    background: transparent;
+    border: none;
+}
+
+.custom-marker div {
+    transition: all 0.2s ease;
+}
+
+.custom-marker:hover div {
+    transform: scale(1.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ============================================================================
+   LOADING STATES
+   ============================================================================ */
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    border-radius: 8px;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ============================================================================
+   OPTIMIZACIONES DE RENDIMIENTO
+   ============================================================================ */
+
+/* Usar GPU para animaciones */
+.stat-card,
+.card,
+.marker-cluster,
+.custom-marker div {
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+/* Reducir repaints */
+.list-group-item {
+    contain: layout style paint;
+}
+
+/* Lazy loading de imágenes */
+img[loading="lazy"] {
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+img[loading="lazy"].loaded {
+    opacity: 1;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    .marker-cluster {
+        width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+    }
+    
+    .skeleton-item {
+        padding: 0.75rem;
+    }
+}
+
+/* ============================================================================
+   SCROLL SUAVE
+   ============================================================================ */
+
+.card-body {
+    scroll-behavior: smooth;
+}
+
+/* Ocultar scrollbar pero mantener funcionalidad */
+.card-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.card-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.card-body::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.card-body::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* ============================================================================
+   ANIMACIONES SUAVES
+   ============================================================================ */
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================================================
+   INDICADORES DE CARGA
+   ============================================================================ */
+
+.refresh-btn.loading {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.refresh-btn.loading i {
+    animation: spin 1s linear infinite;
+}
+
+/* ============================================================================
+   TOOLTIPS OPTIMIZADOS
+   ============================================================================ */
+
+.leaflet-popup-content {
+    margin: 8px 12px;
+    line-height: 1.4;
+}
+
+.leaflet-popup-content-wrapper {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================================================
+   BADGES Y ALERTAS
+   ============================================================================ */
+
+.badge {
+    font-weight: 600;
+    padding: 0.35em 0.65em;
+    border-radius: 6px;
+}
+
+.alert {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================================================
+   PERFORMANCE HINTS
+   ============================================================================ */
+
+/* Usar contain para aislar elementos */
+.stat-card,
+.chart-card,
+.quick-action-card {
+    contain: layout style paint;
+}
+
+/* Optimizar repaint de listas largas */
+.list-group {
+    contain: layout style;
+}
+
+.list-group-item {
+    contain: layout style paint;
+}

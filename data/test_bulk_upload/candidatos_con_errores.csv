@@ -1,0 +1,4 @@
+partido_codigo,numero_lista,candidato_nombre,candidato_cedula,es_cabeza_lista,foto_url
+INEXISTENTE,1,Candidato Error 1,99999999,True,
+LIBERAL,1,Candidato Error 2,88888888,True,
+LIBERAL,1,Candidato Error 3,88888888,True,

@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Usuarios - Sistema Electoral{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        margin-bottom: 20px;
+    }
+    
+    .btn-group {
+        margin-bottom: 15px;
+    }
+    
+    .table-responsive {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    
+    .credentials-box {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 15px;
+        margin: 10px 0;
+    }
+    
+    .credential-item {
+        margin-bottom: 10px;
+        padding: 10px;
+        background-color: white;
+        border-radius: 3px;
+    }
+    
+    .badge-success {
+        background-color: #28a745;
+    }
+    
+    .badge-warning {
+        background-color: #ffc107;
+    }
+    
+    .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2>Gestión Automática de Usuarios</h2>
+            <p class="text-muted">Crear testigos, coordinadores y administradores basados en DIVIPOLA</p>
+        </div>
+    </div>
+
+    <!-- Tabs de navegación -->
+    <ul class="nav nav-tabs" id="gestionTabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="testigos-tab" data-toggle="tab" href="#testigos" role="tab">
+                Testigos por Puesto
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="coordinadores-tab" data-toggle="tab" href="#coordinadores" role="tab">
+                Coordinadores de Puesto
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="municipales-tab" data-toggle="tab" href="#municipales" role="tab">
+                Usuarios Municipales
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="departamentales-tab" data-toggle="tab" href="#departamentales" role="tab">
+                Usuarios Departamentales
+            </a>
+        </li>
+    </ul>
+
+    <!-- Contenido de tabs -->
+    <div class="tab-content" id="gestionTabsContent">
+        <!-- Tab Testigos -->
+        <div class="tab-pane fade show active" id="testigos" role="tabpanel">
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Crear Testigos para un Puesto</h5>
+                    <p class="text-muted mb-0">Los testigos se asignan al puesto y seleccionan su mesa al hacer login</p>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Importante:</strong> Solo puede haber tantos testigos como mesas tenga el puesto.
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="selectPuestoTestigos">Seleccionar Puesto:</label>
+                        <select class="form-control" id="selectPuestoTestigos">
+                            <option value="">Cargando puestos...</option>
+                        </select>
+                        <small class="form-text text-muted" id="infoPuestoTestigos"></small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cantidadTestigos">Cantidad de Testigos:</label>
+                        <input type="number" class="form-control" id="cantidadTestigos" min="1" value="1">
+                        <small class="form-text text-muted">Dejar vacío para crear tantos como mesas disponibles</small>
+                    </div>
+                    
+                    <button class="btn btn-primary" id="btnCrearTestigos">
+                        <i class="bi bi-people-fill"></i> Crear Testigos
+                    </button>
+                    <button class="btn btn-success" id="btnCrearTodosTestigos">
+                        <i class="bi bi-people-fill"></i> Crear Todos (Llenar Puesto)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Coordinadores de Puesto -->
+        <div class="tab-pane fade" id="coordinadores" role="tabpanel">
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Crear Coordinador de Puesto</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="selectPuestoCoordinador">Seleccionar Puesto:</label>
+                        <select class="form-control" id="selectPuestoCoordinador">
+                            <option value="">Cargando puestos...</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="btnCrearCoordinadorPuesto">
+                        Crear Coordinador
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Municipales -->
+        <div class="tab-pane fade" id="municipales" role="tabpanel">
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Crear Usuarios Municipales</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="selectMunicipio">Seleccionar Municipio:</label>
+                        <select class="form-control" id="selectMunicipio">
+                            <option value="">Cargando municipios...</option>
+                        </select>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="checkCoordinadorMunicipal" checked>
+                        <label class="form-check-label" for="checkCoordinadorMunicipal">
+                            Crear Coordinador Municipal
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="checkAdminMunicipal" checked>
+                        <label class="form-check-label" for="checkAdminMunicipal">
+                            Crear Administrador Municipal
+                        </label>
+                    </div>
+                    <button class="btn btn-primary mt-3" id="btnCrearUsuariosMunicipio">
+                        Crear Usuarios
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Departamentales -->
+        <div class="tab-pane fade" id="departamentales" role="tabpanel">
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Crear Usuarios Departamentales</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="selectDepartamento">Seleccionar Departamento:</label>
+                        <select class="form-control" id="selectDepartamento">
+                            <option value="">Cargando departamentos...</option>
+                        </select>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="checkCoordinadorDepartamental" checked>
+                        <label class="form-check-label" for="checkCoordinadorDepartamental">
+                            Crear Coordinador Departamental
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="checkAdminDepartamental" checked>
+                        <label class="form-check-label" for="checkAdminDepartamental">
+                            Crear Administrador Departamental
+                        </label>
+                    </div>
+                    <button class="btn btn-primary mt-3" id="btnCrearUsuariosDepartamento">
+                        Crear Usuarios
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para mostrar credenciales -->
+<div class="modal fade" id="modalCredenciales" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Credenciales Creadas</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="modalCredencialesBody">
+                <!-- Contenido dinámico -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btnDescargarCredenciales">
+                    Descargar Credenciales
+                </button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/gestion-usuarios.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,6 @@
+codigo,nombre,nombre_corto,color,logo_url,activo
+LIBERAL,Partido Liberal Colombiano,Partido Liberal,#FF0000,,True
+CONSERVADOR,Partido Conservador Colombiano,Partido Conservador,#0000FF,,True
+VERDE,Alianza Verde,Alianza Verde,#00FF00,,True
+U,Partido de la U,Partido U,#FFFF00,,True
+POLO,Polo Democrático Alternativo,Polo,#FF00FF,,True

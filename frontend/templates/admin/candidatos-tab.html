@@ -1,0 +1,310 @@
+<!-- Tab de Candidatos -->
+<div class="chart-card" style="background: white !important; color: #212529 !important;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="mb-1" style="color: #212529 !important;">Gestión de Candidatos</h5>
+            <p class="text-muted small mb-0" style="color: #6c757d !important;">Administre los candidatos del sistema</p>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-primary" id="btn-nuevo-candidato">
+                <i class="bi bi-person-plus"></i> Nuevo Candidato
+            </button>
+            <button class="btn btn-outline-secondary" onclick="candidatosManager.exportarCandidatos()">
+                <i class="bi bi-download"></i> Exportar
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtros y Búsqueda -->
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <input type="text" class="form-control" id="search-candidatos" placeholder="🔍 Buscar candidato...">
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="filtro-partido-candidatos">
+                <option value="">Todos los partidos</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="filtro-tipo-eleccion-candidatos">
+                <option value="">Todos los tipos</option>
+            </select>
+        </div>
+        <div class="col-md-3 text-end">
+            <span class="badge bg-success fs-6">
+                <i class="bi bi-person-badge"></i> <span id="candidatos-count">0</span> candidatos
+            </span>
+        </div>
+    </div>
+
+    <!-- Tabla de Candidatos -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle" style="background: white !important; color: #212529 !important;">
+            <thead class="table-light" style="background: #f8f9fa !important; color: #212529 !important;">
+                <tr>
+                    <th style="width: 60px; color: #212529 !important;">Foto</th>
+                    <th style="color: #212529 !important;">Nombre</th>
+                    <th style="width: 120px; color: #212529 !important;">Partido</th>
+                    <th style="width: 150px; color: #212529 !important;">Cargo</th>
+                    <th style="width: 150px; color: #212529 !important;">Tipo Elección</th>
+                    <th style="width: 100px; color: #212529 !important;">Estado</th>
+                    <th style="width: 120px; color: #212529 !important;" class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="candidatos-lista" style="background: white !important; color: #212529 !important;">
+                <tr style="background: white !important;">
+                    <td colspan="7" class="text-center py-4" style="color: #212529 !important;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="text-muted mt-2" style="color: #6c757d !important;">Cargando candidatos...</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de Candidato -->
+<div class="modal fade" id="modalCandidato" tabindex="-1" aria-labelledby="modal-candidato-title" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="modal-candidato-title">
+                    <i class="bi bi-person-badge"></i> Nuevo Candidato
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-candidato">
+                    <div class="row">
+                        <!-- Columna Izquierda: Datos Personales -->
+                        <div class="col-md-8">
+                            <h6 class="text-muted mb-3">
+                                <i class="bi bi-person-circle"></i> Datos Personales
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <label for="candidato-nombre-completo" class="form-label">
+                                    Nombre Completo <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control" id="candidato-nombre-completo" 
+                                       name="nombre_completo" placeholder="Ej: Juan Pérez García" required>
+                                <div class="invalid-feedback">
+                                    El nombre completo es obligatorio
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="candidato-partido" class="form-label">
+                                        Partido Político <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="candidato-partido" name="partido_id" required>
+                                        <option value="">Seleccione un partido...</option>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Debe seleccionar un partido
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="candidato-tipo-eleccion" class="form-label">
+                                        Tipo de Elección <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="candidato-tipo-eleccion" 
+                                            name="tipo_eleccion_id" required>
+                                        <option value="">Seleccione tipo...</option>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Debe seleccionar un tipo de elección
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-8 mb-3">
+                                    <label for="candidato-cargo" class="form-label">
+                                        Cargo <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="candidato-cargo" 
+                                           name="cargo" placeholder="Ej: Alcalde, Senador, Concejal" required>
+                                    <div class="invalid-feedback">
+                                        El cargo es obligatorio
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label for="candidato-numero-lista" class="form-label">
+                                        Número de Lista
+                                    </label>
+                                    <input type="number" class="form-control" id="candidato-numero-lista" 
+                                           name="numero_lista" placeholder="Ej: 1" min="1">
+                                    <small class="text-muted">Opcional</small>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="candidato-biografia" class="form-label">Biografía</label>
+                                <textarea class="form-control" id="candidato-biografia" name="biografia" 
+                                          rows="4" placeholder="Breve biografía del candidato (opcional)"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="candidato-activo" 
+                                           name="activo" checked>
+                                    <label class="form-check-label" for="candidato-activo">
+                                        Candidato Activo
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Columna Derecha: Foto -->
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-3">
+                                <i class="bi bi-camera"></i> Fotografía
+                            </h6>
+                            
+                            <div class="mb-3">
+                                <div class="text-center">
+                                    <!-- Preview de la Foto -->
+                                    <div id="foto-preview-container" class="mb-3 p-3 border rounded" 
+                                         style="min-height: 250px; background-color: #f8f9fa;">
+                                        <div id="foto-preview" class="d-flex align-items-center justify-content-center" 
+                                             style="height: 220px;">
+                                            <i class="bi bi-person-circle text-muted" style="font-size: 5rem;"></i>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Botón de Upload -->
+                                    <input type="file" id="candidato-foto-input" 
+                                           accept="image/png,image/jpeg,image/jpg,image/webp" 
+                                           style="display: none;">
+                                    <button type="button" class="btn btn-outline-success btn-sm w-100 mb-2" 
+                                            onclick="document.getElementById('candidato-foto-input').click()">
+                                        <i class="bi bi-upload"></i> Seleccionar Foto
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm w-100" 
+                                            id="btn-remove-foto" style="display: none;">
+                                        <i class="bi bi-trash"></i> Eliminar Foto
+                                    </button>
+                                    <small class="text-muted d-block mt-2">
+                                        Formatos: PNG, JPG, WEBP<br>
+                                        Tamaño máximo: 5MB<br>
+                                        Recomendado: 400x400px
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Información Adicional -->
+                            <div class="alert alert-info small">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Tip:</strong> Use fotos con fondo neutro y buena iluminación para mejor visualización.
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-success" onclick="candidatosManager.guardarCandidato()">
+                    <i class="bi bi-check-circle"></i> Guardar Candidato
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Estilos específicos para el tab de candidatos */
+#foto-preview-container {
+    transition: all 0.3s ease;
+}
+
+#foto-preview-container:hover {
+    background-color: #e9ecef !important;
+}
+
+#foto-preview img {
+    max-width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.table-hover tbody tr {
+    cursor: pointer;
+}
+
+.badge {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.6rem;
+}
+
+/* Estilos para las fotos en la tabla */
+.rounded-circle {
+    border: 2px solid #dee2e6;
+}
+</style>
+
+<script>
+// Manejar upload de foto
+document.addEventListener('DOMContentLoaded', function() {
+    const fotoInput = document.getElementById('candidato-foto-input');
+    const fotoPreview = document.getElementById('foto-preview');
+    const btnRemoveFoto = document.getElementById('btn-remove-foto');
+
+    if (fotoInput) {
+        fotoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validar tamaño (5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('El archivo es demasiado grande. Tamaño máximo: 5MB');
+                    this.value = '';
+                    return;
+                }
+
+                // Validar tipo
+                const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    alert('Formato no válido. Use PNG, JPG o WEBP');
+                    this.value = '';
+                    return;
+                }
+
+                // Mostrar preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    fotoPreview.innerHTML = `<img src="${e.target.result}" alt="Foto Preview" class="rounded">`;
+                    btnRemoveFoto.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // Remover foto
+    if (btnRemoveFoto) {
+        btnRemoveFoto.addEventListener('click', function() {
+            fotoInput.value = '';
+            fotoPreview.innerHTML = '<i class="bi bi-person-circle text-muted" style="font-size: 5rem;"></i>';
+            this.style.display = 'none';
+        });
+    }
+
+    // Limpiar modal al cerrar
+    const modalCandidato = document.getElementById('modalCandidato');
+    if (modalCandidato) {
+        modalCandidato.addEventListener('hidden.bs.modal', function() {
+            document.getElementById('form-candidato').reset();
+            fotoPreview.innerHTML = '<i class="bi bi-person-circle text-muted" style="font-size: 5rem;"></i>';
+            btnRemoveFoto.style.display = 'none';
+        });
+    }
+});
+</script>

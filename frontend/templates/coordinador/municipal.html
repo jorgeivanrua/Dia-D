@@ -1,0 +1,605 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Coordinador Municipal{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-universal-v2.css') }}">
+<style>
+    .badge-status {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    .puesto-row {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .puesto-row:hover {
+        background-color: #f8f9fa;
+    }
+    .puesto-row.selected {
+        background-color: #e7f3ff;
+    }
+    .discrepancia-badge {
+        position: relative;
+        top: -2px;
+    }
+    
+    /* Cards de puestos para móvil */
+    .puesto-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .puesto-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    .puesto-card.selected {
+        border-color: #0d6efd;
+        background-color: #e7f3ff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3 pb-5 pb-md-3">
+    <!-- Header Mejorado -->
+    <div class="dashboard-header">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h2><i class="bi bi-building"></i> Coordinador Municipal</h2>
+                <p class="mb-0">Municipio: <span id="municipioInfo">Cargando...</span></p>
+            </div>
+            <div class="d-none d-md-flex gap-2">
+                <button class="btn btn-outline-primary btn-sm" onclick="loadPuestos()">
+                    <i class="bi bi-arrow-clockwise"></i> Actualizar
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="logout()">
+                    <i class="bi bi-box-arrow-right"></i> Salir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards Mejoradas -->
+    <div class="stats-grid">
+        <div class="stat-card primary">
+            <h6>Puestos</h6>
+            <h3 id="statPuestos">0</h3>
+            <small>Total</small>
+        </div>
+        <div class="stat-card success">
+            <h6>Validados</h6>
+            <h3 id="statValidados">0</h3>
+            <small>Formularios</small>
+        </div>
+        <div class="stat-card warning">
+            <h6>Pendientes</h6>
+            <h3 id="statPendientes">0</h3>
+            <small>Por revisar</small>
+        </div>
+        <div class="stat-card info">
+            <h6>Progreso</h6>
+            <h3 id="statProgreso">0%</h3>
+            <small>Completado</small>
+        </div>
+    </div>
+
+    <!-- Tabs Desktop (ocultos en móvil) -->
+    <ul class="nav nav-tabs mb-3 d-none d-md-flex" id="municipalTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="puestos-tab" data-bs-toggle="tab" data-bs-target="#puestos" type="button" role="tab">
+                <i class="bi bi-geo-alt"></i> Puestos
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="consolidado-tab" data-bs-toggle="tab" data-bs-target="#consolidado" type="button" role="tab">
+                <i class="bi bi-pie-chart"></i> Consolidado
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="reportes-tab" data-bs-toggle="tab" data-bs-target="#reportes" type="button" role="tab">
+                <i class="bi bi-bar-chart"></i> Reportes
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="mapa-tab" data-bs-toggle="tab" data-bs-target="#mapa" type="button" role="tab">
+                <i class="bi bi-map"></i> Mapa
+            </button>
+        </li>
+    </ul>
+
+    <!-- Contenido de las pestañas -->
+    <div class="tab-content" id="municipalTabsContent">
+        <!-- Tab 1: Puestos -->
+        <div class="tab-pane fade show active" id="puestos" role="tabpanel">
+            <!-- Botones de Acción Rápida (Móvil) -->
+            <div class="quick-actions d-md-none mb-3">
+                <button class="btn-touch btn-primary-touch btn-touch-block" onclick="generarE24Municipal()">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    Generar E-24 Municipal
+                </button>
+                <button class="btn-touch btn-info-touch btn-touch-block" onclick="exportarDatos()">
+                    <i class="bi bi-download"></i>
+                    Exportar Datos
+                </button>
+            </div>
+
+            <!-- Filtros -->
+            <div class="mb-3">
+                <div class="search-bar">
+                    <i class="bi bi-search"></i>
+                    <input type="text" class="search-input" id="searchPuesto" 
+                           placeholder="Buscar puesto..." onkeyup="buscarPuesto()">
+                </div>
+                
+                <div class="filter-chips">
+                    <button class="filter-chip active" onclick="filtrarPuestos('')">
+                        Todos <span class="badge" id="badgeTodos">0</span>
+                    </button>
+                    <button class="filter-chip" onclick="filtrarPuestos('completo')">
+                        Completos <span class="badge bg-success" id="badgeCompletos">0</span>
+                    </button>
+                    <button class="filter-chip" onclick="filtrarPuestos('incompleto')">
+                        Incompletos <span class="badge bg-warning" id="badgeIncompletos">0</span>
+                    </button>
+                    <button class="filter-chip" onclick="filtrarPuestos('con_discrepancias')">
+                        Discrepancias <span class="badge bg-danger" id="badgeDiscrepancias">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Lista de Puestos -->
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-geo-alt"></i> Puestos de Votación</h5>
+                            <button class="btn btn-sm btn-outline-primary d-none d-md-inline-flex" onclick="loadPuestos()">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <!-- Vista de Cards para Móvil -->
+                            <div class="d-md-none" id="puestosCardsMobile">
+                                <div class="text-center py-4 text-muted">
+                                    <i class="bi bi-geo-alt" style="font-size: 3rem;"></i>
+                                    <p class="mt-2">Cargando puestos...</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Vista de Tabla para Desktop -->
+                            <div class="table-responsive d-none d-md-block" style="max-height: 600px; overflow-y: auto;">
+                                <table class="table table-hover table-sm" id="puestosTable">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>Puesto</th>
+                                            <th>Coordinador</th>
+                                            <th class="text-center">Avance</th>
+                                            <th class="text-center">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="4" class="text-center py-4">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">Cargando...</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel lateral: Detalle y Alertas -->
+                <div class="col-lg-4 d-none d-lg-block">
+                    <!-- Detalle de Puesto Seleccionado -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0"><i class="bi bi-info-circle"></i> Detalle de Puesto</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="detallePuesto">
+                                <p class="text-muted text-center">
+                                    <i class="bi bi-hand-index"></i><br>
+                                    Seleccione un puesto
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alertas y Discrepancias -->
+                    <div class="card">
+                        <div class="card-header bg-warning">
+                            <h6 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Alertas</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="discrepanciasPanel">
+                                <div class="text-center py-3">
+                                    <div class="spinner-border spinner-border-sm text-warning" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab Puestos -->
+
+        <!-- Tab 2: Consolidado -->
+        <div class="tab-pane fade" id="consolidado" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Consolidado Municipal</h5>
+                </div>
+                <div class="card-body">
+                    <div id="consolidadoMunicipal">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab Consolidado -->
+
+        <!-- Tab 3: Reportes -->
+        <div class="tab-pane fade" id="reportes" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Reportes y Estadísticas</h5>
+                </div>
+                <div class="card-body">
+                    <div id="estadisticasGenerales">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab Reportes -->
+
+        <!-- Tab 4: Mapa -->
+        <div class="tab-pane fade" id="mapa" role="tabpanel">
+            <!-- Filtros del Mapa -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-funnel"></i> Filtros del Mapa</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Zona</label>
+                            <select class="form-select form-select-sm" id="filtro-mapa-zona">
+                                <option value="">Todas las zonas</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Estado</label>
+                            <select class="form-select form-select-sm" id="filtro-mapa-estado">
+                                <option value="">Todos</option>
+                                <option value="completo">Completos</option>
+                                <option value="incompleto">Incompletos</option>
+                                <option value="con_discrepancias">Con Discrepancias</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Mostrar en el mapa</label>
+                            <div class="d-flex gap-3 flex-wrap">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="mostrar-coordinadores" checked>
+                                    <label class="form-check-label" for="mostrar-coordinadores">
+                                        Coordinadores
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="mostrar-testigos" checked>
+                                    <label class="form-check-label" for="mostrar-testigos">
+                                        Testigos
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="mostrar-incidentes" checked>
+                                    <label class="form-check-label" for="mostrar-incidentes">
+                                        Incidentes
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="mostrar-delitos" checked>
+                                    <label class="form-check-label" for="mostrar-delitos">
+                                        Delitos
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mapa -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-map"></i> Mapa de Geolocalización</h5>
+                    <div class="d-flex gap-2 align-items-center">
+                        <span class="badge bg-success" id="usuarios-activos-badge">0 usuarios activos</span>
+                        <button class="btn btn-sm btn-outline-primary" onclick="refrescarMapa()">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div id="mapa-municipal" style="height: 600px;"></div>
+                </div>
+            </div>
+
+            <!-- Leyenda -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-info-circle"></i> Leyenda</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Puestos</h6>
+                            <div class="d-flex align-items-center mb-2">
+                                <div style="width: 20px; height: 20px; background-color: #28a745; border-radius: 50%; margin-right: 10px;"></div>
+                                <span>Completo</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <div style="width: 20px; height: 20px; background-color: #ffc107; border-radius: 50%; margin-right: 10px;"></div>
+                                <span>Incompleto</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <div style="width: 20px; height: 20px; background-color: #dc3545; border-radius: 50%; margin-right: 10px;"></div>
+                                <span>Con Discrepancias</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Usuarios</h6>
+                            <div class="d-flex align-items-center mb-2">
+                                <div style="width: 18px; height: 18px; background-color: #28a745; border-radius: 50%; margin-right: 10px;"></div>
+                                <span>Coordinador Activo</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <div style="width: 16px; height: 16px; background-color: #17a2b8; border-radius: 50%; margin-right: 10px;"></div>
+                                <span>Testigo</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <div style="width: 18px; height: 18px; background-color: #ffc107; border-radius: 4px; margin-right: 10px;"></div>
+                                <span>Incidente</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <div style="width: 18px; height: 18px; background-color: #721c24; border-radius: 4px; margin-right: 10px;"></div>
+                                <span>Delito</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab Mapa -->
+
+    </div>
+    <!-- Fin Tab Content -->
+</div>
+
+<!-- Bottom Navigation (Solo Móvil) -->
+<nav class="bottom-nav d-md-none">
+    <a href="#puestos" class="bottom-nav-item active" data-bs-toggle="tab" data-tab="puestos">
+        <i class="bi bi-speedometer2-fill"></i>
+        <span>Dashboard</span>
+    </a>
+    <a href="#puestos" class="bottom-nav-item" data-bs-toggle="tab" data-tab="puestos">
+        <i class="bi bi-building-fill"></i>
+        <span>Puestos</span>
+    </a>
+    <a href="#reportes" class="bottom-nav-item" data-bs-toggle="tab" data-tab="reportes">
+        <i class="bi bi-bar-chart-fill"></i>
+        <span>Reportes</span>
+    </a>
+    <a href="#mapa" class="bottom-nav-item" data-bs-toggle="tab" data-tab="mapa">
+        <i class="bi bi-geo-alt-fill"></i>
+        <span>Mapa</span>
+    </a>
+</nav>
+
+<!-- Modal: Comparación de Puestos -->
+<div class="modal fade" id="comparacionModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-bar-chart-line"></i> Comparación de Puestos</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="comparacionContent">
+                    <p class="text-muted">Seleccione 2-5 puestos para comparar</p>
+                    <div id="puestosSeleccionComparacion"></div>
+                    <canvas id="chartComparacion" style="max-height: 400px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Generar E-24 -->
+<div class="modal fade" id="e24Modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-file-earmark-pdf"></i> Generar E-24 Municipal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="e24Content">
+                    <p>¿Está seguro de generar el formulario E-24 Municipal?</p>
+                    <div id="e24Validaciones"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="confirmarGenerarE24()">Generar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- Leaflet para mapas -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Script de geolocalización ya está cargado en base.html -->
+
+<script>
+// Funciones auxiliares para el dashboard
+function logout() {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_data');
+    window.location.href = '/auth/login';
+}
+
+function loadPuestos() {
+    console.log('Cargando puestos...');
+    // La implementación real debe estar en coordinador-municipal.js
+}
+
+function filtrarPuestos(filtro) {
+    console.log('Filtrando puestos:', filtro);
+}
+
+function buscarPuesto() {
+    console.log('Buscando puesto...');
+}
+
+function generarE24Municipal() {
+    const modal = new bootstrap.Modal(document.getElementById('e24Modal'));
+    modal.show();
+}
+
+function exportarDatos() {
+    console.log('Exportando datos...');
+}
+
+function abrirComparacion() {
+    const modal = new bootstrap.Modal(document.getElementById('comparacionModal'));
+    modal.show();
+}
+
+function confirmarGenerarE24() {
+    console.log('Generando E-24...');
+}
+
+// Inicializar mapa mejorado cuando se abre el tab de mapa
+document.addEventListener('DOMContentLoaded', function() {
+    const mapaTab = document.getElementById('mapa-tab');
+    if (mapaTab) {
+        mapaTab.addEventListener('shown.bs.tab', async function() {
+            if (!window.mapaMunicipal) {
+                console.log('Inicializando mapa municipal mejorado...');
+                window.mapaMunicipal = new MapaCoordinadorMunicipal('mapa-municipal');
+                await window.mapaMunicipal.init();
+                
+                // Cargar zonas para filtro
+                await cargarZonasParaFiltro();
+                
+                // Configurar event listeners de filtros
+                configurarFiltrosMapa();
+            }
+        });
+    }
+});
+
+// Cargar zonas para el filtro
+async function cargarZonasParaFiltro() {
+    try {
+        const response = await APIClient.get('/coordinador-municipal/zonas');
+        if (response.success) {
+            const select = document.getElementById('filtro-mapa-zona');
+            if (select) {
+                response.data.forEach(zona => {
+                    const option = document.createElement('option');
+                    option.value = zona.codigo;
+                    option.textContent = `${zona.nombre} (${zona.total_puestos} puestos)`;
+                    select.appendChild(option);
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error cargando zonas:', error);
+    }
+}
+
+// Configurar filtros del mapa
+function configurarFiltrosMapa() {
+    // Filtro de zona
+    document.getElementById('filtro-mapa-zona')?.addEventListener('change', function() {
+        if (window.mapaMunicipal) {
+            window.mapaMunicipal.aplicarFiltros({ zona: this.value });
+        }
+    });
+    
+    // Filtro de estado
+    document.getElementById('filtro-mapa-estado')?.addEventListener('change', function() {
+        if (window.mapaMunicipal) {
+            window.mapaMunicipal.aplicarFiltros({ estado: this.value });
+        }
+    });
+    
+    // Checkboxes de capas
+    document.getElementById('mostrar-coordinadores')?.addEventListener('change', function() {
+        if (window.mapaMunicipal) {
+            window.mapaMunicipal.aplicarFiltros({ mostrarCoordinadores: this.checked });
+        }
+    });
+    
+    document.getElementById('mostrar-testigos')?.addEventListener('change', function() {
+        if (window.mapaMunicipal) {
+            window.mapaMunicipal.aplicarFiltros({ mostrarTestigos: this.checked });
+        }
+    });
+    
+    document.getElementById('mostrar-incidentes')?.addEventListener('change', function() {
+        if (window.mapaMunicipal) {
+            window.mapaMunicipal.aplicarFiltros({ mostrarIncidentes: this.checked });
+        }
+    });
+    
+    document.getElementById('mostrar-delitos')?.addEventListener('change', function() {
+        if (window.mapaMunicipal) {
+            window.mapaMunicipal.aplicarFiltros({ mostrarDelitos: this.checked });
+        }
+    });
+}
+
+// Refrescar mapa
+function refrescarMapa() {
+    if (window.mapaMunicipal) {
+        window.mapaMunicipal.cargarDatos();
+        Utils.showSuccess('Mapa actualizado');
+    }
+}
+</script>
+<script src="{{ url_for('static', filename='js/coordinador-municipal.js') }}"></script>
+<script src="{{ url_for('static', filename='js/coordinador-municipal-mapa.js') }}"></script>
+<!-- Mejoras UI/UX Mobile-First -->
+<script src="{{ url_for('static', filename='js/coordinador-municipal-mejoras.js') }}"></script>
+{% endblock %}

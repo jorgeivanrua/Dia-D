@@ -1,0 +1,588 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Coordinador Municipal{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/coordinador-puesto-v2.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/mobile-responsive.css') }}">
+<style>
+.stats-card {
+    border-left: 4px solid;
+    transition: transform 0.2s;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.stats-card.pendientes {
+    border-left-color: #ffc107;
+}
+
+.stats-card.validados {
+    border-left-color: #28a745;
+}
+
+.stats-card.rechazados {
+    border-left-color: #dc3545;
+}
+
+.stats-card.progreso {
+    border-left-color: #007bff;
+}
+
+.puesto-row {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.puesto-row:hover {
+    background-color: #f8f9fa;
+}
+
+.puesto-row.selected {
+    background-color: #e7f3ff;
+}
+
+.discrepancia-badge {
+    position: relative;
+    top: -2px;
+}
+
+.badge-status {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.65rem;
+}
+
+/* Estilos para markers del mapa */
+.custom-marker {
+    background: none;
+    border: none;
+}
+
+.marker-pin {
+    width: 30px;
+    height: 42px;
+    border-radius: 50% 50% 50% 0;
+    position: relative;
+    transform: rotate(-45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.marker-pin i {
+    transform: rotate(45deg);
+    color: white;
+    font-size: 16px;
+}
+
+.marker-puesto {
+    background-color: #007bff;
+}
+
+.marker-usuario {
+    background-color: #6c757d;
+}
+
+.marker-activo {
+    background-color: #28a745;
+}
+
+.marker-inactivo {
+    background-color: #ffc107;
+}
+
+.marker-ausente {
+    background-color: #6c757d;
+}
+
+/* Estilos responsive ahora están en mobile-responsive.css */
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Mejorado -->
+    <div class="dashboard-header">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div class="flex-grow-1">
+                <h2><i class="bi bi-building"></i> Coordinador Municipal</h2>
+                <p id="municipioInfo">Cargando información del municipio...</p>
+            </div>
+            <button class="btn btn-light btn-touch" onclick="logout()">
+                <i class="bi bi-box-arrow-right"></i>
+                <span class="d-none d-md-inline">Cerrar Sesión</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Estadísticas Mejoradas -->
+    <div class="stats-grid">
+        <div class="stat-card pendientes">
+            <h6>Puestos Pendientes</h6>
+            <h3 id="statPendientes">0</h3>
+            <small>Por completar</small>
+        </div>
+        <div class="stat-card validados">
+            <h6>Puestos Completos</h6>
+            <h3 id="statValidados">0</h3>
+            <small>Finalizados</small>
+        </div>
+        <div class="stat-card rechazados">
+            <h6>Con Discrepancias</h6>
+            <h3 id="statRechazados">0</h3>
+            <small>Requieren atención</small>
+        </div>
+        <div class="stat-card progreso">
+            <h6>Progreso</h6>
+            <h3 id="statProgreso">0%</h3>
+            <small id="statPuestos">0 de 0 puestos</small>
+        </div>
+    </div>
+
+    <!-- Pestañas (Ocultas en móvil, se usa bottom nav) -->
+    <ul class="nav nav-tabs mb-3 d-none d-md-flex" id="dashboardTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="puestos-tab" data-bs-toggle="tab" data-bs-target="#puestos" type="button" role="tab">
+                <i class="bi bi-building"></i> Puestos
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="e24-tab" data-bs-toggle="tab" data-bs-target="#e24" type="button" role="tab">
+                <i class="bi bi-table"></i> Consolidado E-24
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="incidentes-tab" data-bs-toggle="tab" data-bs-target="#incidentes" type="button" role="tab">
+                <i class="bi bi-exclamation-triangle"></i> Incidentes
+                <span class="badge bg-warning ms-1" id="badge-incidentes">0</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="delitos-tab" data-bs-toggle="tab" data-bs-target="#delitos" type="button" role="tab">
+                <i class="bi bi-shield-exclamation"></i> Delitos
+                <span class="badge bg-danger ms-1" id="badge-delitos">0</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="equipo-tab" data-bs-toggle="tab" data-bs-target="#equipo" type="button" role="tab">
+                <i class="bi bi-people"></i> Coordinadores
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="mapa-tab" data-bs-toggle="tab" data-bs-target="#mapa" type="button" role="tab">
+                <i class="bi bi-geo-alt"></i> Mapa
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="dashboardTabContent">
+        <!-- Tab Puestos -->
+        <div class="tab-pane fade show active" id="puestos" role="tabpanel">
+            <div class="row">
+                <!-- Tabla de Puestos -->
+                <div class="col-lg-8 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-3 d-md-none">Puestos del Municipio</h5>
+                            <h5 class="mb-0 d-none d-md-block">Puestos del Municipio</h5>
+                            
+                            <!-- Barra de Búsqueda -->
+                            <div class="search-bar mt-3">
+                                <input type="search" 
+                                       class="form-control" 
+                                       placeholder="🔍 Buscar por código o nombre de puesto..." 
+                                       oninput="buscarPuestos(this.value)">
+                            </div>
+                            
+                            <!-- Filtros con Chips -->
+                            <div class="filter-chips mt-3">
+                                <button class="chip active" onclick="filtrarPorEstado('')">
+                                    Todos <span class="badge" id="badgeTodos">0</span>
+                                </button>
+                                <button class="chip" onclick="filtrarPorEstado('completo')">
+                                    Completos <span class="badge bg-success" id="badgeCompletos">0</span>
+                                </button>
+                                <button class="chip" onclick="filtrarPorEstado('incompleto')">
+                                    Incompletos <span class="badge bg-warning" id="badgeIncompletos">0</span>
+                                </button>
+                                <button class="chip" onclick="filtrarPorEstado('con_discrepancias')">
+                                    Con Discrepancias <span class="badge bg-danger" id="badgeDiscrepancias">0</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Vista de Cards para Móvil -->
+                            <div id="puestosCards" class="d-md-none">
+                                <!-- Se llenará dinámicamente con JavaScript -->
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </div>
+                                    <p class="text-muted mt-2">Cargando puestos...</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Vista de Tabla para Desktop -->
+                            <div class="d-none d-md-block">
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="puestosTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Puesto</th>
+                                                <th>Coordinador</th>
+                                                <th>Zona</th>
+                                                <th class="text-center">Avance</th>
+                                                <th class="text-center">Estado</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="6" class="text-center py-4">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="visually-hidden">Cargando...</span>
+                                                    </div>
+                                                    <p class="text-muted mt-2">Cargando puestos...</p>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Lateral -->
+                <div class="col-lg-4">
+                    <!-- Consolidado Municipal -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="mb-0">Consolidado Municipal</h5>
+                        </div>
+                        <div class="card-body" id="consolidadoPanel">
+                            <p class="text-muted">Cargando consolidado...</p>
+                        </div>
+                    </div>
+
+                    <!-- Alertas y Discrepancias -->
+                    <div class="card">
+                        <div class="card-header bg-warning">
+                            <h6 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Alertas</h6>
+                        </div>
+                        <div class="card-body" id="discrepanciasPanel">
+                            <p class="text-muted">Cargando alertas...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab E-24 Consolidado Municipal -->
+        <div class="tab-pane fade" id="e24" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Consolidado E-24 Municipal</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-success btn-sm" onclick="exportarDatosMunicipal()">
+                            <i class="bi bi-download"></i> Exportar Datos
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="generarPDFE24Municipal()">
+                            <i class="bi bi-file-pdf"></i> Generar E-24
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Resumen General -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted mb-2">Total Puestos</h6>
+                                    <h3 id="e24TotalPuestos">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success bg-opacity-10">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted mb-2">Puestos Validados</h6>
+                                    <h3 id="e24PuestosValidados">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info bg-opacity-10">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted mb-2">Total Votos</h6>
+                                    <h3 id="e24TotalVotos">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-primary bg-opacity-10">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted mb-2">Participación</h6>
+                                    <h3 id="e24Participacion">0%</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Puestos con Votos -->
+                    <h6 class="mb-3">Detalle por Puesto</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered" id="e24Table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Puesto</th>
+                                    <th>Coordinador</th>
+                                    <th>Estado</th>
+                                    <th class="text-end">Mesas</th>
+                                    <th class="text-end">Votantes</th>
+                                    <th class="text-end">Votos</th>
+                                    <th class="text-end">Válidos</th>
+                                    <th class="text-end">Nulos</th>
+                                    <th class="text-end">Blanco</th>
+                                    <th class="text-end">%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="10" class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Cargando...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-secondary fw-bold">
+                                <tr>
+                                    <td colspan="4">TOTALES</td>
+                                    <td class="text-end" id="e24FooterVotantes">0</td>
+                                    <td class="text-end" id="e24FooterVotos">0</td>
+                                    <td class="text-end" id="e24FooterValidos">0</td>
+                                    <td class="text-end" id="e24FooterNulos">0</td>
+                                    <td class="text-end" id="e24FooterBlanco">0</td>
+                                    <td class="text-end" id="e24FooterParticipacion">0%</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- Consolidado por Partido -->
+                    <h6 class="mb-3 mt-4">Votos por Partido (Solo Puestos Validados)</h6>
+                    <div id="e24VotosPartidos">
+                        <p class="text-muted">Cargando datos...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab E-24 -->
+
+        <!-- Tab Incidentes -->
+        <div class="tab-pane fade" id="incidentes" role="tabpanel">
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Incidentes Reportados en el Municipio</h5>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-primary active" onclick="filtrarIncidentes('')">Todos</button>
+                                <button type="button" class="btn btn-outline-primary" onclick="filtrarIncidentes('reportado')">Reportados</button>
+                                <button type="button" class="btn btn-outline-warning" onclick="filtrarIncidentes('en_revision')">En Revisión</button>
+                                <button type="button" class="btn btn-outline-success" onclick="filtrarIncidentes('resuelto')">Resueltos</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="incidentesLista">
+                                <p class="text-muted text-center py-4">Cargando incidentes...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab Incidentes -->
+
+        <!-- Tab Delitos -->
+        <div class="tab-pane fade" id="delitos" role="tabpanel">
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Delitos Electorales Reportados en el Municipio</h5>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-primary active" onclick="filtrarDelitos('')">Todos</button>
+                                <button type="button" class="btn btn-outline-primary" onclick="filtrarDelitos('reportado')">Reportados</button>
+                                <button type="button" class="btn btn-outline-warning" onclick="filtrarDelitos('en_investigacion')">En Investigación</button>
+                                <button type="button" class="btn btn-outline-success" onclick="filtrarDelitos('investigado')">Investigados</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                <strong>Importante:</strong> Los delitos electorales requieren atención prioritaria. Revise y gestione cada reporte cuidadosamente.
+                            </div>
+                            <div id="delitosLista">
+                                <p class="text-muted text-center py-4">Cargando delitos...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab Delitos -->
+
+        <!-- Tab Coordinadores de Puesto -->
+        <div class="tab-pane fade" id="equipo" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-people"></i> Coordinadores de Puesto
+                    </h5>
+                    <button class="btn btn-sm btn-primary" onclick="actualizarEstadoCoordinadores()">
+                        <i class="bi bi-arrow-clockwise"></i> Actualizar
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="estadoCoordinadoresContainer">
+                        <div class="text-center py-4">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Cargando estado de coordinadores...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab Coordinadores -->
+
+        <!-- Tab Mapa en Tiempo Real -->
+        <div class="tab-pane fade" id="mapa" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-geo-alt"></i> Geolocalización en Tiempo Real
+                    </h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary" onclick="centrarMapaEnMunicipio()">
+                            <i class="bi bi-building"></i> Centrar en Municipio
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="ajustarVistaMapa()">
+                            <i class="bi bi-arrows-fullscreen"></i> Ver Todo
+                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="actualizarMapa()">
+                            <i class="bi bi-arrow-clockwise"></i> Actualizar
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Contenedor del mapa -->
+                    <div id="mapaGeolocalizacion" style="height: 600px; width: 100%;"></div>
+                </div>
+                <div class="card-footer">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <div class="marker-pin marker-puesto me-2" style="width: 20px; height: 28px; transform: rotate(-45deg);">
+                                    <i class="bi bi-building" style="transform: rotate(45deg); font-size: 12px; color: white;"></i>
+                                </div>
+                                <span>Puesto de Votación</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <div class="marker-pin marker-usuario marker-activo me-2" style="width: 20px; height: 28px; transform: rotate(-45deg);">
+                                    <i class="bi bi-person" style="transform: rotate(45deg); font-size: 12px; color: white;"></i>
+                                </div>
+                                <span>Usuario Activo</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <div class="marker-pin marker-usuario marker-inactivo me-2" style="width: 20px; height: 28px; transform: rotate(-45deg);">
+                                    <i class="bi bi-person" style="transform: rotate(45deg); font-size: 12px; color: white;"></i>
+                                </div>
+                                <span>Usuario Inactivo</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <div class="marker-pin marker-usuario marker-ausente me-2" style="width: 20px; height: 28px; transform: rotate(-45deg);">
+                                    <i class="bi bi-person" style="transform: rotate(45deg); font-size: 12px; color: white;"></i>
+                                </div>
+                                <span>Usuario Ausente</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab Mapa -->
+
+    </div>
+</div>
+
+<!-- Bottom Navigation para Móvil (fuera del container para position fixed) -->
+<nav class="bottom-nav">
+    <a href="#puestos" class="bottom-nav-item active" data-bs-toggle="tab" data-bs-target="#puestos">
+        <i class="bi bi-building"></i>
+        <span>Puestos</span>
+    </a>
+    <a href="#e24" class="bottom-nav-item" data-bs-toggle="tab" data-bs-target="#e24">
+        <i class="bi bi-table"></i>
+        <span>E-24</span>
+    </a>
+    <a href="#incidentes" class="bottom-nav-item" data-bs-toggle="tab" data-bs-target="#incidentes">
+        <i class="bi bi-exclamation-triangle"></i>
+        <span class="badge bg-warning" id="badge-incidentes-mobile">0</span>
+        <span>Incidentes</span>
+    </a>
+    <a href="#delitos" class="bottom-nav-item" data-bs-toggle="tab" data-bs-target="#delitos">
+        <i class="bi bi-shield-exclamation"></i>
+        <span class="badge bg-danger" id="badge-delitos-mobile">0</span>
+        <span>Delitos</span>
+    </a>
+    <a href="#equipo" class="bottom-nav-item" data-bs-toggle="tab" data-bs-target="#equipo">
+        <i class="bi bi-people"></i>
+        <span>Equipo</span>
+    </a>
+    <a href="#mapa" class="bottom-nav-item" data-bs-toggle="tab" data-bs-target="#mapa">
+        <i class="bi bi-geo-alt"></i>
+        <span>Mapa</span>
+    </a>
+</nav>
+
+<!-- Modal de Detalle de Puesto -->
+<div class="modal fade" id="detallePuestoModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalle del Puesto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detallePuestoContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Leaflet para mapas -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="{{ url_for('static', filename='js/coordinador-municipal-mejorado.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Login</title>
+    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/utils.js"></script>
+</head>
+<body>
+    <h1>Debug Login - Prueba de Carga de Ubicaciones</h1>
+    <div id="results"></div>
+    
+    <script>
+        async function testAll() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p>Iniciando pruebas...</p>';
+            
+            let html = '';
+            
+            // Test 1: Verificar que APIClient existe
+            html += '<h3>1. Verificar APIClient</h3>';
+            html += `<p>APIClient existe: ${typeof APIClient !== 'undefined' ? '✅ SÍ' : '❌ NO'}</p>`;
+            
+            // Test 2: Verificar que Utils existe
+            html += '<h3>2. Verificar Utils</h3>';
+            html += `<p>Utils existe: ${typeof Utils !== 'undefined' ? '✅ SÍ' : '❌ NO'}</p>`;
+            
+            // Test 3: Probar getDepartamentos
+            html += '<h3>3. Probar getDepartamentos()</h3>';
+            try {
+                const response = await APIClient.getDepartamentos();
+                html += `<p>✅ Status: ${response.success ? 'SUCCESS' : 'FAIL'}</p>`;
+                html += `<p>Departamentos: ${response.data ? response.data.length : 0}</p>`;
+                if (response.data && response.data.length > 0) {
+                    html += `<pre>${JSON.stringify(response.data[0], null, 2)}</pre>`;
+                }
+            } catch (error) {
+                html += `<p>❌ Error: ${error.message}</p>`;
+            }
+            
+            // Test 4: Probar getMunicipios
+            html += '<h3>4. Probar getMunicipios(44)</h3>';
+            try {
+                const response = await APIClient.getMunicipios('44');
+                html += `<p>✅ Status: ${response.success ? 'SUCCESS' : 'FAIL'}</p>`;
+                html += `<p>Municipios: ${response.data ? response.data.length : 0}</p>`;
+                if (response.data && response.data.length > 0) {
+                    html += `<pre>${JSON.stringify(response.data[0], null, 2)}</pre>`;
+                }
+            } catch (error) {
+                html += `<p>❌ Error: ${error.message}</p>`;
+            }
+            
+            // Test 5: Probar getZonas
+            html += '<h3>5. Probar getZonas(01)</h3>';
+            try {
+                const response = await APIClient.getZonas('01');
+                html += `<p>✅ Status: ${response.success ? 'SUCCESS' : 'FAIL'}</p>`;
+                html += `<p>Zonas: ${response.data ? response.data.length : 0}</p>`;
+                if (response.data && response.data.length > 0) {
+                    html += `<pre>${JSON.stringify(response.data[0], null, 2)}</pre>`;
+                }
+            } catch (error) {
+                html += `<p>❌ Error: ${error.message}</p>`;
+            }
+            
+            // Test 6: Probar getPuestos
+            html += '<h3>6. Probar getPuestos(01)</h3>';
+            try {
+                const response = await APIClient.getPuestos('01');
+                html += `<p>✅ Status: ${response.success ? 'SUCCESS' : 'FAIL'}</p>`;
+                html += `<p>Puestos: ${response.data ? response.data.length : 0}</p>`;
+                if (response.data && response.data.length > 0) {
+                    html += `<pre>${JSON.stringify(response.data[0], null, 2)}</pre>`;
+                }
+            } catch (error) {
+                html += `<p>❌ Error: ${error.message}</p>`;
+            }
+            
+            // Test 7: Verificar que el select existe
+            html += '<h3>7. Verificar Elementos del DOM</h3>';
+            html += `<p>Select departamento: ${document.getElementById('departamento') ? '✅ EXISTE' : '❌ NO EXISTE'}</p>`;
+            html += `<p>Select municipio: ${document.getElementById('municipio') ? '✅ EXISTE' : '❌ NO EXISTE'}</p>`;
+            html += `<p>Select zona: ${document.getElementById('zona') ? '✅ EXISTE' : '❌ NO EXISTE'}</p>`;
+            html += `<p>Select puesto: ${document.getElementById('puesto') ? '✅ EXISTE' : '❌ NO EXISTE'}</p>`;
+            
+            results.innerHTML = html;
+        }
+        
+        // Ejecutar cuando el DOM esté listo
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', testAll);
+        } else {
+            testAll();
+        }
+    </script>
+</body>
+</html>

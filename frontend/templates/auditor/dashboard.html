@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Auditor Electoral - Sistema Electoral{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    .audit-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .stat-card h3 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 0;
+    }
+    
+    .stat-card p {
+        margin: 5px 0 0 0;
+        opacity: 0.9;
+    }
+    
+    .anomaly-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .anomaly-high {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .anomaly-medium {
+        background-color: #ffc107;
+        color: #000;
+    }
+    
+    .anomaly-low {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    #mapa-auditoria {
+        height: 400px;
+        width: 100%;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-4">
+                        <i class="bi bi-shield-check"></i> Dashboard de Auditoría Electoral
+                    </h1>
+                    <p class="lead text-muted">Verificación y control del proceso electoral</p>
+                </div>
+                <div>
+                    <button class="btn btn-outline-primary me-2" onclick="exportarReporteAuditoria()">
+                        <i class="bi bi-file-earmark-pdf"></i> Exportar Reporte
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="logout()">
+                        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas Generales -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h3 id="stat-formularios-validados">-</h3>
+                <p>Formularios Validados</p>
+                <small id="stat-formularios-info">Cargando...</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <h3 id="stat-anomalias">-</h3>
+                <p>Anomalías Detectadas</p>
+                <small id="stat-anomalias-info">Cargando...</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <h3 id="stat-incidentes">-</h3>
+                <p>Incidentes Reportados</p>
+                <small id="stat-incidentes-info">Cargando...</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <h3 id="stat-progreso">-</h3>
+                <p>Progreso General</p>
+                <small id="stat-progreso-info">Cargando...</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs de Auditoría -->
+    <ul class="nav nav-tabs mb-4" id="auditoriaTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="resumen-tab" data-bs-toggle="tab" data-bs-target="#resumen" type="button">
+                <i class="bi bi-clipboard-data"></i> Resumen
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="formularios-tab" data-bs-toggle="tab" data-bs-target="#formularios" type="button">
+                <i class="bi bi-file-earmark-text"></i> Formularios
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="anomalias-tab" data-bs-toggle="tab" data-bs-target="#anomalias" type="button">
+                <i class="bi bi-exclamation-triangle"></i> Anomalías
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="incidentes-tab" data-bs-toggle="tab" data-bs-target="#incidentes" type="button">
+                <i class="bi bi-shield-exclamation"></i> Incidentes
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="mapa-tab" data-bs-toggle="tab" data-bs-target="#mapa" type="button">
+                <i class="bi bi-geo-alt"></i> Mapa
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="auditoriaTabContent">
+        <!-- Resumen Tab -->
+        <div class="tab-pane fade show active" id="resumen" role="tabpanel">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="audit-card">
+                        <h5><i class="bi bi-bar-chart"></i> Progreso por Departamento</h5>
+                        <canvas id="chart-progreso-departamento" height="300"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="audit-card">
+                        <h5><i class="bi bi-pie-chart"></i> Estado de Validación</h5>
+                        <canvas id="chart-estado-validacion" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12">
+                    <div class="audit-card">
+                        <h5><i class="bi bi-clock-history"></i> Actividad Reciente</h5>
+                        <div id="actividad-reciente">
+                            <p class="text-muted">Cargando actividad reciente...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formularios Tab -->
+        <div class="tab-pane fade" id="formularios" role="tabpanel">
+            <div class="audit-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5><i class="bi bi-file-earmark-text"></i> Formularios E-14 Validados</h5>
+                    <div>
+                        <input type="text" class="form-control form-control-sm" id="buscar-formulario" placeholder="Buscar formulario...">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="tabla-formularios">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Mesa</th>
+                                <th>Puesto</th>
+                                <th>Municipio</th>
+                                <th>Departamento</th>
+                                <th>Validado Por</th>
+                                <th>Fecha Validación</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-formularios">
+                            <tr>
+                                <td colspan="9" class="text-center">Cargando formularios...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <nav>
+                    <ul class="pagination justify-content-center" id="paginacion-formularios"></ul>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Anomalías Tab -->
+        <div class="tab-pane fade" id="anomalias" role="tabpanel">
+            <div class="audit-card">
+                <h5><i class="bi bi-exclamation-triangle"></i> Anomalías Detectadas</h5>
+                <div id="lista-anomalias">
+                    <p class="text-muted">Cargando anomalías...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Incidentes Tab -->
+        <div class="tab-pane fade" id="incidentes" role="tabpanel">
+            <div class="audit-card">
+                <h5><i class="bi bi-shield-exclamation"></i> Incidentes y Delitos Reportados</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="tabla-incidentes">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Descripción</th>
+                                <th>Puesto</th>
+                                <th>Severidad</th>
+                                <th>Reportado Por</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-incidentes">
+                            <tr>
+                                <td colspan="7" class="text-center">Cargando incidentes...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mapa Tab -->
+        <div class="tab-pane fade" id="mapa" role="tabpanel">
+            <div class="audit-card">
+                <h5><i class="bi bi-geo-alt"></i> Mapa de Auditoría</h5>
+                <div id="mapa-auditoria"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/auditor-dashboard.js') }}?v=20241205"></script>
+<script>
+// Inicializar dashboard de auditor
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.auditorDashboard) {
+        window.auditorDashboard.init();
+    }
+});
+
+// Función de logout
+function logout() {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    window.location.href = '/login';
+}
+
+// Función de exportar reporte
+function exportarReporteAuditoria() {
+    if (window.auditorDashboard) {
+        window.auditorDashboard.exportarReporte();
+    }
+}
+</script>
+{% endblock %}

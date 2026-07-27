@@ -1,0 +1,958 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Coordinador de Puesto{% endblock %}
+
+{% block extra_css %}
+<!-- Incluir CSS mejorado -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/coordinador-puesto-v2.css') }}">
+<style>
+.stats-card {
+    border-left: 4px solid;
+    transition: transform 0.2s;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.stats-card.pendientes {
+    border-left-color: #ffc107;
+}
+
+.stats-card.validados {
+    border-left-color: #28a745;
+}
+
+.stats-card.rechazados {
+    border-left-color: #dc3545;
+}
+
+.stats-card.progreso {
+    border-left-color: #007bff;
+}
+
+.image-preview-modal {
+    max-height: 400px;
+    overflow: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: #f8f9fa;
+    padding: 1rem;
+}
+
+.image-preview-modal img {
+    max-width: 100%;
+    height: auto;
+    cursor: zoom-in;
+}
+
+.validation-alert {
+    padding: 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.validation-alert.error {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.validation-alert.warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+}
+
+.validation-alert.success {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.split-view {
+    display: flex;
+    gap: 1rem;
+}
+
+.split-view-left {
+    flex: 1;
+}
+
+.split-view-right {
+    flex: 1;
+}
+
+.data-field {
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.data-field label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+.data-field .value {
+    font-size: 1rem;
+    color: #212529;
+}
+
+.badge-status {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.65rem;
+}
+
+/* Visor de imagen mejorado */
+.image-viewer-container {
+    width: 100%;
+}
+
+.image-viewer-controls {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.image-viewer-wrapper {
+    position: relative;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+}
+
+.image-viewer-wrapper::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.image-viewer-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.image-viewer-wrapper::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.image-viewer-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+#formularioImagen {
+    transform-origin: center center;
+}
+
+/* Modal de validación más ancho */
+.modal-xl-custom {
+    max-width: 95%;
+}
+
+@media (min-width: 1200px) {
+    .modal-xl-custom {
+        max-width: 1400px;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .split-view {
+        flex-direction: column;
+    }
+    
+    .stats-card {
+        margin-bottom: 0.75rem;
+    }
+    
+    .image-viewer-wrapper {
+        max-height: 300px !important;
+    }
+    
+    .image-viewer-controls .btn-group {
+        flex-wrap: wrap;
+    }
+    
+    .table-responsive {
+        font-size: 0.85rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Mejorado -->
+    <div class="dashboard-header">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div class="flex-grow-1">
+                <h2><i class="bi bi-building"></i> Coordinador de Puesto</h2>
+                <p id="puestoInfo">Cargando información del puesto...</p>
+            </div>
+            <button class="btn btn-light btn-touch" onclick="logout()">
+                <i class="bi bi-box-arrow-right"></i>
+                <span class="d-none d-md-inline">Cerrar Sesión</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Estadísticas Mejoradas -->
+    <div class="stats-grid">
+        <div class="stat-card pendientes">
+            <h6>Pendientes</h6>
+            <h3 id="statPendientes">0</h3>
+            <small>Por validar</small>
+        </div>
+        <div class="stat-card validados">
+            <h6>Validados</h6>
+            <h3 id="statValidados">0</h3>
+            <small>Aprobados</small>
+        </div>
+        <div class="stat-card rechazados">
+            <h6>Rechazados</h6>
+            <h3 id="statRechazados">0</h3>
+            <small>Devueltos</small>
+        </div>
+        <div class="stat-card progreso">
+            <h6>Progreso</h6>
+            <h3 id="statProgreso">0%</h3>
+            <small id="statMesas">0 de 0 mesas</small>
+        </div>
+    </div>
+
+    <!-- Pestañas (Ocultas en móvil, se usa bottom nav) -->
+    <ul class="nav nav-tabs mb-3 d-none d-md-flex" id="dashboardTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="formularios-tab" data-bs-toggle="tab" data-bs-target="#formularios" type="button" role="tab">
+                <i class="bi bi-file-earmark-text"></i> Formularios E-14
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="e24-tab" data-bs-toggle="tab" data-bs-target="#e24" type="button" role="tab">
+                <i class="bi bi-table"></i> Consolidado E-24
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="incidentes-tab" data-bs-toggle="tab" data-bs-target="#incidentes" type="button" role="tab">
+                <i class="bi bi-exclamation-triangle"></i> Incidentes
+                <span class="badge bg-warning ms-1" id="badge-incidentes">0</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="delitos-tab" data-bs-toggle="tab" data-bs-target="#delitos" type="button" role="tab">
+                <i class="bi bi-shield-exclamation"></i> Delitos
+                <span class="badge bg-danger ms-1" id="badge-delitos">0</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="equipo-tab" data-bs-toggle="tab" data-bs-target="#equipo" type="button" role="tab">
+                <i class="bi bi-people"></i> Equipo
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="mapa-tab" data-bs-toggle="tab" data-bs-target="#mapa" type="button" role="tab">
+                <i class="bi bi-geo-alt"></i> Mapa
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="dashboardTabContent">
+        <!-- Tab Formularios -->
+        <div class="tab-pane fade show active" id="formularios" role="tabpanel">
+            <div class="row">
+                <!-- Tabla de Formularios -->
+                <div class="col-lg-8 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-3 d-md-none">Formularios E-14</h5>
+                            <h5 class="mb-0 d-none d-md-block">Formularios E-14</h5>
+                            
+                            <!-- Barra de Búsqueda -->
+                            <div class="search-bar mt-3">
+                                <input type="search" 
+                                       class="form-control" 
+                                       placeholder="🔍 Buscar por mesa o testigo..." 
+                                       oninput="buscarFormularios(this.value)">
+                            </div>
+                            
+                            <!-- Filtros con Chips -->
+                            <div class="filter-chips mt-3">
+                                <button class="chip active" onclick="filtrarPorEstado('')">
+                                    Todos <span class="badge" id="badgeTodos">0</span>
+                                </button>
+                                <button class="chip" onclick="filtrarPorEstado('pendiente')">
+                                    Pendientes <span class="badge bg-warning" id="badgePendientes">0</span>
+                                </button>
+                                <button class="chip" onclick="filtrarPorEstado('validado')">
+                                    Validados <span class="badge bg-success" id="badgeValidados">0</span>
+                                </button>
+                                <button class="chip" onclick="filtrarPorEstado('rechazado')">
+                                    Rechazados <span class="badge bg-danger" id="badgeRechazados">0</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Vista de Cards para Móvil -->
+                            <div id="formulariosCards" class="d-md-none">
+                                <!-- Se llenará dinámicamente con JavaScript -->
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </div>
+                                    <p class="text-muted mt-2">Cargando formularios...</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Vista de Tabla para Desktop -->
+                            <div class="d-none d-md-block">
+                                <div class="table-responsive">
+                                    <table class="table table-hover formulario-table" id="formulariosTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Mesa</th>
+                                                <th>Testigo</th>
+                                                <th>Tipo Elección</th>
+                                                <th>Estado</th>
+                                                <th>Total Votos</th>
+                                                <th>Fecha</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="6" class="text-center py-4">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="visually-hidden">Cargando...</span>
+                                                    </div>
+                                                    <p class="text-muted mt-2">Cargando formularios...</p>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Lateral -->
+                <div class="col-lg-4">
+                    <!-- Consolidado -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="mb-0">Consolidado del Puesto</h5>
+                        </div>
+                        <div class="card-body" id="consolidadoPanel">
+                            <p class="text-muted">Cargando consolidado...</p>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Mesas -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Estado de Mesas</h5>
+                        </div>
+                        <div class="card-body" id="mesasPanel">
+                            <p class="text-muted">Cargando mesas...</p>
+                        </div>
+                    </div>
+
+                    <!-- Panel de Testigos -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="bi bi-people"></i> Testigos del Puesto</h6>
+                        </div>
+                        <div class="card-body" id="testigosPanel">
+                            <p class="text-muted">Cargando testigos...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab E-24 Consolidado -->
+        <div class="tab-pane fade" id="e24" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Consolidado E-24 del Puesto</h5>
+                    <div class="btn-group">
+                        <button class="btn btn-success btn-sm" onclick="exportarDatosPuesto()">
+                            <i class="bi bi-download"></i> Exportar Datos
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="generarPDFE24()">
+                            <i class="bi bi-file-pdf"></i> Generar E-24
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Resumen General -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted mb-2">Total Mesas</h6>
+                                    <h3 id="e24TotalMesas">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success bg-opacity-10">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted mb-2">Mesas Validadas</h6>
+                                    <h3 id="e24MesasValidadas">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info bg-opacity-10">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted mb-2">Total Votos</h6>
+                                    <h3 id="e24TotalVotos">0</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-primary bg-opacity-10">
+                                <div class="card-body text-center">
+                                    <h6 class="text-muted mb-2">Participación</h6>
+                                    <h3 id="e24Participacion">0%</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Mesas con Votos -->
+                    <h6 class="mb-3">Detalle por Mesa</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered" id="e24Table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Mesa</th>
+                                    <th>Testigo</th>
+                                    <th>Estado</th>
+                                    <th class="text-end">Votantes</th>
+                                    <th class="text-end">Votos</th>
+                                    <th class="text-end">Válidos</th>
+                                    <th class="text-end">Nulos</th>
+                                    <th class="text-end">Blanco</th>
+                                    <th class="text-end">%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="9" class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Cargando...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-secondary fw-bold">
+                                <tr>
+                                    <td colspan="3">TOTALES</td>
+                                    <td class="text-end" id="e24FooterVotantes">0</td>
+                                    <td class="text-end" id="e24FooterVotos">0</td>
+                                    <td class="text-end" id="e24FooterValidos">0</td>
+                                    <td class="text-end" id="e24FooterNulos">0</td>
+                                    <td class="text-end" id="e24FooterBlanco">0</td>
+                                    <td class="text-end" id="e24FooterParticipacion">0%</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- Consolidado por Partido -->
+                    <h6 class="mb-3 mt-4">Votos por Partido (Solo Mesas Validadas)</h6>
+                    <div id="e24VotosPartidos">
+                        <p class="text-muted">Cargando datos...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab E-24 -->
+
+        <!-- Tab Incidentes -->
+        <div class="tab-pane fade" id="incidentes" role="tabpanel">
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Incidentes Reportados en el Puesto</h5>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-primary active" onclick="filtrarIncidentes('')">Todos</button>
+                                <button type="button" class="btn btn-outline-primary" onclick="filtrarIncidentes('reportado')">Reportados</button>
+                                <button type="button" class="btn btn-outline-warning" onclick="filtrarIncidentes('en_revision')">En Revisión</button>
+                                <button type="button" class="btn btn-outline-success" onclick="filtrarIncidentes('resuelto')">Resueltos</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="incidentesLista">
+                                <p class="text-muted text-center py-4">Cargando incidentes...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab Incidentes -->
+
+        <!-- Tab Delitos -->
+        <div class="tab-pane fade" id="delitos" role="tabpanel">
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Delitos Electorales Reportados en el Puesto</h5>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-primary active" onclick="filtrarDelitos('')">Todos</button>
+                                <button type="button" class="btn btn-outline-primary" onclick="filtrarDelitos('reportado')">Reportados</button>
+                                <button type="button" class="btn btn-outline-warning" onclick="filtrarDelitos('en_investigacion')">En Investigación</button>
+                                <button type="button" class="btn btn-outline-success" onclick="filtrarDelitos('investigado')">Investigados</button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                <strong>Importante:</strong> Los delitos electorales requieren atención prioritaria. Revise y gestione cada reporte cuidadosamente.
+                            </div>
+                            <div id="delitosLista">
+                                <p class="text-muted text-center py-4">Cargando delitos...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab Delitos -->
+
+        <!-- ⭐ NUEVA TAB: Estado del Equipo -->
+        <div class="tab-pane fade" id="equipo" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-people"></i> Estado de Testigos del Puesto
+                    </h5>
+                    <button class="btn btn-sm btn-primary" onclick="actualizarEstadoEquipo()">
+                        <i class="bi bi-arrow-clockwise"></i> Actualizar
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="estadoEquipoContainer">
+                        <div class="text-center py-4">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Cargando estado del equipo...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab Estado del Equipo -->
+
+        <!-- ⭐ NUEVA TAB: Mapa en Tiempo Real -->
+        <div class="tab-pane fade" id="mapa" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-geo-alt"></i> Geolocalización en Tiempo Real
+                    </h5>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-primary" onclick="centrarMapaEnPuesto()">
+                            <i class="bi bi-building"></i> Centrar en Puesto
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="ajustarVistaMapa()">
+                            <i class="bi bi-arrows-fullscreen"></i> Ver Todo
+                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="actualizarMapa()">
+                            <i class="bi bi-arrow-clockwise"></i> Actualizar
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <!-- Contenedor del mapa -->
+                    <div id="mapaGeolocalizacion" style="height: 600px; width: 100%;"></div>
+                </div>
+                <div class="card-footer">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <div class="marker-pin marker-puesto me-2" style="width: 20px; height: 28px; transform: rotate(-45deg);">
+                                    <i class="bi bi-building" style="transform: rotate(45deg); font-size: 12px; color: white;"></i>
+                                </div>
+                                <span>Puesto de Votación</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <div class="marker-pin marker-usuario marker-activo me-2" style="width: 20px; height: 28px; transform: rotate(-45deg);">
+                                    <i class="bi bi-person" style="transform: rotate(45deg); font-size: 12px; color: white;"></i>
+                                </div>
+                                <span>Usuario Activo</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <div class="marker-pin marker-usuario marker-inactivo me-2" style="width: 20px; height: 28px; transform: rotate(-45deg);">
+                                    <i class="bi bi-person" style="transform: rotate(45deg); font-size: 12px; color: white;"></i>
+                                </div>
+                                <span>Usuario Inactivo</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <div class="marker-pin marker-usuario marker-ausente me-2" style="width: 20px; height: 28px; transform: rotate(-45deg);">
+                                    <i class="bi bi-person" style="transform: rotate(45deg); font-size: 12px; color: white;"></i>
+                                </div>
+                                <span>Usuario Ausente</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab Mapa -->
+
+    </div>
+</div>
+
+<!-- Modal de Validación -->
+<div class="modal fade" id="validacionModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-xl-custom">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Validar Formulario E-14</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="split-view">
+                    <!-- Imagen del formulario -->
+                    <div class="split-view-left">
+                        <h6 class="mb-3">📸 Imagen del Formulario</h6>
+                        <div class="image-preview-modal" id="imagenFormulario">
+                            <p class="text-muted">No hay imagen disponible</p>
+                        </div>
+                    </div>
+
+                    <!-- Datos digitados -->
+                    <div class="split-view-right">
+                        <h6 class="mb-3">📊 Datos Digitados</h6>
+                        
+                        <!-- Información de la mesa -->
+                        <div class="mb-3">
+                            <div class="data-field">
+                                <label>Mesa</label>
+                                <div class="value" id="valMesa">-</div>
+                            </div>
+                            <div class="data-field">
+                                <label>Testigo</label>
+                                <div class="value" id="valTestigo">-</div>
+                            </div>
+                        </div>
+
+                        <!-- Datos de votación -->
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">Datos de Votación</h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="btnEditarDatos" onclick="habilitarEdicion()">
+                                <i class="bi bi-pencil"></i> Editar
+                            </button>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <div class="data-field">
+                                    <label>Votantes Registrados</label>
+                                    <div class="value" id="valVotantesRegistrados">0</div>
+                                    <input type="number" class="form-control form-control-sm d-none" id="editVotantesRegistrados" min="0" readonly>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="data-field">
+                                    <label>Total Votos</label>
+                                    <div class="value" id="valTotalVotos">0</div>
+                                    <input type="number" class="form-control form-control-sm d-none" id="editTotalVotos" min="0">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="data-field">
+                                    <label>Votos Válidos</label>
+                                    <div class="value" id="valVotosValidos">0</div>
+                                    <input type="number" class="form-control form-control-sm d-none" id="editVotosValidos" min="0">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="data-field">
+                                    <label>Votos Nulos</label>
+                                    <div class="value" id="valVotosNulos">0</div>
+                                    <input type="number" class="form-control form-control-sm d-none" id="editVotosNulos" min="0">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="data-field">
+                                    <label>Votos en Blanco</label>
+                                    <div class="value" id="valVotosBlanco">0</div>
+                                    <input type="number" class="form-control form-control-sm d-none" id="editVotosBlanco" min="0">
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="data-field">
+                                    <label>Tarjetas No Marcadas</label>
+                                    <div class="value" id="valTarjetasNoMarcadas">0</div>
+                                    <input type="number" class="form-control form-control-sm d-none" id="editTarjetasNoMarcadas" min="0">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Alerta de edición -->
+                        <div class="alert alert-warning py-2 d-none" id="alertaEdicion">
+                            <small><i class="bi bi-info-circle"></i> Modo de edición activado. Los cambios se registrarán en el historial.</small>
+                        </div>
+
+                        <!-- Validaciones automáticas -->
+                        <h6 class="mb-2">Validaciones Automáticas</h6>
+                        <div id="validacionesAutomaticas">
+                            <!-- Se llenarán dinámicamente -->
+                        </div>
+
+                        <!-- Votos por partido -->
+                        <h6 class="mb-2 mt-3">Votos por Partido</h6>
+                        <div id="votosPartidosList">
+                            <!-- Se llenarán dinámicamente -->
+                        </div>
+
+                        <!-- Observaciones -->
+                        <div class="mt-3">
+                            <label class="form-label">Observaciones del Testigo</label>
+                            <div class="data-field">
+                                <div class="value" id="valObservaciones">Sin observaciones</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-danger" id="btnRechazar" onclick="mostrarModalRechazo()">
+                    <i class="bi bi-x-circle"></i> Rechazar
+                </button>
+                <button type="button" class="btn btn-warning d-none" id="btnCancelarEdicion" onclick="cancelarEdicion()">
+                    <i class="bi bi-x"></i> Cancelar Edición
+                </button>
+                <button type="button" class="btn btn-success" id="btnValidar" onclick="validarFormulario()">
+                    <i class="bi bi-check-circle"></i> Validar
+                </button>
+                <button type="button" class="btn btn-primary d-none" id="btnValidarConCambios" onclick="validarConCambios()">
+                    <i class="bi bi-check-circle-fill"></i> Validar con Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Rechazo -->
+<div class="modal fade" id="rechazoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Rechazar Formulario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    El formulario será devuelto al testigo para corrección.
+                </div>
+                
+                <div class="mb-3">
+                    <label for="motivoRechazo" class="form-label">Motivo del Rechazo *</label>
+                    <textarea class="form-control" id="motivoRechazo" rows="4" required 
+                              placeholder="Explique claramente el motivo del rechazo..."></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Motivos Comunes:</label>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary text-start" 
+                                onclick="seleccionarMotivo('Imagen borrosa o ilegible')">
+                            Imagen borrosa o ilegible
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary text-start" 
+                                onclick="seleccionarMotivo('Totales no coinciden con la suma de votos')">
+                            Totales no coinciden con la suma de votos
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary text-start" 
+                                onclick="seleccionarMotivo('Datos incompletos')">
+                            Datos incompletos
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary text-start" 
+                                onclick="seleccionarMotivo('Discrepancia entre imagen y datos digitados')">
+                            Discrepancia entre imagen y datos digitados
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="confirmarRechazo()">
+                    <i class="bi bi-x-circle"></i> Confirmar Rechazo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para gestionar incidente -->
+<div class="modal fade" id="gestionarIncidenteModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Gestionar Incidente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="detalleIncidente"></div>
+                <hr>
+                <h6>Cambiar Estado</h6>
+                <div class="mb-3">
+                    <label class="form-label">Nuevo Estado</label>
+                    <select class="form-select" id="nuevoEstadoIncidente">
+                        <option value="en_revision">En Revisión</option>
+                        <option value="resuelto">Resuelto</option>
+                        <option value="escalado">Escalar a Superior</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Comentario / Notas de Resolución</label>
+                    <textarea class="form-control" id="comentarioIncidente" rows="3" placeholder="Agregue comentarios sobre la gestión del incidente..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarGestionIncidente()">
+                    <i class="bi bi-check-circle"></i> Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para gestionar delito -->
+<div class="modal fade" id="gestionarDelitoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Gestionar Delito Electoral</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="detalleDelito"></div>
+                <hr>
+                <h6>Cambiar Estado</h6>
+                <div class="mb-3">
+                    <label class="form-label">Nuevo Estado</label>
+                    <select class="form-select" id="nuevoEstadoDelito">
+                        <option value="en_investigacion">En Investigación</option>
+                        <option value="investigado">Investigado</option>
+                        <option value="escalado">Escalar a Auditor</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Comentario / Resultado de Investigación</label>
+                    <textarea class="form-control" id="comentarioDelito" rows="4" placeholder="Agregue comentarios sobre la investigación del delito..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" onclick="guardarGestionDelito()">
+                    <i class="bi bi-check-circle"></i> Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Navigation (Solo Móvil) -->
+<nav class="bottom-nav d-md-none">
+    <a href="#" class="bottom-nav-item active" data-tab="formularios" onclick="cambiarTab('formularios'); return false;">
+        <i class="bi bi-file-earmark-text"></i>
+        <span>Formularios</span>
+        <span class="badge bg-warning" id="navBadgeFormularios" style="display: none;">0</span>
+    </a>
+    <a href="#" class="bottom-nav-item" data-tab="alertas" onclick="cambiarTab('alertas'); return false;">
+        <i class="bi bi-exclamation-triangle"></i>
+        <span>Alertas</span>
+        <span class="badge bg-danger" id="navBadgeAlertas" style="display: none;">0</span>
+    </a>
+    <a href="#" class="bottom-nav-item" data-tab="equipo" onclick="cambiarTab('equipo'); return false;">
+        <i class="bi bi-people"></i>
+        <span>Equipo</span>
+    </a>
+    <a href="#" class="bottom-nav-item" data-tab="mapa" onclick="cambiarTab('mapa'); return false;">
+        <i class="bi bi-geo-alt"></i>
+        <span>Mapa</span>
+    </a>
+</nav>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- Leaflet para mapas -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Script de geolocalización ya está cargado en base.html -->
+
+<script src="{{ url_for('static', filename='js/incidentes-delitos.js') }}"></script>
+<script src="{{ url_for('static', filename='js/coordinador-puesto.js') }}"></script>
+<script src="{{ url_for('static', filename='js/coordinador-puesto-mejoras.js') }}"></script>
+
+<script>
+// Inicializar mapa de geolocalización cuando se abre el tab de mapa
+document.addEventListener('DOMContentLoaded', function() {
+    const mapaTab = document.getElementById('mapa-tab');
+    if (mapaTab) {
+        mapaTab.addEventListener('shown.bs.tab', function() {
+            if (!window.mapaPuesto) {
+                console.log('Inicializando mapa de puesto...');
+                window.mapaPuesto = new MapaGeolocalizacion('mapaGeolocalizacion', {
+                    center: [1.6144, -75.6062], // Caquetá, Colombia
+                    zoom: 15,
+                    autoUpdate: true,
+                    updateInterval: 30000, // 30 segundos
+                    showPuestos: true,
+                    showUsuarios: true
+                });
+                window.mapaPuesto.init();
+            }
+        });
+    }
+});
+
+// Funciones para los botones del mapa
+function centrarMapaEnPuesto() {
+    if (window.mapaPuesto) {
+        window.mapaPuesto.centrarEn(1.6144, -75.6062, 15);
+    }
+}
+
+function ajustarVistaMapa() {
+    if (window.mapaPuesto) {
+        window.mapaPuesto.ajustarVista();
+    }
+}
+
+function actualizarMapa() {
+    if (window.mapaPuesto) {
+        window.mapaPuesto.actualizar();
+    }
+}
+</script>
+
+{% endblock %}

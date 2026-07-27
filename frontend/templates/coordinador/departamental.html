@@ -1,0 +1,384 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Coordinador Departamental{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard-universal-v2.css') }}">
+<style>
+    /* Cards de municipios para móvil */
+    .municipio-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .municipio-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    .municipio-card.selected {
+        border-color: #0d6efd;
+        background-color: #e7f3ff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3 pb-5 pb-md-3">
+    <!-- Header Mejorado -->
+    <div class="dashboard-header">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h2><i class="bi bi-map"></i> Coordinador Departamental</h2>
+                <p class="mb-0">Departamento: <span id="departamentoNombre">Cargando...</span></p>
+            </div>
+            <div class="d-none d-md-flex gap-2">
+                <button class="btn btn-outline-primary btn-sm" onclick="actualizarDatos()">
+                    <i class="bi bi-arrow-clockwise"></i> Actualizar
+                </button>
+                <button class="btn btn-outline-danger btn-sm" onclick="logout()">
+                    <i class="bi bi-box-arrow-right"></i> Salir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards Mejoradas -->
+    <div class="stats-grid">
+        <div class="stat-card primary">
+            <h6>Municipios</h6>
+            <h3 id="statMunicipios">0</h3>
+            <small>Total</small>
+        </div>
+        <div class="stat-card success">
+            <h6>Puestos</h6>
+            <h3 id="statPuestos">0</h3>
+            <small>Activos</small>
+        </div>
+        <div class="stat-card warning">
+            <h6>Formularios</h6>
+            <h3 id="statFormularios">0</h3>
+            <small>Procesados</small>
+        </div>
+        <div class="stat-card info">
+            <h6>Participación</h6>
+            <h3 id="statParticipacion">0%</h3>
+            <small>Estimada</small>
+        </div>
+    </div>
+
+    <!-- Tabs Desktop (ocultos en móvil) -->
+    <ul class="nav nav-tabs mb-3 d-none d-md-flex" id="departamentalTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="municipios-tab" data-bs-toggle="tab" data-bs-target="#municipios" type="button" role="tab">
+                <i class="bi bi-building"></i> Municipios
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="consolidado-tab" data-bs-toggle="tab" data-bs-target="#consolidado" type="button" role="tab">
+                <i class="bi bi-pie-chart"></i> Consolidado
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="analisis-tab" data-bs-toggle="tab" data-bs-target="#analisis" type="button" role="tab">
+                <i class="bi bi-bar-chart"></i> Análisis
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="mapa-tab" data-bs-toggle="tab" data-bs-target="#mapa" type="button" role="tab">
+                <i class="bi bi-geo-alt"></i> Mapa
+            </button>
+        </li>
+    </ul>
+
+    <!-- Contenido de pestañas -->
+    <div class="tab-content" id="departamentalTabsContent">
+        
+        <!-- Tab Municipios -->
+        <div class="tab-pane fade show active" id="municipios" role="tabpanel">
+            <!-- Botones de Acción Rápida (Móvil) -->
+            <div class="quick-actions d-md-none mb-3">
+                <button class="btn-touch btn-primary-touch btn-touch-block" onclick="generarReporte()">
+                    <i class="bi bi-file-earmark-pdf"></i>
+                    Generar Reporte Departamental
+                </button>
+                <button class="btn-touch btn-info-touch btn-touch-block" onclick="exportarDatos()">
+                    <i class="bi bi-download"></i>
+                    Exportar Datos
+                </button>
+            </div>
+
+            <!-- Búsqueda y Filtros -->
+            <div class="mb-3">
+                <div class="search-bar">
+                    <i class="bi bi-search"></i>
+                    <input type="text" class="search-input" id="searchMunicipio" 
+                           placeholder="Buscar municipio..." onkeyup="buscarMunicipio()">
+                </div>
+                
+                <div class="filter-chips">
+                    <button class="filter-chip active" onclick="filtrarMunicipios('')">
+                        Todos <span class="badge" id="badgeTodos">0</span>
+                    </button>
+                    <button class="filter-chip" onclick="filtrarMunicipios('completo')">
+                        Completos <span class="badge bg-success" id="badgeCompletos">0</span>
+                    </button>
+                    <button class="filter-chip" onclick="filtrarMunicipios('incompleto')">
+                        Incompletos <span class="badge bg-warning" id="badgeIncompletos">0</span>
+                    </button>
+                    <button class="filter-chip" onclick="filtrarMunicipios('con_discrepancias')">
+                        Discrepancias <span class="badge bg-danger" id="badgeDiscrepancias">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Lista de municipios -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Municipios del Departamento</h5>
+                    <button class="btn btn-sm btn-outline-primary d-none d-md-inline-flex" onclick="actualizarDatos()">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- Vista de Cards para Móvil -->
+                    <div class="d-md-none" id="municipiosCardsMobile">
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-building" style="font-size: 3rem;"></i>
+                            <p class="mt-2">Cargando municipios...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Vista de Tabla para Desktop -->
+                    <div class="table-responsive d-none d-md-block">
+                        <table class="table table-hover" id="municipiosTable">
+                            <thead>
+                                <tr>
+                                    <th>Municipio</th>
+                                    <th>Coordinador</th>
+                                    <th>Puestos</th>
+                                    <th>Avance</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Cargando...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab Municipios -->
+
+        <!-- Tab Consolidado -->
+        <div class="tab-pane fade" id="consolidado" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Consolidado Departamental</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-8 mb-3">
+                            <canvas id="chartPartidos" height="80"></canvas>
+                        </div>
+                        <div class="col-lg-4">
+                            <div id="resumenDepartamental">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-success" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab Consolidado -->
+
+        <!-- Tab Análisis -->
+        <div class="tab-pane fade" id="analisis" role="tabpanel">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Estadísticas</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="estadisticasGenerales">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-header bg-warning">
+                            <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Discrepancias</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="discrepanciasLista">
+                                <div class="text-center py-4">
+                                    <div class="spinner-border text-warning" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-file-earmark-pdf"></i> Reportes</h5>
+                    <button class="btn btn-primary d-none d-md-inline-flex" onclick="generarReporte()">
+                        <i class="bi bi-plus-circle"></i> Generar Reporte
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="reportesLista">
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-file-earmark-pdf" style="font-size: 3rem;"></i>
+                            <p class="mt-2">No hay reportes generados</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab Análisis -->
+
+        <!-- Tab Mapa -->
+        <div class="tab-pane fade" id="mapa" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-geo-alt"></i> Mapa del Departamento</h5>
+                </div>
+                <div class="card-body">
+                    <div id="mapa-departamental" style="height: 500px; border-radius: 8px;"></div>
+                </div>
+            </div>
+        </div>
+        <!-- Fin Tab Mapa -->
+
+    </div>
+    <!-- Fin Tab Content -->
+</div>
+
+<!-- Bottom Navigation (Solo Móvil) -->
+<nav class="bottom-nav d-md-none">
+    <a href="#municipios" class="bottom-nav-item active" data-bs-toggle="tab" data-tab="municipios">
+        <i class="bi bi-speedometer2-fill"></i>
+        <span>Dashboard</span>
+    </a>
+    <a href="#municipios" class="bottom-nav-item" data-bs-toggle="tab" data-tab="municipios">
+        <i class="bi bi-building-fill"></i>
+        <span>Municipios</span>
+    </a>
+    <a href="#analisis" class="bottom-nav-item" data-bs-toggle="tab" data-tab="analisis">
+        <i class="bi bi-bar-chart-fill"></i>
+        <span>Análisis</span>
+    </a>
+    <a href="#mapa" class="bottom-nav-item" data-bs-toggle="tab" data-tab="mapa">
+        <i class="bi bi-geo-alt-fill"></i>
+        <span>Mapa</span>
+    </a>
+</nav>
+
+<!-- Modal Detalle Municipio -->
+<div class="modal fade" id="municipioModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalle del Municipio</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="municipioDetalle">
+                    <p class="text-muted">Cargando...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+<!-- Leaflet para mapas -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Script de geolocalización ya está cargado en base.html -->
+
+<script>
+// Funciones auxiliares
+function logout() {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_data');
+    window.location.href = '/auth/login';
+}
+
+function actualizarDatos() {
+    console.log('Actualizando datos...');
+}
+
+function filtrarMunicipios(filtro) {
+    console.log('Filtrando municipios:', filtro);
+}
+
+function buscarMunicipio() {
+    console.log('Buscando municipio...');
+}
+
+function generarReporte() {
+    console.log('Generando reporte...');
+}
+
+function exportarDatos() {
+    console.log('Exportando datos...');
+}
+
+// Inicializar mapa de geolocalización cuando se abre el tab de mapa
+document.addEventListener('DOMContentLoaded', function() {
+    const mapaTab = document.getElementById('mapa-tab');
+    if (mapaTab) {
+        mapaTab.addEventListener('shown.bs.tab', function() {
+            if (!window.mapaDepartamental) {
+                console.log('Inicializando mapa departamental...');
+                window.mapaDepartamental = new MapaGeolocalizacion('mapa-departamental', {
+                    center: [1.6144, -75.6062], // Caquetá, Colombia
+                    zoom: 9,
+                    autoUpdate: true,
+                    updateInterval: 30000, // 30 segundos
+                    showPuestos: true,
+                    showUsuarios: true
+                });
+                window.mapaDepartamental.init();
+            }
+        });
+    }
+});
+</script>
+<script src="{{ url_for('static', filename='js/coordinador-departamental.js') }}"></script>
+<!-- Mejoras UI/UX Mobile-First -->
+<script src="{{ url_for('static', filename='js/coordinador-departamental-mejoras.js') }}"></script>
+{% endblock %}
