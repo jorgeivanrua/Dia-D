@@ -20,13 +20,11 @@ services:
     depends_on:
       - postgres
       - minio
-      - chroma
     ports:
       - "5000:5000"
     volumes:
       - ./instance:/app/instance
       - ./uploads:/app/uploads
-      - chroma_data:/app/chroma_db
 
   postgres:
     image: postgres:15
@@ -54,18 +52,6 @@ services:
     volumes:
       - minio_data:/data
 
-  chroma:
-    image: chromadb/chromadb:latest
-    container_name: dia_d_chroma
-    environment:
-      # If using the server mode, set CHROMA_SERVER_HOST/PORT
-      - CHROMA_SERVER_HTTP_PORT=8000
-    ports:
-      - "8000:8000"
-    volumes:
-      - chroma_data:/data
-
 volumes:
   postgres_data:
   minio_data:
-  chroma_data:
