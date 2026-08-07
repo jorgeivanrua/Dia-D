@@ -30,8 +30,7 @@ def setup_logging(app):
     if not app.debug:
         # Crear directorio de logs si no existe
         logs_dir = os.path.join(os.getcwd(), 'logs')
-        if not os.path.exists(logs_dir):
-            os.makedirs(logs_dir)
+        os.makedirs(logs_dir, exist_ok=True)
         
         # Archivo de logs con rotación
         file_handler = RotatingFileHandler(

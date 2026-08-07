@@ -16,7 +16,7 @@ Estas credenciales son **idénticas** tanto en desarrollo local como en Render:
 
 | Usuario | Contraseña | Rol | Descripción |
 |---------|-----------|-----|-------------|
-| **monitoreo** | **Monitoreo2025!** | Monitoreo | Dashboard de monitoreo en tiempo real |
+| **monitoreo** | **test123** | Monitoreo | Dashboard de monitoreo en tiempo real |
 | **auditor** | **test123** | Auditor Electoral | Auditoría del sistema |
 | **coord_dept** | **test123** | Coordinador Departamental | Coordinación departamental |
 | **coord_mun** | **test123** | Coordinador Municipal | Coordinación municipal |
@@ -35,7 +35,7 @@ Las contraseñas están definidas en **un solo lugar** y se usan en todos los am
 
 ```python
 usuarios = [
-    {'nombre': 'monitoreo', 'rol': 'monitoreo', 'password': 'Monitoreo2025!'},
+    {'nombre': 'monitoreo', 'rol': 'monitoreo', 'password': 'test123'},
     {'nombre': 'auditor', 'rol': 'auditor_electoral', 'password': 'test123'},
     {'nombre': 'coord_dept', 'rol': 'coordinador_departamental', 'password': 'test123'},
     {'nombre': 'coord_mun', 'rol': 'coordinador_municipal', 'password': 'test123'},
@@ -63,7 +63,7 @@ python run.py
 # Probar login
 URL: http://localhost:5000
 Usuario: monitoreo
-Contraseña: Monitoreo2025!
+Contraseña: test123
 ```
 
 ### Render (Producción)
@@ -72,7 +72,7 @@ Contraseña: Monitoreo2025!
 # URL de tu app en Render
 URL: https://tu-app.onrender.com
 Usuario: monitoreo
-Contraseña: Monitoreo2025!
+Contraseña: test123
 ```
 
 ---
@@ -187,7 +187,7 @@ def verificar_contraseñas():
     app = create_app()
     with app.app_context():
         usuarios = [
-            ('monitoreo', 'Monitoreo2025!'),
+            ('monitoreo', 'test123'),
             ('auditor', 'test123'),
             ('coord_dept', 'test123'),
             ('coord_mun', 'test123'),
@@ -232,7 +232,7 @@ if __name__ == '__main__':
 
 **Solución**:
 1. Verificar que estás usando la contraseña correcta:
-   - `monitoreo`: `Monitoreo2025!` (con mayúscula y signo de exclamación)
+   - `monitoreo`: `test123`
    - Otros: `test123` (todo minúsculas)
 
 2. Verificar en la base de datos:

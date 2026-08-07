@@ -7,6 +7,7 @@ El sistema tiene usuarios **fijos** con roles específicos. Estos NO son usuario
 ## Credenciales de Acceso
 
 ### Super Administrador
+
 ```
 Usuario: admin
 Password: admin123
@@ -15,6 +16,7 @@ Ubicación: Sin ubicación (acceso global)
 ```
 
 ### Administradores Departamentales
+
 ```
 Usuario: admin_caqueta
 Password: admin123
@@ -23,6 +25,7 @@ Ubicación: Departamento Caquetá
 ```
 
 ### Administradores Municipales
+
 ```
 Usuario: admin_florencia
 Password: admin123
@@ -31,49 +34,55 @@ Ubicación: Municipio Florencia
 ```
 
 ### Coordinadores Departamentales
+
 ```
 Usuario: coord_dpto_caqueta
-Password: coord123
+Password: test123
 Rol: coordinador_departamental
 Ubicación: Departamento Caquetá
 ```
 
 ### Coordinadores Municipales
+
 ```
 Usuario: coord_mun_florencia
-Password: coord123
+Password: test123
 Rol: coordinador_municipal
 Ubicación: Municipio Florencia
 ```
 
 ### Coordinadores de Puesto
+
 ```
 Usuario: coord_puesto_01, coord_puesto_02, ..., coord_puesto_10
-Password: coord123
+Password: test123
 Rol: coordinador_puesto
 Ubicación: Puesto específico (01, 02, etc.)
 ```
 
 ### Testigos Electorales
+
 ```
 Usuario: testigo_01_1, testigo_01_2, testigo_02_1, testigo_02_2, ...
-Password: testigo123
+Password: test123
 Rol: testigo_electoral
 Ubicación: Puesto específico
 ```
 
 ### Auditores
+
 ```
 Usuario: auditor_caqueta
-Password: auditor123
+Password: test123
 Rol: auditor_electoral
 Ubicación: Departamento Caquetá
 ```
 
 ### Usuario de Monitoreo
+
 ```
 Usuario: monitoreo
-Password: Monitoreo2025!
+Password: test123
 Rol: monitoreo
 Ubicación: Sin ubicación (acceso global)
 ```
@@ -84,6 +93,7 @@ El usuario de monitoreo tiene visibilidad completa del sistema sin restricciones
 **Dashboard:** `http://localhost:5000/monitoreo/dashboard`
 
 **Funcionalidades:**
+
 - 🗺️ Mapa global de usuarios geolocalizados
 - 📊 Estadísticas globales del sistema
 - 🎛️ Filtros avanzados por ubicación
@@ -158,17 +168,17 @@ Password: testigo123
 
 ## Contraseñas por Rol
 
-| Rol | Password |
-|-----|----------|
-| Super Admin | admin123 |
-| Admin Departamental | admin123 |
-| Admin Municipal | admin123 |
-| Coordinador Departamental | coord123 |
-| Coordinador Municipal | coord123 |
-| Coordinador de Puesto | coord123 |
-| Testigo Electoral | testigo123 |
-| Auditor Electoral | auditor123 |
-| Monitoreo | Monitoreo2025! |
+| Rol                       | Password       |
+| ------------------------- | -------------- |
+| Super Admin               | admin123       |
+| Admin Departamental       | admin123       |
+| Admin Municipal           | admin123       |
+| Coordinador Departamental | coord123       |
+| Coordinador Municipal     | coord123       |
+| Coordinador de Puesto     | coord123       |
+| Testigo Electoral         | testigo123     |
+| Auditor Electoral         | auditor123     |
+| Monitoreo                 | Monitoreo2025! |
 
 ## Seguridad
 
@@ -208,6 +218,7 @@ Editar `scripts/create_fixed_users.py` y agregar el nuevo usuario a la lista `us
 ```
 
 Luego ejecutar:
+
 ```bash
 python scripts/create_fixed_users.py
 ```
@@ -243,6 +254,7 @@ python scripts/verificar_roles_jwt.py
 **Causa**: Usuario o contraseña incorrectos, o ubicación incorrecta
 
 **Solución**:
+
 1. Verificar que el usuario existe
 2. Verificar la contraseña
 3. Verificar que la ubicación seleccionada sea correcta
@@ -253,6 +265,7 @@ python scripts/verificar_roles_jwt.py
 **Causa**: Demasiados intentos fallidos de login (5 intentos)
 
 **Solución**:
+
 1. Esperar 30 minutos
 2. O contactar al Super Admin para desbloquear la cuenta
 3. Super Admin puede usar "Corregir Roles" para desbloquear todas las cuentas
@@ -262,6 +275,7 @@ python scripts/verificar_roles_jwt.py
 **Causa**: Token JWT con rol incorrecto (sesión antigua)
 
 **Solución**:
+
 1. Cerrar sesión
 2. Volver a iniciar sesión
 3. Esto generará un nuevo token con el rol correcto
@@ -271,18 +285,21 @@ python scripts/verificar_roles_jwt.py
 ### Cambiar Contraseñas Masivamente
 
 Desde el Dashboard Super Admin:
+
 1. Clic en "Arreglar Contraseñas"
 2. Esto actualizará todas las contraseñas a los valores por defecto
 
 ### Desbloquear Cuentas
 
 Desde el Dashboard Super Admin:
+
 1. Clic en "Corregir Roles"
 2. Esto desbloqueará todas las cuentas y reseteará intentos fallidos
 
 ### Activar/Desactivar Usuarios
 
 Desde el Dashboard Super Admin:
+
 1. Ir a "Gestión de Usuarios"
 2. Buscar el usuario
 3. Clic en "Activar" o "Desactivar"

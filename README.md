@@ -35,6 +35,28 @@ Sistema web para la gestión y registro de formularios E-14 (Actas de Escrutinio
 
 ## 🔧 Instalación y Configuración
 
+### Opción Docker (rápida) 🐳
+
+Si quieres levantar la app con PostgreSQL y MinIO en contenedores:
+
+```bash
+docker compose up --build -d
+```
+
+Después de unos segundos, la aplicación estará disponible en:
+- http://localhost:5000
+- MinIO Console: http://localhost:9001
+
+Para ver los logs:
+```bash
+docker compose logs -f app
+```
+
+Para detenerlos:
+```bash
+docker compose down
+```
+
 ### Opción 1: Instalación Automática (Recomendada) ⚡
 
 **Windows:**

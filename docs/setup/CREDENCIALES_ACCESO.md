@@ -25,7 +25,7 @@ Ubicación: Ninguna (acceso global)
 ```
 Rol: Coordinador de Puesto
 Usuario en BD: coord_puesto_01, coord_puesto_02, etc.
-Password: coord123
+Password: test123
 Ubicación: Puesto específico
 ```
 
@@ -36,7 +36,7 @@ Ubicación: Puesto específico
    - Municipio: Florencia
    - Zona: 01
    - Puesto: 01 (o el que corresponda)
-3. Ingresar password: `coord123`
+3. Ingresar password: `test123`
 
 ---
 
@@ -44,7 +44,7 @@ Ubicación: Puesto específico
 ```
 Rol: Testigo Electoral
 Usuario en BD: testigo_01_1, testigo_01_2, testigo_02_1, etc.
-Password: testigo123
+Password: test123
 Ubicación: Puesto específico
 ```
 
@@ -55,7 +55,7 @@ Ubicación: Puesto específico
    - Municipio: Florencia
    - Zona: 01
    - Puesto: 01 (o el que corresponda)
-3. Ingresar password: `testigo123`
+3. Ingresar password: `test123`
 
 ---
 
@@ -63,7 +63,7 @@ Ubicación: Puesto específico
 ```
 Rol: Coordinador Municipal
 Usuario en BD: coord_mun_florencia
-Password: coord123
+Password: test123
 Ubicación: Municipio Florencia
 ```
 
@@ -72,7 +72,7 @@ Ubicación: Municipio Florencia
 2. Seleccionar:
    - Departamento: Caquetá
    - Municipio: Florencia
-3. Ingresar password: `coord123`
+3. Ingresar password: `test123`
 
 ---
 
@@ -80,7 +80,7 @@ Ubicación: Municipio Florencia
 ```
 Rol: Coordinador Departamental
 Usuario en BD: coord_dpto_caqueta
-Password: coord123
+Password: test123
 Ubicación: Departamento Caquetá
 ```
 
@@ -88,7 +88,7 @@ Ubicación: Departamento Caquetá
 1. Seleccionar rol: "Coordinador Departamental"
 2. Seleccionar:
    - Departamento: Caquetá
-3. Ingresar password: `coord123`
+3. Ingresar password: `test123`
 
 ---
 
@@ -129,7 +129,7 @@ Ubicación: Departamento Caquetá
 ```
 Rol: Auditor Electoral
 Usuario en BD: auditor_caqueta
-Password: auditor123
+Password: test123
 Ubicación: Departamento Caquetá
 ```
 
@@ -137,7 +137,7 @@ Ubicación: Departamento Caquetá
 1. Seleccionar rol: "Auditor Electoral"
 2. Seleccionar:
    - Departamento: Caquetá
-3. Ingresar password: `auditor123`
+3. Ingresar password: `test123`
 
 ---
 
@@ -148,11 +148,11 @@ Ubicación: Departamento Caquetá
 | Super Admin | `admin123` |
 | Admin Departamental | `admin123` |
 | Admin Municipal | `admin123` |
-| Coordinador Departamental | `coord123` |
-| Coordinador Municipal | `coord123` |
-| Coordinador de Puesto | `coord123` |
-| Testigo Electoral | `testigo123` |
-| Auditor Electoral | `auditor123` |
+| Coordinador Departamental | `test123` |
+| Coordinador Municipal | `test123` |
+| Coordinador de Puesto | `test123` |
+| Testigo Electoral | `test123` |
+| Auditor Electoral | `test123` |
 
 ## 🔍 Cómo Funciona el Login
 

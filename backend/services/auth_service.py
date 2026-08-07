@@ -55,7 +55,32 @@ class AuthService:
                 ubicacion_id=location.id,
                 activo=True
             ).first()
-        
+
+            # Si no hay usuario en el puesto, algunos testigos pueden estar registrados
+            # a nivel de mesa dentro del mismo puesto.
+            if not user and rol == 'testigo_electoral' and location.tipo == 'puesto':
+                logger.info(
+                    f"No se encontró usuario testigo en el puesto {location.puesto_codigo}; verificando mesas asociadas"
+                )
+
+                mesa_ids = [
+                    mesa.id for mesa in Location.query.filter_by(
+                        tipo='mesa',
+                        departamento_codigo=location.departamento_codigo,
+                        municipio_codigo=location.municipio_codigo,
+                        zona_codigo=location.zona_codigo,
+                        puesto_codigo=location.puesto_codigo
+                    ).all()
+                ]
+
+                if mesa_ids:
+                    user = User.query.filter(
+                        User.rol == rol,
+                        User.ubicacion_id.in_(mesa_ids),
+                        User.activo == True
+                    ).first()
+                    logger.info(f"Usuario encontrado en mesa del puesto: {user.id if user else None}")
+
         if not user:
             raise AuthenticationException("Credenciales inválidas")
         
@@ -110,17 +135,17 @@ class AuthService:
             return None
         
         query = Location.query
-        print(f"[LOCATION] Buscando ubicación - rol={rol}, ubicacion_data={ubicacion_data}")
+        logger.debug(f"Buscando ubicación - rol={rol}, ubicacion_data={ubicacion_data}")
         
         # Filtrar por departamento
         if 'departamento_codigo' in ubicacion_data:
             query = query.filter_by(departamento_codigo=ubicacion_data['departamento_codigo'])
-            print(f"[LOCATION] Filtrado por departamento: {ubicacion_data['departamento_codigo']}")
+            logger.debug(f"Filtrado por departamento: {ubicacion_data['departamento_codigo']}")
         
         # Según el rol, determinar el tipo de ubicación
         if rol in ['admin_departamental', 'coordinador_departamental', 'auditor_electoral']:
             query = query.filter_by(tipo='departamento')
-            print(f"[LOCATION] Filtrando por tipo=departamento")
+            logger.debug("Filtrando por tipo=departamento")
         
         elif rol in ['admin_municipal', 'coordinador_municipal']:
             if 'municipio_codigo' in ubicacion_data:
@@ -128,7 +153,7 @@ class AuthService:
                     tipo='municipio',
                     municipio_codigo=ubicacion_data['municipio_codigo']
                 )
-                print(f"[LOCATION] Filtrando por tipo=municipio, municipio_codigo={ubicacion_data['municipio_codigo']}")
+                logger.debug(f"Filtrando por tipo=municipio, municipio_codigo={ubicacion_data['municipio_codigo']}")
         
         elif rol == 'coordinador_puesto':
             if 'puesto_codigo' in ubicacion_data:
@@ -140,7 +165,9 @@ class AuthService:
                 if len(puesto_cod) < 8 and zona_cod:
                     # zona_codigo (6) + últimos 2 dígitos de puesto_codigo = código completo (8)
                     puesto_codigo_completo = zona_cod + puesto_cod[-2:]
-                    print(f"[LOCATION] Puesto código completo construido: {puesto_cod} -> {puesto_codigo_completo}")
+                    logger.debug(
+                        f"Puesto código completo construido: {puesto_cod} -> {puesto_codigo_completo}"
+                    )
                 else:
                     puesto_codigo_completo = puesto_cod
                 
@@ -149,7 +176,7 @@ class AuthService:
                     'puesto_codigo': puesto_codigo_completo
                 }
                 query = query.filter_by(**filters)
-                print(f"[LOCATION] Filtrando por tipo=puesto, puesto_codigo={puesto_codigo_completo}")
+                logger.debug(f"Filtrando por tipo=puesto, puesto_codigo={puesto_codigo_completo}")
         
         elif rol == 'testigo_electoral':
             # Testigos se autentican a nivel de puesto
@@ -163,7 +190,9 @@ class AuthService:
                 if len(puesto_cod) < 8 and zona_cod:
                     # zona_codigo (6) + últimos 2 dígitos de puesto_codigo = código completo (8)
                     puesto_codigo_completo = zona_cod + puesto_cod[-2:]
-                    print(f"[LOCATION] Puesto código completo construido: {puesto_cod} -> {puesto_codigo_completo}")
+                    logger.debug(
+                        f"Puesto código completo construido: {puesto_cod} -> {puesto_codigo_completo}"
+                    )
                 else:
                     puesto_codigo_completo = puesto_cod
                 
@@ -172,12 +201,34 @@ class AuthService:
                     'puesto_codigo': puesto_codigo_completo
                 }
                 query = query.filter_by(**filters)
-                print(f"[LOCATION] Filtrando por tipo=puesto, puesto_codigo={puesto_codigo_completo}")
-        
-        result = query.first()
-        print(f"[LOCATION] Resultado: {result.id if result else None}")
+                logger.debug(f"Filtrando por tipo=puesto, puesto_codigo={puesto_codigo_completo}")
+                result = query.first()
+                
+                # Si no encontramos el puesto directamente, intentar contra mesas dentro de ese puesto
+                if not result:
+                    logger.debug(
+                        f"No se encontró puesto para testigo, intentando buscar mesas bajo el puesto {puesto_codigo_completo}"
+                    )
+                    query = Location.query.filter_by(
+                        tipo='mesa',
+                        departamento_codigo=ubicacion_data.get('departamento_codigo'),
+                        municipio_codigo=ubicacion_data.get('municipio_codigo'),
+                        zona_codigo=ubicacion_data.get('zona_codigo'),
+                        puesto_codigo=puesto_codigo_completo
+                    )
+                    result = query.first()
+                    if result:
+                        logger.debug(f"Se encontró ubicación de mesa para testigo: {result.id}")
+                        return result
+            else:
+                result = None
+        else:
+            result = query.first()
+        logger.debug(f"Resultado de ubicación: {result.id if result else None}")
         if result:
-            print(f"[LOCATION] Detalles: id={result.id}, nombre={result.nombre_completo}, tipo={result.tipo}, puesto_codigo={result.puesto_codigo}")
+            logger.debug(
+                f"Detalles de ubicación: id={result.id}, nombre={result.nombre_completo}, tipo={result.tipo}, puesto_codigo={result.puesto_codigo}"
+            )
         
         return result
     

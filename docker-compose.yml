@@ -1,25 +1,28 @@
-version: '3.8'
-
 services:
   app:
     build: .
     container_name: dia_d_app
+    restart: unless-stopped
     environment:
-      - FLASK_ENV=production
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/electoral_db
-      - S3_ENABLED=True
-      - S3_ENDPOINT_URL=http://minio:9000
-      - S3_ACCESS_KEY=minioadmin
-      - S3_SECRET_KEY=minioadmin
-      - S3_BUCKET=electoral-evidencias
-      - S3_USE_SSL=False
-      - CHROMA_ENABLED=True
-      - CHROMA_PERSIST_DIR=/data/chroma
-      - CHROMA_SERVER_HOST=
-      - PORT=5000
+      FLASK_ENV: production
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/electoral_db
+      S3_ENABLED: "True"
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+      S3_BUCKET: electoral-evidencias
+      S3_USE_SSL: "False"
+      CHROMA_ENABLED: "True"
+      CHROMA_PERSIST_DIR: /data/chroma
+      CHROMA_SERVER_HOST: ""
+      PORT: "5000"
+      DB_HOST: postgres
+      DB_PORT: "5432"
     depends_on:
-      - postgres
-      - minio
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
     ports:
       - "5000:5000"
     volumes:
@@ -34,6 +37,12 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: electoral_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d electoral_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:

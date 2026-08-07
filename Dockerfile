@@ -1,25 +1,30 @@
-# Simple Dockerfile for the Flask app
+# Dockerfile para la aplicación Flask
 FROM python:3.11-slim
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
-# System deps
-RUN apt-get update && apt-get install -y build-essential gcc libpq-dev && rm -rf /var/lib/apt/lists/*
+# Dependencias del sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy project
-COPY . /app
+# Copiar dependencias primero para cachear mejor la build
+COPY requirements.txt ./
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Install dependencies
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+# Copiar el resto del proyecto
+COPY . .
+RUN chmod +x /app/docker-entrypoint.sh
 
-# Expose port
 EXPOSE 5000
 
-ENV FLASK_ENV=production
-ENV PORT=5000
+ENV FLASK_ENV=production \
+    PORT=5000
 
-CMD ["python", "run.py"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
