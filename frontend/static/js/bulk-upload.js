@@ -82,6 +82,15 @@ function nextUploadStep() {
     const currentStepEl = document.getElementById(`step${currentUploadStep}`);
     if (!currentStepEl) return;
     
+    // Para ubicaciones, el departamento es obligatorio antes de avanzar del paso 2 al 3
+    if (currentUploadStep === 2 && uploadConfig.type === 'ubicaciones') {
+        const deptVal = document.getElementById('uploadDepartamento')?.value;
+        if (!deptVal) {
+            showError('Debe seleccionar un departamento para cargar ubicaciones');
+            return;
+        }
+    }
+    
     currentStepEl.classList.add('d-none');
     
     currentUploadStep++;
@@ -125,7 +134,11 @@ function prevUploadStep() {
 async function loadUploadConfiguration() {
     try {
         // Cargar configuración desde el backend
-        const response = await fetch('/api/super-admin/bulk-upload/config', {
+        const url = uploadConfig.type === 'ubicaciones'
+            ? '/api/super-admin/bulk-upload/config?upload_type=ubicaciones'
+            : '/api/super-admin/bulk-upload/config';
+        
+        const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
@@ -188,7 +201,12 @@ async function loadMunicipios() {
         const result = await response.json();
         
         if (result.success) {
-            munSelect.innerHTML = '<option value="">Seleccionar...</option>' +
+            // Para ubicaciones, el municipio es opcional (puede cargarse el departamento completo)
+            const allOption = uploadConfig.type === 'ubicaciones'
+                ? '<option value="">Todos los municipios</option>'
+                : '<option value="">Seleccionar...</option>';
+            
+            munSelect.innerHTML = allOption +
                 result.data.map(mun => 
                     `<option value="${mun.codigo}">${mun.nombre}</option>`
                 ).join('');
@@ -214,7 +232,15 @@ function updateCurrentConfig() {
     
     const tipoText = document.getElementById('uploadTipoEleccion')?.selectedOptions[0]?.text || 'No especificado';
     const deptText = document.getElementById('uploadDepartamento')?.selectedOptions[0]?.text || 'No especificado';
-    const munText = document.getElementById('uploadMunicipio')?.selectedOptions[0]?.text || 'No especificado';
+    const munSelect = document.getElementById('uploadMunicipio');
+    let munText = 'No especificado';
+    if (munSelect) {
+        if (!munSelect.value) {
+            munText = uploadConfig.type === 'ubicaciones' ? 'Todos los municipios' : 'No especificado';
+        } else {
+            munText = munSelect.selectedOptions[0]?.text || 'No especificado';
+        }
+    }
     
     configEl.innerHTML = `
         <li><strong>Tipo:</strong> ${getUploadTypeText(uploadConfig.type)}</li>
@@ -363,7 +389,7 @@ function downloadTemplate() {
         'candidatos_lista_cerrada': 'partido_codigo,numero_lista,candidato_nombre,candidato_cedula,es_cabeza_lista,foto_url\nLIBERAL,1,Ana García Rodríguez,12345678,TRUE,',
         'candidatos_lista_abierta': 'partido_codigo,numero_lista,candidato_nombre,candidato_cedula,es_cabeza_lista,permite_voto_preferente,foto_url\nVERDE,1,Roberto Silva Mora,12345678,TRUE,TRUE,',
         'coaliciones': 'coalicion_nombre,partido_codigo,partido_nombre\nCoalición Centro Esperanza,VERDE,Alianza Verde',
-        'ubicaciones': 'departamento_codigo,departamento_nombre,municipio_codigo,municipio_nombre,zona_codigo,puesto_codigo,puesto_nombre,direccion,latitud,longitud\n18,CAQUETÁ,001,FLORENCIA,00,01,Puesto Centro,Calle 11 # 5-42,1.6143,-75.6062'
+        'ubicaciones': 'dd,mm,zz,pp,mesa,departamento,municipio,puesto,mesa_nombre,mujeres_mesa,hombres_mesa,total_mesa,comuna,direccion,LATITUD,LONGITUD\n44,01,01,01,01,CAQUETÁ,FLORENCIA,Puesto Centro,Mesa 1,20,18,38,,Calle 11 # 5-42,1.6143,-75.6062'
     };
     
     const template = templates[type];

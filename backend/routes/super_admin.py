@@ -6,6 +6,8 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from backend.models.user import User
 from backend.utils.decorators import role_required
+import os
+import csv
 
 super_admin_bp = Blueprint('super_admin', __name__, url_prefix='/api/super-admin')
 
@@ -2034,7 +2036,7 @@ def get_incidentes_delitos_admin():
 
 
 # ============================================================================
-# ENDPOINTS DE UBICACIONES (DIVIPOLA) - SOLO CAQUETÁ
+# ENDPOINTS DE UBICACIONES (DIVIPOLA)
 # ============================================================================
 
 @super_admin_bp.route('/locations/departamentos', methods=['GET'])
@@ -2042,31 +2044,25 @@ def get_incidentes_delitos_admin():
 @role_required(['super_admin'])
 def get_departamentos():
     """
-    Obtener departamento de Caquetá únicamente
+    Obtener departamentos cargados en la base de datos
     """
     try:
         from backend.database import db
         from backend.models.location import Location
         
-        # Solo retornar Caquetá (código 44)
-        departamento = db.session.query(Location).filter(
+        # Todos los departamentos cargados
+        departamentos = db.session.query(Location).filter(
             Location.tipo == 'departamento',
-            Location.departamento_codigo == '44'
-        ).first()
+            Location.activo == True
+        ).order_by(Location.departamento_nombre).all()
         
-        if departamento:
-            return jsonify({
-                'success': True,
-                'data': [{
-                    'departamento_codigo': departamento.departamento_codigo,
-                    'departamento_nombre': departamento.departamento_nombre
-                }]
-            })
-        else:
-            return jsonify({
-                'success': True,
-                'data': []
-            })
+        return jsonify({
+            'success': True,
+            'data': [{
+                'departamento_codigo': d.departamento_codigo,
+                'departamento_nombre': d.departamento_nombre
+            } for d in departamentos]
+        })
     except Exception as e:
         return jsonify({
             'success': False,
@@ -2169,7 +2165,7 @@ def get_puestos(zona_codigo):
 @role_required(['super_admin'])
 def get_mesas(puesto_codigo):
     """
-    Obtener mesas de un puesto de Caquetá
+    Obtener mesas de un puesto
     """
     try:
         from backend.database import db
@@ -2177,7 +2173,6 @@ def get_mesas(puesto_codigo):
         
         mesas = db.session.query(Location).filter(
             Location.tipo == 'mesa',
-            Location.departamento_codigo == '44',
             Location.puesto_codigo == puesto_codigo
         ).order_by(Location.mesa_codigo).all()
         
@@ -3115,25 +3110,68 @@ def upload_csv_data():
 def get_upload_config():
     """
     Obtener configuración para carga masiva
+
+    Parámetros:
+    - upload_type: Tipo de carga (opcional, query). Si es 'ubicaciones',
+      los departamentos se leen desde divipola.csv para poder elegir cualquier zona.
     """
     try:
         from backend.models.configuracion_electoral import TipoEleccion
         from backend.models.location import Location
-        
+
+        upload_type = request.args.get('upload_type', '')
+
         # Obtener tipos de elección
         tipos_eleccion = TipoEleccion.query.filter_by(activo=True).all()
-        
+
         # Obtener departamentos
-        departamentos = Location.query.filter_by(tipo='departamento').all()
-        
+        departamentos = []
+
+        if upload_type == 'ubicaciones':
+            # Leer departamentos desde el CSV DIVIPOLA para ofrecer todas las zonas
+            import csv
+            csv_paths = ['divipola.csv', 'todos los datos/divipola.csv', 'data/divipola.csv']
+            csv_path = None
+            for path in csv_paths:
+                if os.path.exists(path):
+                    csv_path = path
+                    break
+
+            if csv_path:
+                seen = set()
+                with open(csv_path, 'r', encoding='utf-8') as file:
+                    reader = csv.DictReader(file)
+                    for row in reader:
+                        dd = row['dd'].strip().zfill(2)
+                        if dd not in seen:
+                            seen.add(dd)
+                            departamentos.append({
+                                'codigo': dd,
+                                'nombre': row['departamento'].strip()
+                            })
+                departamentos.sort(key=lambda d: d['nombre'])
+            else:
+                # Fallback a la BD si no hay CSV
+                db_departamentos = Location.query.filter_by(tipo='departamento').all()
+                departamentos = [{'codigo': d.departamento_codigo, 'nombre': d.departamento_nombre}
+                                 for d in db_departamentos]
+        else:
+            # Forma actual: departamentos cargados en la BD
+            db_departamentos = Location.query.filter_by(tipo='departamento').all()
+            departamentos = [{'codigo': d.departamento_codigo, 'nombre': d.departamento_nombre}
+                             for d in db_departamentos]
+
         return jsonify({
             'success': True,
             'data': {
                 'tipos_eleccion': [{'id': t.id, 'nombre': t.nombre, 'codigo': t.codigo} for t in tipos_eleccion],
-                'departamentos': [{'codigo': d.departamento_codigo, 'nombre': d.nombre} for d in departamentos]
+                'departamentos': departamentos,
+                'source': 'csv' if (upload_type == 'ubicaciones' and departamentos and
+                                     any(d['codigo'] not in {x.departamento_codigo for x in Location.query.filter_by(tipo='departamento').all()}
+                                         for d in departamentos)) else 'db'
             }
         }), 200
-        
+
     except Exception as e:
         return jsonify({
             'success': False,
@@ -3147,20 +3185,68 @@ def get_upload_config():
 def get_municipios_for_upload(dept_codigo):
     """
     Obtener municipios de un departamento para carga masiva
+    Si el departamento no está en la BD, se leen desde divipola.csv
     """
     try:
         from backend.models.location import Location
-        
-        municipios = Location.query.filter_by(
-            tipo='municipio',
+
+        dept_codigo = str(dept_codigo).strip().zfill(2)
+
+        # Verificar si el departamento está cargado en la BD
+        dept_in_db = Location.query.filter_by(
+            tipo='departamento',
             departamento_codigo=dept_codigo
-        ).all()
-        
+        ).first()
+
+        if dept_in_db:
+            # Forma actual: municipios desde la BD
+            municipios = Location.query.filter_by(
+                tipo='municipio',
+                departamento_codigo=dept_codigo
+            ).all()
+            return jsonify({
+                'success': True,
+                'data': [{'codigo': m.municipio_codigo, 'nombre': m.municipio_nombre} for m in municipios]
+            }), 200
+
+        # Leer municipios desde el CSV DIVIPOLA
+        import csv
+        csv_paths = ['divipola.csv', 'todos los datos/divipola.csv', 'data/divipola.csv']
+        csv_path = None
+        for path in csv_paths:
+            if os.path.exists(path):
+                csv_path = path
+                break
+
+        if not csv_path:
+            return jsonify({
+                'success': True,
+                'data': []
+            }), 200
+
+        municipios = []
+        seen = set()
+        with open(csv_path, 'r', encoding='utf-8') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                dd = row['dd'].strip().zfill(2)
+                if dd != dept_codigo:
+                    continue
+                mm = row['mm'].strip().zfill(2)
+                muni_codigo = f"{dd}{mm}"
+                if muni_codigo not in seen:
+                    seen.add(muni_codigo)
+                    municipios.append({
+                        'codigo': muni_codigo,
+                        'nombre': row['municipio'].strip()
+                    })
+        municipios.sort(key=lambda m: m['nombre'])
+
         return jsonify({
             'success': True,
-            'data': [{'codigo': m.municipio_codigo, 'nombre': m.nombre} for m in municipios]
+            'data': municipios
         }), 200
-        
+
     except Exception as e:
         return jsonify({
             'success': False,
@@ -3250,26 +3336,39 @@ def validate_csv_by_type(df, upload_type, config):
                     errors.append(f"Línea {idx + 2}: Partido '{row['partido_codigo']}' no existe")
     
     elif upload_type == 'ubicaciones':
-        required_cols = ['departamento_codigo', 'departamento_nombre', 'municipio_codigo', 'municipio_nombre']
+        # Formato DIVIPOLA real
+        required_cols = ['dd', 'mm', 'zz', 'pp', 'mesa', 'departamento', 'municipio', 'puesto', 'mesa_nombre']
         missing_cols = [col for col in required_cols if col not in df.columns]
         
         if missing_cols:
             errors.append(f"Faltan columnas requeridas: {', '.join(missing_cols)}")
         else:
-            # Validar coordenadas si existen
-            if 'latitud' in df.columns and 'longitud' in df.columns:
-                for idx, row in df.iterrows():
+            # Validar códigos de departamento
+            departamento_filter = config.get('departamento') if isinstance(config, dict) else None
+            for idx, row in df.iterrows():
+                dd = str(row['dd']).strip().zfill(2)
+                if departamento_filter and dd != str(departamento_filter).strip().zfill(2):
+                    continue
+                if not dd:
+                    errors.append(f"Línea {idx + 2}: Código de departamento vacío")
+                    continue
+                # Validar coordenadas si existen
+                lat = row.get('LATITUD')
+                lon = row.get('LONGITUD')
+                if pd.notna(lat):
                     try:
-                        if pd.notna(row['latitud']):
-                            lat = float(row['latitud'])
-                            if lat < -90 or lat > 90:
-                                errors.append(f"Línea {idx + 2}: Latitud inválida")
-                        if pd.notna(row['longitud']):
-                            lon = float(row['longitud'])
-                            if lon < -180 or lon > 180:
-                                errors.append(f"Línea {idx + 2}: Longitud inválida")
+                        lat_f = float(lat)
+                        if lat_f < -90 or lat_f > 90:
+                            errors.append(f"Línea {idx + 2}: Latitud inválida")
                     except:
-                        errors.append(f"Línea {idx + 2}: Coordenadas inválidas")
+                        errors.append(f"Línea {idx + 2}: Latitud inválida")
+                if pd.notna(lon):
+                    try:
+                        lon_f = float(lon)
+                        if lon_f < -180 or lon_f > 180:
+                            errors.append(f"Línea {idx + 2}: Longitud inválida")
+                    except:
+                        errors.append(f"Línea {idx + 2}: Longitud inválida")
     
     return {
         'records': records,
@@ -3385,6 +3484,153 @@ def process_csv_by_type(df, upload_type, config):
                 except Exception as e:
                     errors.append(f"Línea {idx + 2}: {str(e)}")
         
+        elif upload_type == 'ubicaciones':
+            departamento_filter = str(config.get('departamento') or '').strip().zfill(2)
+            municipio_filter = str(config.get('municipio') or '').strip().zfill(2)
+            
+            if not departamento_filter:
+                return {'success': False, 'error': 'Debe seleccionar un departamento'}
+            
+            departamentos = {}
+            municipios = {}
+            zonas = {}
+            puestos = {}
+            mesa_count = 0
+            
+            for idx, row in df.iterrows():
+                try:
+                    dd = str(row['dd']).strip().zfill(2)
+                    if dd != departamento_filter:
+                        continue
+                    
+                    mm = str(row['mm']).strip().zfill(2)
+                    if municipio_filter and mm != municipio_filter:
+                        continue
+                    
+                    zz = str(row['zz']).strip().zfill(2)
+                    pp = str(row['pp']).strip().zfill(2)
+                    mesa = str(row['mesa']).strip().zfill(2)
+                    
+                    departamento_nombre = str(row['departamento']).strip()
+                    municipio_nombre = str(row['municipio']).strip()
+                    puesto_nombre = str(row['puesto']).strip()
+                    mesa_nombre = str(row['mesa_nombre']).strip()
+                    
+                    depto_codigo = dd
+                    muni_codigo = f"{dd}{mm}"
+                    zona_codigo = f"{dd}{mm}{zz}"
+                    puesto_codigo = f"{dd}{mm}{zz}{pp}"
+                    mesa_codigo = f"{dd}{mm}{zz}{pp}{mesa}"
+                    
+                    lat = row.get('LATITUD')
+                    lon = row.get('LONGITUD')
+                    latitud = float(lat) if pd.notna(lat) else None
+                    longitud = float(lon) if pd.notna(lon) else None
+                    
+                    # Departamento
+                    if depto_codigo not in departamentos:
+                        dept = Location(
+                            departamento_codigo=depto_codigo,
+                            departamento_nombre=departamento_nombre,
+                            nombre_completo=departamento_nombre,
+                            tipo='departamento',
+                            activo=True
+                        )
+                        db.session.add(dept)
+                        db.session.flush()
+                        departamentos[depto_codigo] = dept.id
+                        created.append(f"Departamento: {departamento_nombre}")
+                    
+                    # Municipio
+                    if muni_codigo not in municipios:
+                        muni = Location(
+                            departamento_codigo=depto_codigo,
+                            municipio_codigo=muni_codigo,
+                            departamento_nombre=departamento_nombre,
+                            municipio_nombre=municipio_nombre,
+                            nombre_completo=f"{departamento_nombre} - {municipio_nombre}",
+                            tipo='municipio',
+                            parent_id=departamentos[depto_codigo],
+                            activo=True
+                        )
+                        db.session.add(muni)
+                        db.session.flush()
+                        municipios[muni_codigo] = muni.id
+                        created.append(f"Municipio: {municipio_nombre}")
+                    
+                    # Zona
+                    if zona_codigo not in zonas:
+                        zona = Location(
+                            departamento_codigo=depto_codigo,
+                            municipio_codigo=muni_codigo,
+                            zona_codigo=zona_codigo,
+                            departamento_nombre=departamento_nombre,
+                            municipio_nombre=municipio_nombre,
+                            nombre_completo=f"{departamento_nombre} - {municipio_nombre} - Zona {zz}",
+                            tipo='zona',
+                            parent_id=municipios[muni_codigo],
+                            activo=True
+                        )
+                        db.session.add(zona)
+                        db.session.flush()
+                        zonas[zona_codigo] = zona.id
+                        created.append(f"Zona: {zona_codigo}")
+                    
+                    # Puesto
+                    if puesto_codigo not in puestos:
+                        puesto = Location(
+                            departamento_codigo=depto_codigo,
+                            municipio_codigo=muni_codigo,
+                            zona_codigo=zona_codigo,
+                            puesto_codigo=puesto_codigo,
+                            departamento_nombre=departamento_nombre,
+                            municipio_nombre=municipio_nombre,
+                            puesto_nombre=puesto_nombre,
+                            nombre_completo=f"{departamento_nombre} - {municipio_nombre} - Zona {zz} - {puesto_nombre}",
+                            tipo='puesto',
+                            direccion=str(row.get('direccion', '')).strip() or None,
+                            comuna=str(row.get('comuna', '')).strip() or None,
+                            latitud=latitud,
+                            longitud=longitud,
+                            parent_id=zonas[zona_codigo],
+                            activo=True
+                        )
+                        db.session.add(puesto)
+                        db.session.flush()
+                        puestos[puesto_codigo] = puesto.id
+                        created.append(f"Puesto: {puesto_nombre}")
+                    
+                    # Mesa
+                    mesa_location = Location(
+                        departamento_codigo=depto_codigo,
+                        municipio_codigo=muni_codigo,
+                        zona_codigo=zona_codigo,
+                        puesto_codigo=puesto_codigo,
+                        mesa_codigo=mesa_codigo,
+                        departamento_nombre=departamento_nombre,
+                        municipio_nombre=municipio_nombre,
+                        puesto_nombre=puesto_nombre,
+                        mesa_nombre=mesa_nombre,
+                        nombre_completo=f"{departamento_nombre} - {municipio_nombre} - Zona {zz} - {puesto_nombre} - Mesa {mesa}",
+                        tipo='mesa',
+                        total_votantes_registrados=int(row.get('total_mesa', 0) or 0),
+                        mujeres=int(row.get('mujeres_mesa', 0) or 0),
+                        hombres=int(row.get('hombres_mesa', 0) or 0),
+                        direccion=str(row.get('direccion', '')).strip() or None,
+                        comuna=str(row.get('comuna', '')).strip() or None,
+                        latitud=latitud,
+                        longitud=longitud,
+                        parent_id=puestos[puesto_codigo],
+                        activo=True
+                    )
+                    db.session.add(mesa_location)
+                    mesa_count += 1
+                    
+                    if mesa_count % 100 == 0:
+                        db.session.flush()
+                except Exception as e:
+                    errors.append(f"Línea {idx + 2}: {str(e)}")
+        
         return {
             'success': True,
             'message': f'{len(created)} registros creados, {len(updated)} actualizados',
@@ -3392,9 +3638,10 @@ def process_csv_by_type(df, upload_type, config):
                 'created': created,
                 'updated': updated,
                 'errors': errors,
-                'total_created': len(created),
+                'total_created': len(created) + mesa_count if upload_type == 'ubicaciones' else len(created),
                 'total_updated': len(updated),
-                'total_errors': len(errors)
+                'total_errors': len(errors),
+                'mesas': mesa_count if upload_type == 'ubicaciones' else None
             }
         }
         

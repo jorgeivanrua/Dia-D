@@ -21,7 +21,7 @@ class Config:
         if not os.path.isabs(sqlite_path):
             project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
             abs_path = os.path.abspath(os.path.join(project_root, sqlite_path))
-            database_url = f"sqlite:///{abs_path.replace('\\', '/') }"
+            database_url = 'sqlite:///' + abs_path.replace('\\', '/')
     # Render usa postgres:// pero SQLAlchemy necesita postgresql://
     if database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)

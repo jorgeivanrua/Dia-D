@@ -50,14 +50,23 @@ def init_db_manual():
         zonas = {}
         puestos = {}
         
+        # Departamentos a cargar (configurable vía env DIVIPOLA_DEPARTAMENTOS, default '44')
+        deptos_a_cargar = set(
+            d.strip().zfill(2) for d in
+            os.getenv('DIVIPOLA_DEPARTAMENTOS', '44').replace(',', ' ').split()
+            if d.strip()
+        )
+        if not deptos_a_cargar:
+            deptos_a_cargar = {'44'}
+        
         with open(csv_path, 'r', encoding='utf-8') as file:
             reader = csv.DictReader(file)
             
             for row in reader:
                 dd = row['dd'].strip().zfill(2)
                 
-                # SOLO CAQUETÁ
-                if dd != '44':
+                # Solo cargar los departamentos configurados
+                if dd not in deptos_a_cargar:
                     continue
                 
                 mm = row['mm'].strip().zfill(2)

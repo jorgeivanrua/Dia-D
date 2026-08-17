@@ -25,7 +25,16 @@ def load_divipola_from_csv(csv_path):
     
     with app.app_context():
         print(f">> Cargando datos desde: {csv_path}")
-        print(">> SOLO CARGANDO DEPARTAMENTO DE CAQUETA (codigo 44)")
+        
+        # Departamentos a cargar (configurable vía env DIVIPOLA_DEPARTAMENTOS, default '44')
+        deptos_a_cargar = set(
+            d.strip().zfill(2) for d in
+            os.getenv('DIVIPOLA_DEPARTAMENTOS', '44').replace(',', ' ').split()
+            if d.strip()
+        )
+        if not deptos_a_cargar:
+            deptos_a_cargar = {'44'}
+        print(f">> SOLO CARGANDO DEPARTAMENTOS: {sorted(deptos_a_cargar)}")
         
         # Limpiar tabla de ubicaciones
         print(">> Limpiando tabla de ubicaciones...")
@@ -50,8 +59,8 @@ def load_divipola_from_csv(csv_path):
             for row in reader:
                 dd = row['dd'].strip().zfill(2)  # Departamento
                 
-                # SOLO CARGAR CAQUETÁ (código 44)
-                if dd != '44':
+                # Solo cargar los departamentos configurados
+                if dd not in deptos_a_cargar:
                     continue
                 
                 mm = row['mm'].strip().zfill(2)  # Municipio
