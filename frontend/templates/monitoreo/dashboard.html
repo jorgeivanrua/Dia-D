@@ -485,8 +485,6 @@
 <!-- api-client.js ya está incluido en base.html -->
 <!-- Cargador de datos con manejo de errores -->
 <script src="{{ url_for('static', filename='js/dashboard-data-loader.js') }}"></script>
-<!-- Script de debugging -->
-<script src="{{ url_for('static', filename='js/monitoreo-dashboard-debug.js') }}"></script>
 <script>
 let mapa;
 let marcadores = [];
@@ -522,8 +520,8 @@ async function cargarUbicaciones() {
         selectDepto.innerHTML = '<option value="">Todos</option>';
         deptos.forEach(depto => {
             const option = document.createElement('option');
-            option.value = depto.codigo;
-            option.textContent = depto.nombre;
+            option.value = depto.departamento_codigo;
+            option.textContent = depto.departamento_nombre;
             selectDepto.appendChild(option);
         });
     } catch (error) {
@@ -554,8 +552,8 @@ async function onDepartamentoChange() {
             
             municipios.forEach(muni => {
                 const option = document.createElement('option');
-                option.value = muni.codigo;
-                option.textContent = muni.nombre;
+                option.value = muni.municipio_codigo;
+                option.textContent = muni.municipio_nombre;
                 muniSelect.appendChild(option);
             });
             
@@ -587,13 +585,13 @@ async function onMunicipioChange() {
     
     if (filtros.municipio) {
         try {
-            const response = await APIClient.get(`/locations/zonas/${filtros.departamento}/${filtros.municipio}`);
+            const response = await APIClient.get(`/locations/zonas/${filtros.municipio}`);
             const zonas = response.data || [];
             
             zonas.forEach(zona => {
                 const option = document.createElement('option');
-                option.value = zona.codigo;
-                option.textContent = `Zona ${zona.codigo}`;
+                option.value = zona.zona_codigo;
+                option.textContent = zona.zona_nombre;
                 zonaSelect.appendChild(option);
             });
             
@@ -621,13 +619,13 @@ async function onZonaChange() {
     
     if (filtros.zona) {
         try {
-            const response = await APIClient.get(`/locations/puestos/${filtros.departamento}/${filtros.municipio}/${filtros.zona}`);
+            const response = await APIClient.get(`/locations/puestos/${filtros.zona}`);
             const puestos = response.data || [];
             
             puestos.forEach(puesto => {
                 const option = document.createElement('option');
-                option.value = puesto.codigo;
-                option.textContent = puesto.nombre;
+                option.value = puesto.puesto_codigo;
+                option.textContent = puesto.puesto_nombre;
                 puestoSelect.appendChild(option);
             });
             

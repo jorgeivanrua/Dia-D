@@ -473,6 +473,8 @@
 <script src="{{ url_for('static', filename='js/login-mejoras.js') }}"></script>
 <script>
 // Cargar fondo dinámico desde la configuración
+// COMPENTADO: la feature Personalización del Sistema (/api/config-sistema/*) no tiene backend
+/*
 document.addEventListener('DOMContentLoaded', async function() {
     try {
         const response = await fetch('/api/config-sistema/fondos/activo');
@@ -521,6 +523,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.log('Usando fondo predeterminado');
     }
 });
+*/
 
 // Helper para convertir hex a rgb
 function hexToRgb(hex) {
