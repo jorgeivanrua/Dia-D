@@ -998,7 +998,7 @@ async function exportarDatosMunicipal() {
         Utils.showInfo('Generando archivo CSV...');
         
         const url = '/api/coordinador-municipal/exportar?formato=csv';
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('access_token');
         
         const response = await fetch(url, {
             headers: {

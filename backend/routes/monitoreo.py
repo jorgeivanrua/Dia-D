@@ -97,8 +97,8 @@ def get_estadisticas():
         # Consulta optimizada con agregación en una sola query
         testigos_stats = db.session.query(
             func.count(User.id).label('total'),
-            func.sum(func.coalesce(User.ultima_latitud.isnot(None), 0)).label('con_geo'),
-            func.sum(func.coalesce(User.presencia_verificada, 0)).label('con_presencia')
+            func.sum(func.cast(User.ultima_latitud.isnot(None), db.Integer)).label('con_geo'),
+            func.sum(func.cast(User.presencia_verificada, db.Integer)).label('con_presencia')
         ).filter(
             User.rol == 'testigo_electoral',
             User.activo == True
@@ -106,7 +106,7 @@ def get_estadisticas():
         
         coordinadores_stats = db.session.query(
             func.count(User.id).label('total'),
-            func.sum(func.coalesce(User.ultima_latitud.isnot(None), 0)).label('con_geo')
+            func.sum(func.cast(User.ultima_latitud.isnot(None), db.Integer)).label('con_geo')
         ).filter(
             User.rol.in_(['coordinador_departamental', 'coordinador_municipal', 'coordinador_puesto']),
             User.activo == True

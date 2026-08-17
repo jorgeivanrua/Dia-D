@@ -140,7 +140,7 @@ async function loadUploadConfiguration() {
         
         const response = await fetch(url, {
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
             }
         });
         
@@ -194,7 +194,7 @@ async function loadMunicipios() {
     try {
         const response = await fetch(`/api/super-admin/bulk-upload/municipios/${deptCodigo}`, {
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
             }
         });
         
@@ -425,7 +425,7 @@ async function validateUpload() {
         const response = await fetch('/api/super-admin/bulk-upload/validate-csv', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
             },
             body: formData
         });
@@ -514,7 +514,7 @@ async function confirmUpload() {
         const response = await fetch('/api/super-admin/bulk-upload/upload-csv', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
             },
             body: formData
         });

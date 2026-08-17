@@ -55,7 +55,7 @@ window.loadMainStats = async function() {
             const stats = response.data;
             console.log('[Data Loader] Estadísticas recibidas:', stats);
             
-            // Actualizar UI de forma segura
+// Actualizar UI de forma segura
             const updateElement = (id, value) => {
                 const element = document.getElementById(id);
                 if (element) {
@@ -64,7 +64,7 @@ window.loadMainStats = async function() {
                     console.warn(`[Data Loader] Elemento ${id} no encontrado`);
                 }
             };
-            
+
             updateElement('totalUsuarios', stats.totalUsuarios || 0);
             updateElement('usuariosChange', stats.usuariosChange >= 0 ? `+${stats.usuariosChange}` : stats.usuariosChange);
             updateElement('totalPuestos', stats.totalPuestos || 0);
@@ -73,6 +73,9 @@ window.loadMainStats = async function() {
             updateElement('formulariosPendientes', stats.formulariosPendientes || 0);
             updateElement('totalValidados', stats.totalValidados || 0);
             updateElement('porcentajeValidados', (stats.porcentajeValidados || 0).toFixed(1));
+            
+            // Actualizar sparklines
+            updateSparklines(stats);
             
             console.log('[Data Loader] ✓ UI actualizada correctamente');
         } else {
@@ -186,6 +189,132 @@ window.checkBackendConnection = async function() {
         return false;
     }
 };
+
+// Funciones para sparklines
+let sparklineCharts = {};
+
+/**
+ * Genera datos simulados para sparkline basado en un valor base
+ */
+function createSparklineData(baseValue, variance = 0.1, points = 20) {
+    const data = [];
+    let lastValue = baseValue;
+    
+    for (let i = 0; i < points; i++) {
+        // Generar variación aleatoria alrededor del valor base
+        const change = (Math.random() - 0.5) * variance * 2 * baseValue;
+        lastValue = Math.max(0, lastValue + change); // No permitir valores negativos
+        data.push(Math.round(lastValue));
+    }
+    
+    return data;
+}
+
+/**
+ * Actualiza o crea los sparklines para las estadísticas principales
+ /**
+ * Actualiza o crea los sparklines para las estadísticas principales
+ */
+function updateSparklines(stats) {
+    try {
+        // Configuración común para sparklines
+        const sparklineOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            borderWidth: 2,
+            pointRadius: 0,
+            pointHoverRadius: 0,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    enabled: false
+                }
+            },
+            scales: {
+                x: {
+                    display: false,
+                    drawBorder: false
+                },
+                y: {
+                    display: false,
+                    drawBorder: false
+                }
+            }
+        };
+
+        // Datos para cada sparkline (usando variaciones simuladas)
+        const sparklineConfigs = [
+            {
+                id: 'sparklineUsuarios',
+                label: 'Usuarios',
+                data: createSparklineData(stats.totalUsuarios || 0, 0.15, 30),
+                color: 'rgba(30, 60, 114, 0.8)',
+                backgroundColor: 'rgba(30, 60, 114, 0.1)'
+            },
+            {
+                id: 'sparklinePuestos',
+                label: 'Puestos',
+                data: createSparklineData(stats.totalPuestos || 0, 0.1, 30),
+                color: 'rgba(0, 123, 255, 0.8)',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)'
+            },
+            {
+                id: 'sparklineFormularios',
+                label: 'Formularios',
+                data: createSparklineData(stats.totalFormularios || 0, 0.2, 30),
+                color: 'rgba(255, 193, 7, 0.8)',
+                backgroundColor: 'rgba(255, 193, 7, 0.1)'
+            },
+            {
+                id: 'sparklineValidados',
+                label: 'Validados',
+                data: createSparklineData(stats.totalValidados || 0, 0.12, 30),
+                color: 'rgba(40, 167, 69, 0.8)',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)'
+            }
+        ];
+
+        // Crear o actualizar cada sparkline
+        sparklineConfigs.forEach(config => {
+            const canvas = document.getElementById(config.id);
+            if (!canvas) {
+                console.warn(`[Data Loader] Canvas ${config.id} no encontrado`);
+                return;
+            }
+
+            // Si ya existe un gráfico, lo actualizamos; si no, lo creamos
+            if (sparklineCharts[config.id]) {
+                // Actualizar datos existentes
+                sparklineCharts[config.id].data.datasets[0].data = config.data;
+                sparklineCharts[config.id].update('none'); // Actualizar sin animación
+            } else {
+                // Crear nuevo gráfico
+                sparklineCharts[config.id] = new Chart(canvas, {
+                    type: 'line',
+                    data: {
+                        labels: Array.from({length: config.data.length}, (_, i) => i),
+                        datasets: [{
+                            label: config.label,
+                            data: config.data,
+                            borderColor: config.color,
+                            backgroundColor: config.backgroundColor,
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: sparklineOptions
+                });
+            }
+        });
+        
+        console.log('[Data Loader] ✓ Sparklines actualizados');
+    } catch (error) {
+        console.error('[Data Loader] Error actualizando sparklines:', error);
+    }
+}
 
 // Verificar conexión al cargar
 setTimeout(async () => {

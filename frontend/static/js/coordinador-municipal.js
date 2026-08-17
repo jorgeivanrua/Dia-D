@@ -782,7 +782,7 @@ async function exportarFormatoMunicipal(formato) {
         if (modal) modal.hide();
         
         const url = `/api/coordinador-municipal/exportar?formato=${formato}`;
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('access_token');
         
         // Descargar archivo
         const response = await fetch(url, {
