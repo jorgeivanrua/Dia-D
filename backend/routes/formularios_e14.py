@@ -1042,6 +1042,26 @@ def exportar_formularios_puesto():
 def generar_e24_puesto():
     """
     Generar formulario E-24 consolidado del puesto
+    ---
+    tags:
+      - Formularios
+    summary: Generar PDF E-24 consolidado a partir de formularios E-14 validados del puesto
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: PDF del formulario E-24 generado
+        content:
+          application/pdf:
+            schema:
+              type: string
+              format: binary
+      400:
+        description: No hay formularios validados para generar el E-24 o falta ubicación
+      403:
+        description: Rol sin permisos
+      404:
+        description: Ubicación del puesto no encontrada
     """
     try:
         from flask import send_file

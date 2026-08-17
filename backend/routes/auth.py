@@ -17,14 +17,76 @@ auth_bp = Blueprint('auth', __name__)
 def login():
     """
     Login basado en ubicación jerárquica
-    
-    Body:
-        rol: Rol del usuario
-        departamento_codigo: Código de departamento (opcional según rol)
-        municipio_codigo: Código de municipio (opcional según rol)
-        zona_codigo: Código de zona (opcional según rol)
-        puesto_codigo: Código de puesto (opcional según rol)
-        password: Contraseña
+    ---
+    tags:
+      - Autenticación
+    summary: Iniciar sesión según rol y ubicación
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [rol, password]
+            properties:
+              rol:
+                type: string
+                description: Rol del usuario (super_admin, coordinador_puesto, etc.)
+                example: coordinador_puesto
+              departamento_codigo:
+                type: string
+                description: Código de departamento (opcional según rol)
+                example: '44'
+              municipio_codigo:
+                type: string
+                description: Código de municipio (opcional según rol)
+                example: '4401'
+              zona_codigo:
+                type: string
+                description: Código de zona (opcional según rol)
+                example: '440101'
+              puesto_codigo:
+                type: string
+                description: Código de puesto (opcional según rol)
+                example: '44010101'
+              password:
+                type: string
+                description: Contraseña del usuario
+                example: test123
+    responses:
+      200:
+        description: Login exitoso, retorna tokens y datos del usuario
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                data:
+                  type: object
+                  properties:
+                    access_token:
+                      type: string
+                    refresh_token:
+                      type: string
+                    token_type:
+                      type: string
+                      example: Bearer
+                    user:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        rol:
+                          type: string
+                    ubicacion:
+                      type: object
+      400:
+        description: Datos incompletos o credenciales inválidas
+      401:
+        description: Credenciales inválidas
     """
     try:
         data = request.get_json()
