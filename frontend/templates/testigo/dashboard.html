@@ -783,20 +783,20 @@
 <!-- Script de verificación SIMPLE (se carga primero) -->
 <script src="{{ url_for('static', filename='js/testigo-verificacion-simple.js') }}"></script>
 
-<!-- Script de depuración -->
-<script src="{{ url_for('static', filename='js/testigo-debug-buttons.js') }}"></script>
-
 <!-- Script para habilitar botones automáticamente -->
-<script src="{{ url_for('static', filename='js/testigo-enable-buttons.js') }}"></script>
 
 <!-- Script para forzar verificación manualmente -->
-<script src="{{ url_for('static', filename='js/testigo-force-verification.js') }}"></script>
 
 <!-- Módulos independientes -->
 <script src="{{ url_for('static', filename='js/incidentes-delitos.js') }}"></script>
+<script src="{{ url_for('static', filename='js/upload-manager.js') }}"></script>
+<script src="{{ url_for('static', filename='js/foto-capture.js') }}"></script>
 
 <!-- Dashboard principal (incluye toda la funcionalidad) -->
 <script src="{{ url_for('static', filename='js/testigo-dashboard-v2.js') }}"></script>
+
+<!-- Mejoras UI/UX mobile-first (bottom nav, cards, pull-to-refresh) -->
+<script src="{{ url_for('static', filename='js/testigo-mejoras.js') }}"></script>
 
 <!-- Fix de visibilidad de botones - DESHABILITADO porque causa conflictos -->
 <!-- <script src="{{ url_for('static', filename='js/testigo-fix-buttons-visibility.js') }}"></script> -->

@@ -88,5 +88,4 @@ def gestion_usuarios():
 @frontend_bp.route('/monitoreo/dashboard')
 def monitoreo_dashboard():
     """Dashboard de monitoreo en tiempo real"""
-    # Usar versión simplificada temporalmente
-    return render_template('monitoreo/dashboard_simple.html')
+    return render_template('monitoreo/dashboard.html')

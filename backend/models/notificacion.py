@@ -56,7 +56,7 @@ class Notificacion(db.Model):
             'fecha_leida': self.fecha_leida.isoformat() if self.fecha_leida else None,
             'severidad': self.severidad,
             'gravedad': self.gravedad,
-            'fecha_creacion': self.fecha_creacion.isoformat(),
+            'fecha_creacion': self.fecha_creacion.isoformat() if self.fecha_creacion else None,
             'enviada_realtime': self.enviada_realtime
         }
 

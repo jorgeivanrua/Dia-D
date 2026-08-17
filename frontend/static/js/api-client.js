@@ -223,6 +223,13 @@ class APIClient {
     static async createFormularioE14(data) {
         return this.post('/formularios', data);
     }
+
+    /**
+     * Generar formulario E-24 del puesto (se genera server-side desde formularios validados)
+     */
+    static async createFormularioE24(data = {}) {
+        return this.post('/formularios/puesto/generar-e24', data);
+    }
     
     static async updateFormularioE14(id, data) {
         return this.put(`/formularios/${id}`, data);
@@ -420,6 +427,38 @@ class APIClient {
      */
     static async getDelito(id) {
         return this.obtenerDelito(id);
+    }
+
+    // ==================== SEGUIMIENTO ====================
+
+    /**
+     * Obtener seguimiento de un reporte (incidente o delito)
+     */
+    static async getSeguimiento(tipoReporte, reporteId) {
+        return this.get(`/seguimiento/${tipoReporte}/${reporteId}`);
+    }
+
+    // ==================== FORMULARIOS (adicionales) ====================
+
+    /**
+     * Obtener formularios E-14 de un puesto (para coordinadores)
+     */
+    static async getFormulariosPorPuesto(puestoId, params = {}) {
+        return this.get('/formularios/puesto', params);
+    }
+
+    /**
+     * Exportar formularios del puesto
+     */
+    static async exportarFormulariosPuesto(params = {}) {
+        return this.get('/formularios/puesto/exportar', params);
+    }
+
+    /**
+     * Obtener formularios consolidados
+     */
+    static async getFormulariosConsolidados(params = {}) {
+        return this.get('/formularios/consolidado', params);
     }
 }
 

@@ -26,7 +26,7 @@ class SyncManager {
      */
     init() {
         // Verificar si el rol actual necesita sincronización
-        const rolesConSincronizacion = ['testigo', 'coordinador_puesto'];
+        const rolesConSincronizacion = ['testigo_electoral', 'coordinador_puesto'];
         const currentUserRol = this.getCurrentUserRole();
         
         if (!rolesConSincronizacion.includes(currentUserRol)) {
@@ -54,7 +54,7 @@ class SyncManager {
      */
     getCurrentUserRole() {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
             if (!token) return null;
             
             // Decodificar JWT (simple, sin validación)
@@ -311,7 +311,7 @@ class SyncManager {
                 endpoint = '/api/formularios';
                 break;
             case 'formulario_e24':
-                endpoint = '/api/formularios/e24';
+                endpoint = '/api/formularios/puesto/generar-e24';
                 break;
             default:
                 throw new Error(`Tipo de reporte desconocido: ${reporte.tipo}`);
@@ -594,6 +594,92 @@ class SyncManager {
         } catch (error) {
             console.warn('Error obteniendo delitos locales:', error);
             return [];
+        }
+    }
+
+    /**
+     * Guardar incidente localmente para sincronización posterior
+     */
+    async saveIncidentLocally(data) {
+        try {
+            const incidente = {
+                ...data,
+                tipo: 'incidente'
+            };
+            
+            if (window.indexedDBService && window.indexedDBService.db) {
+                const id = await window.indexedDBService.guardarReportePendiente(incidente);
+                this.addToSyncQueue({
+                    type: 'reporte',
+                    action: 'create',
+                    data: incidente,
+                    localId: id
+                });
+            } else {
+                this.addToSyncQueue({
+                    type: 'reporte',
+                    action: 'create',
+                    data: incidente
+                });
+            }
+            
+            if (this.isOnline) {
+                this.syncPendingData();
+            }
+        } catch (error) {
+            console.error('Error guardando incidente localmente:', error);
+        }
+    }
+
+    /**
+     * Guardar delito localmente para sincronización posterior
+     */
+    async saveCrimeLocally(data) {
+        try {
+            const delito = {
+                ...data,
+                tipo: 'delito'
+            };
+            
+            if (window.indexedDBService && window.indexedDBService.db) {
+                const id = await window.indexedDBService.guardarReportePendiente(delito);
+                this.addToSyncQueue({
+                    type: 'reporte',
+                    action: 'create',
+                    data: delito,
+                    localId: id
+                });
+            } else {
+                this.addToSyncQueue({
+                    type: 'reporte',
+                    action: 'create',
+                    data: delito
+                });
+            }
+            
+            if (this.isOnline) {
+                this.syncPendingData();
+            }
+        } catch (error) {
+            console.error('Error guardando delito localmente:', error);
+        }
+    }
+
+    /**
+     * Sincronizar todos los datos pendientes
+     */
+    async syncAll() {
+        try {
+            if (!this.isOnline) {
+                console.warn('SyncManager: Sin conexión, no se puede sincronizar');
+                return { success: false, error: 'Sin conexión a internet' };
+            }
+            
+            const result = await this.syncPendingData();
+            return { success: true, result };
+        } catch (error) {
+            console.error('SyncManager: Error en syncAll:', error);
+            return { success: false, error: error.message };
         }
     }
 }
