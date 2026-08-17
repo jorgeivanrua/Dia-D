@@ -817,6 +817,9 @@
             <div class="modal-body">
                 <div id="detalleIncidente"></div>
                 <hr>
+                <h6>Seguimiento del Incidente</h6>
+                <div id="seguimientoIncidente"></div>
+                <hr>
                 <h6>Cambiar Estado</h6>
                 <div class="mb-3">
                     <label class="form-label">Nuevo Estado</label>
@@ -852,14 +855,39 @@
             <div class="modal-body">
                 <div id="detalleDelito"></div>
                 <hr>
+                <h6>Seguimiento del Delito</h6>
+                <div id="seguimientoDelito"></div>
+                <hr>
                 <h6>Cambiar Estado</h6>
                 <div class="mb-3">
                     <label class="form-label">Nuevo Estado</label>
-                    <select class="form-select" id="nuevoEstadoDelito">
+                    <select class="form-select" id="nuevoEstadoDelito" onchange="toggleCamposDenunciaDelito()">
                         <option value="en_investigacion">En Investigación</option>
                         <option value="investigado">Investigado</option>
+                        <option value="denunciado">Denunciado Formalmente</option>
                         <option value="escalado">Escalar a Auditor</option>
                     </select>
+                </div>
+                <div class="mb-3" id="camposDenunciaDelito" style="display: none;">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Denuncia Formal:</strong> Complete los campos obligatorios para registrar la denuncia.
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Número de Denuncia *</label>
+                        <input type="text" class="form-control" id="numeroDenunciaDelito" placeholder="Ej: DEN-2024-001234">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Autoridad Competente *</label>
+                        <select class="form-select" id="autoridadCompetenteDelito">
+                            <option value="">Seleccione...</option>
+                            <option value="fiscalia">Fiscalía General de la Nación</option>
+                            <option value="policia">Policía Nacional</option>
+                            <option value="cne">Consejo Nacional Electoral</option>
+                            <option value="procuraduria">Procuraduría General</option>
+                            <option value="otra">Otra</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Comentario / Resultado de Investigación</label>
@@ -910,6 +938,9 @@
 <!-- Script de geolocalización ya está cargado en base.html -->
 
 <script src="{{ url_for('static', filename='js/incidentes-delitos.js') }}"></script>
+<script src="{{ url_for('static', filename='js/upload-manager.js') }}"></script>
+<script src="{{ url_for('static', filename='js/foto-capture.js') }}"></script>
+<script src="{{ url_for('static', filename='js/seguimiento-timeline.js') }}"></script>
 <script src="{{ url_for('static', filename='js/coordinador-puesto.js') }}"></script>
 <script src="{{ url_for('static', filename='js/coordinador-puesto-mejoras.js') }}"></script>
 

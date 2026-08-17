@@ -1463,28 +1463,17 @@ function mostrarModalGestionIncidente(incidente, seguimiento) {
             <p><strong>Reportado por:</strong> ${incidente.reportado_por_nombre}</p>
             <p><strong>Fecha:</strong> ${Utils.formatDate(incidente.fecha_reporte)}</p>
         </div>
-        ${seguimiento && seguimiento.length > 0 ? `
-            <div class="mb-3">
-                <h6>Historial de Seguimiento</h6>
-                <div class="list-group">
-                    ${seguimiento.map(seg => `
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">${seg.accion}</h6>
-                                <small>${Utils.formatDate(seg.created_at)}</small>
-                            </div>
-                            <p class="mb-1">${seg.comentario || ''}</p>
-                            <small>Por: ${seg.usuario_nombre}</small>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        ` : ''}
     `;
     
     document.getElementById('detalleIncidente').innerHTML = detalleHtml;
     document.getElementById('nuevoEstadoIncidente').value = 'en_revision';
     document.getElementById('comentarioIncidente').value = '';
+    
+    // Cargar timeline de seguimiento
+    if (window.SeguimientoTimeline) {
+        window.seguimientoIncidenteTimeline = new SeguimientoTimeline('seguimientoIncidente');
+        window.seguimientoIncidenteTimeline.cargar('incidente', incidente.id);
+    }
     
     const modal = new bootstrap.Modal(document.getElementById('gestionarIncidenteModal'));
     modal.show();
@@ -1561,31 +1550,31 @@ function mostrarModalGestionDelito(delito, seguimiento) {
             <p><strong>Reportado por:</strong> ${delito.reportado_por_nombre}</p>
             <p><strong>Fecha:</strong> ${Utils.formatDate(delito.fecha_reporte)}</p>
         </div>
-        ${seguimiento && seguimiento.length > 0 ? `
-            <div class="mb-3">
-                <h6>Historial de Seguimiento</h6>
-                <div class="list-group">
-                    ${seguimiento.map(seg => `
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">${seg.accion}</h6>
-                                <small>${Utils.formatDate(seg.created_at)}</small>
-                            </div>
-                            <p class="mb-1">${seg.comentario || ''}</p>
-                            <small>Por: ${seg.usuario_nombre}</small>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        ` : ''}
     `;
     
     document.getElementById('detalleDelito').innerHTML = detalleHtml;
     document.getElementById('nuevoEstadoDelito').value = 'en_investigacion';
     document.getElementById('comentarioDelito').value = '';
+    document.getElementById('numeroDenunciaDelito').value = '';
+    document.getElementById('autoridadCompetenteDelito').value = '';
+    toggleCamposDenunciaDelito();
+    
+    // Cargar timeline de seguimiento
+    if (window.SeguimientoTimeline) {
+        window.seguimientoDelitoTimeline = new SeguimientoTimeline('seguimientoDelito');
+        window.seguimientoDelitoTimeline.cargar('delito', delito.id);
+    }
     
     const modal = new bootstrap.Modal(document.getElementById('gestionarDelitoModal'));
     modal.show();
+}
+
+/**
+ * Mostrar/ocultar campos de denuncia según el estado seleccionado
+ */
+function toggleCamposDenunciaDelito() {
+    const mostrar = document.getElementById('nuevoEstadoDelito').value === 'denunciado';
+    document.getElementById('camposDenunciaDelito').style.display = mostrar ? 'block' : 'none';
 }
 
 /**
@@ -1603,11 +1592,29 @@ async function guardarGestionDelito() {
     try {
         Utils.showInfo('Actualizando delito...');
         
-        const response = await APIClient.actualizarEstadoDelito(
-            delitoActual.id,
-            nuevoEstado,
-            comentario
-        );
+        let response;
+        
+        if (nuevoEstado === 'denunciado') {
+            const numeroDenuncia = document.getElementById('numeroDenunciaDelito').value.trim();
+            const autoridadCompetente = document.getElementById('autoridadCompetenteDelito').value;
+            
+            if (!numeroDenuncia || !autoridadCompetente) {
+                Utils.showError('Número de denuncia y autoridad competente son requeridos');
+                return;
+            }
+            
+            response = await APIClient.denunciarDelito(
+                delitoActual.id,
+                numeroDenuncia,
+                autoridadCompetente
+            );
+        } else {
+            response = await APIClient.actualizarEstadoDelito(
+                delitoActual.id,
+                nuevoEstado,
+                comentario
+            );
+        }
         
         if (response.message) {
             Utils.showSuccess('✓ Delito actualizado exitosamente');
