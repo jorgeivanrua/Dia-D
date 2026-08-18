@@ -53,52 +53,45 @@ class AdminDashboard {
     }
     
     async loadStats() {
-        // Datos simulados por ahora
-        // TODO: Implementar endpoints reales
-        document.getElementById('totalUsuarios').textContent = '8';
-        document.getElementById('totalPuestos').textContent = '150';
-        document.getElementById('totalFormularios').textContent = '0';
-        document.getElementById('totalValidados').textContent = '0';
+        try {
+            const response = await APIClient.get('/admin/stats');
+            
+            if (response.success && response.data) {
+                const stats = response.data;
+                
+                document.getElementById('totalUsuarios').textContent = Utils.formatNumber(stats.total_usuarios);
+                document.getElementById('totalPuestos').textContent = Utils.formatNumber(stats.total_puestos);
+                document.getElementById('totalFormularios').textContent = Utils.formatNumber(stats.total_formularios);
+                document.getElementById('totalValidados').textContent = Utils.formatNumber(stats.formularios_completados);
+            }
+        } catch (error) {
+            console.error('Error loading stats:', error);
+        }
     }
     
     async loadResumenMunicipios() {
         const container = document.getElementById('resumenMunicipios');
         
         try {
-            // TODO: Implementar endpoint real
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const response = await APIClient.get('/admin/ubicaciones?tipo=municipio');
             
-            // Datos simulados
-            const municipios = [
-                { nombre: 'Florencia', puestos: 45, formularios: 0, porcentaje: 0 },
-                { nombre: 'San Vicente del Caguán', puestos: 25, formularios: 0, porcentaje: 0 },
-                { nombre: 'Puerto Rico', puestos: 18, formularios: 0, porcentaje: 0 },
-                { nombre: 'El Doncello', puestos: 12, formularios: 0, porcentaje: 0 },
-                { nombre: 'Otros', puestos: 50, formularios: 0, porcentaje: 0 }
-            ];
+            const municipios = (response.success && response.data) ? response.data : [];
+            
+            if (municipios.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">No hay municipios registrados</div>';
+                return;
+            }
             
             let html = '<div class="table-responsive">';
             html += '<table class="table table-hover">';
-            html += '<thead><tr><th>Municipio</th><th>Puestos</th><th>Formularios</th><th>Progreso</th></tr></thead>';
+            html += '<thead><tr><th>Municipio</th><th>Votantes Registrados</th></tr></thead>';
             html += '<tbody>';
             
             municipios.forEach(m => {
                 html += `
                     <tr>
-                        <td><strong>${m.nombre}</strong></td>
-                        <td>${m.puestos}</td>
-                        <td>${m.formularios}</td>
-                        <td>
-                            <div class="progress" style="height: 20px;">
-                                <div class="progress-bar" role="progressbar" 
-                                     style="width: ${m.porcentaje}%" 
-                                     aria-valuenow="${m.porcentaje}" 
-                                     aria-valuemin="0" 
-                                     aria-valuemax="100">
-                                    ${m.porcentaje}%
-                                </div>
-                            </div>
-                        </td>
+                        <td><strong>${m.nombre_completo}</strong></td>
+                        <td>${Utils.formatNumber(m.total_votantes_registrados || 0)}</td>
                     </tr>
                 `;
             });

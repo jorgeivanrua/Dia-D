@@ -145,15 +145,6 @@ function buscarMunicipio() {
 }
 
 /**
- * Actualizar datos
- */
-function actualizarDatos() {
-    loadMunicipios();
-    loadEstadisticas();
-    Utils.showSuccess('Datos actualizados');
-}
-
-/**
  * Renderizar tabla de municipios
  */
 function renderMunicipiosTable(municipios) {

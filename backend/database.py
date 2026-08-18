@@ -19,6 +19,12 @@ def init_db(app):
     db.init_app(app)
     migrate.init_app(app, db)
     
+    # Asegurar que el directorio instance/ existe (necesario para SQLite en producción)
+    import os
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    instance_dir = os.path.join(project_root, 'instance')
+    os.makedirs(instance_dir, exist_ok=True)
+    
     # Importar modelos para que Alembic los detecte (cuando existan)
     with app.app_context():
         try:

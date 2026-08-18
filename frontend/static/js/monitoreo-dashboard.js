@@ -603,8 +603,18 @@ function actualizarChartUsuarios(datos) {
     const ctx = document.getElementById('chart-usuarios-actividad');
     if (!ctx) return;
     
+    const data = [
+        datos.ultima_hora,
+        datos.ultimas_6_horas,
+        datos.ultimas_12_horas,
+        datos.ultimas_24_horas
+    ];
+    
     if (chartUsuariosActividad) {
-        chartUsuariosActividad.destroy();
+        // Actualizar datos existentes sin recrear el chart
+        chartUsuariosActividad.data.datasets[0].data = data;
+        chartUsuariosActividad.update('none');
+        return;
     }
     
     chartUsuariosActividad = new Chart(ctx, {
@@ -613,12 +623,7 @@ function actualizarChartUsuarios(datos) {
             labels: ['1h', '6h', '12h', '24h'],
             datasets: [{
                 label: 'Usuarios Activos',
-                data: [
-                    datos.ultima_hora,
-                    datos.ultimas_6_horas,
-                    datos.ultimas_12_horas,
-                    datos.ultimas_24_horas
-                ],
+                data: data,
                 backgroundColor: 'rgba(102, 126, 234, 0.6)',
                 borderColor: 'rgba(102, 126, 234, 1)',
                 borderWidth: 2
@@ -641,8 +646,18 @@ function actualizarChartFormularios(datos) {
     const ctx = document.getElementById('chart-formularios-periodo');
     if (!ctx) return;
     
+    const data = [
+        datos.ultima_hora,
+        datos.ultimas_6_horas,
+        datos.ultimas_12_horas,
+        datos.ultimas_24_horas
+    ];
+    
     if (chartFormulariosPeriodo) {
-        chartFormulariosPeriodo.destroy();
+        // Actualizar datos existentes sin recrear el chart
+        chartFormulariosPeriodo.data.datasets[0].data = data;
+        chartFormulariosPeriodo.update('none');
+        return;
     }
     
     chartFormulariosPeriodo = new Chart(ctx, {
@@ -651,12 +666,7 @@ function actualizarChartFormularios(datos) {
             labels: ['1h', '6h', '12h', '24h'],
             datasets: [{
                 label: 'Formularios Recibidos',
-                data: [
-                    datos.ultima_hora,
-                    datos.ultimas_6_horas,
-                    datos.ultimas_12_horas,
-                    datos.ultimas_24_horas
-                ],
+                data: data,
                 backgroundColor: 'rgba(67, 233, 123, 0.2)',
                 borderColor: 'rgba(67, 233, 123, 1)',
                 borderWidth: 2,
@@ -730,44 +740,53 @@ async function cargarTendencias() {
             const incidentes = response.tendencias.map(t => t.incidentes);
             const usuarios = response.tendencias.map(t => t.usuarios_activos);
             
-            chartTendenciasHora = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Formularios',
-                            data: formularios,
-                            borderColor: 'rgba(67, 233, 123, 1)',
-                            backgroundColor: 'rgba(67, 233, 123, 0.1)',
-                            tension: 0.4
-                        },
-                        {
-                            label: 'Incidentes',
-                            data: incidentes,
-                            borderColor: 'rgba(245, 87, 108, 1)',
-                            backgroundColor: 'rgba(245, 87, 108, 0.1)',
-                            tension: 0.4
-                        },
-                        {
-                            label: 'Usuarios Activos',
-                            data: usuarios,
-                            borderColor: 'rgba(79, 172, 254, 1)',
-                            backgroundColor: 'rgba(79, 172, 254, 0.1)',
-                            tension: 0.4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true
+            if (chartTendenciasHora) {
+                // Actualizar datos existentes sin recrear el chart
+                chartTendenciasHora.data.labels = labels;
+                chartTendenciasHora.data.datasets[0].data = formularios;
+                chartTendenciasHora.data.datasets[1].data = incidentes;
+                chartTendenciasHora.data.datasets[2].data = usuarios;
+                chartTendenciasHora.update('none');
+            } else {
+                chartTendenciasHora = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Formularios',
+                                data: formularios,
+                                borderColor: 'rgba(67, 233, 123, 1)',
+                                backgroundColor: 'rgba(67, 233, 123, 0.1)',
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Incidentes',
+                                data: incidentes,
+                                borderColor: 'rgba(245, 87, 108, 1)',
+                                backgroundColor: 'rgba(245, 87, 108, 0.1)',
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Usuarios Activos',
+                                data: usuarios,
+                                borderColor: 'rgba(79, 172, 254, 1)',
+                                backgroundColor: 'rgba(79, 172, 254, 0.1)',
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
                         }
                     }
-                }
-            });
+                });
+            }
             
             // Actualizar hora pico
             document.getElementById('hora-pico').textContent = `${response.hora_pico.hora}:00 (${response.hora_pico.actividad_total} eventos)`;

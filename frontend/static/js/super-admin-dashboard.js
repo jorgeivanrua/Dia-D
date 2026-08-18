@@ -106,36 +106,10 @@ async function loadUserProfile() {
 
 /**
  * Cargar estadísticas principales
+ * NOTA: la implementación real con sparklines y retry está en dashboard-data-loader.js
+ * (window.loadMainStats), que se carga primero. Esta definición era duplicada y sobreescribía
+ * la buena; se eliminó.
  */
-async function loadMainStats() {
-    try {
-        const response = await APIClient.get('/super-admin/stats');
-        
-        if (response.success) {
-            const stats = response.data;
-            
-            // Actualizar UI
-            document.getElementById('totalUsuarios').textContent = Utils.formatNumber(stats.totalUsuarios);
-            document.getElementById('usuariosChange').textContent = stats.usuariosChange >= 0 ? `+${stats.usuariosChange}` : stats.usuariosChange;
-            document.getElementById('totalPuestos').textContent = Utils.formatNumber(stats.totalPuestos);
-            document.getElementById('totalMesas').textContent = Utils.formatNumber(stats.totalMesas);
-            document.getElementById('totalFormularios').textContent = Utils.formatNumber(stats.totalFormularios);
-            document.getElementById('formulariosPendientes').textContent = Utils.formatNumber(stats.formulariosPendientes);
-            document.getElementById('totalValidados').textContent = Utils.formatNumber(stats.totalValidados);
-            document.getElementById('porcentajeValidados').textContent = stats.porcentajeValidados.toFixed(1);
-            
-            // Actualizar barra de progreso
-            const progressBar = document.querySelector('.progress-bar');
-            if (progressBar) {
-                progressBar.style.width = `${stats.porcentajeValidados}%`;
-                progressBar.setAttribute('aria-valuenow', stats.porcentajeValidados);
-            }
-        }
-    } catch (error) {
-        console.error('Error cargando estadísticas:', error);
-        Utils.showError('Error al cargar estadísticas del sistema');
-    }
-}
 
 /**
  * Cargar actividad reciente
@@ -213,29 +187,10 @@ async function updateSystemHealth() {
 
 /**
  * Inicializar gráficos
+ * NOTA: los sparklines del super-admin los gestiona dashboard-data-loader.js (updateSparklines).
  */
-async function initCharts() {
-    try {
-        // Destruir gráficos existentes antes de crear nuevos
-        if (window.charts) {
-            if (window.charts.progress) {
-                window.charts.progress.destroy();
-                window.charts.progress = null;
-            }
-            if (window.charts.activity) {
-                window.charts.activity.destroy();
-                window.charts.activity = null;
-            }
-        } else {
-            window.charts = {};
-        }
-        
-        // Por ahora, no cargar gráficos hasta que se implementen los endpoints
-        console.log('Gráficos inicializados (pendiente de implementación)');
-        
-    } catch (error) {
-        console.error('Error inicializando gráficos:', error);
-    }
+function initCharts() {
+    // Sin gráficos propios: los sparklines se crean/actualizan desde dashboard-data-loader.js
 }
 
 /**

@@ -189,10 +189,7 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-lg-8 mb-3">
-                            <canvas id="chartPartidos" height="80"></canvas>
-                        </div>
-                        <div class="col-lg-4">
+                        <div class="col-lg-12">
                             <div id="resumenDepartamental">
                                 <div class="text-center py-4">
                                     <div class="spinner-border text-success" role="status">
@@ -320,39 +317,9 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-
 <!-- Leaflet ya cargado en base.html -->
 
 <script>
-// Funciones auxiliares
-function logout() {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user_data');
-    window.location.href = '/auth/login';
-}
-
-function actualizarDatos() {
-    console.log('Actualizando datos...');
-}
-
-function filtrarMunicipios(filtro) {
-    console.log('Filtrando municipios:', filtro);
-}
-
-function buscarMunicipio() {
-    console.log('Buscando municipio...');
-}
-
-function generarReporte() {
-    console.log('Generando reporte...');
-}
-
-function exportarDatos() {
-    console.log('Exportando datos...');
-}
-
 // Inicializar mapa de geolocalización cuando se abre el tab de mapa
 document.addEventListener('DOMContentLoaded', function() {
     const mapaTab = document.getElementById('mapa-tab');
