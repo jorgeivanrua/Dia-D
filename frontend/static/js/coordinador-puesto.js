@@ -96,7 +96,7 @@ async function loadFormularios() {
         const errorMsg = error.message || 'Error al cargar formularios';
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center py-4">
+                <td colspan="7" class="text-center py-4">
                     <p class="text-danger">❌ ${errorMsg}</p>
                     <button class="btn btn-sm btn-outline-primary mt-2" onclick="loadFormularios()">
                         <i class="bi bi-arrow-clockwise"></i> Reintentar
@@ -133,7 +133,7 @@ function renderFormulariosTable(formularios) {
     if (formularios.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center py-4">
+                <td colspan="7" class="text-center py-4">
                     <p class="text-muted">No hay formularios ${estadoFiltro ? 'en estado ' + estadoFiltro : ''}</p>
                 </td>
             </tr>
@@ -198,11 +198,14 @@ function getEstadoBadge(estado) {
 function filtrarPorEstado(estado) {
     estadoFiltro = estado;
     
-    // Actualizar botones activos
-    document.querySelectorAll('#filterButtons button').forEach(btn => {
-        btn.classList.remove('active');
+    // Actualizar chips activos
+    document.querySelectorAll('.filter-chips .chip').forEach(chip => {
+        chip.classList.remove('active');
     });
-    event.target.classList.add('active');
+    const activeChip = event && event.target && event.target.closest ? event.target.closest('.chip') : null;
+    if (activeChip) {
+        activeChip.classList.add('active');
+    }
     
     // Recargar formularios
     loadFormularios();
@@ -213,13 +216,25 @@ function filtrarPorEstado(estado) {
  */
 async function abrirModalValidacion(formularioId) {
     try {
+        // Restaurar botones de acción por si fueron ocultados por verDetalles
+        const validacionModal = document.getElementById('validacionModal');
+        if (validacionModal) {
+            const footer = validacionModal.querySelector('.modal-footer');
+            if (footer) {
+                const btnDanger = footer.querySelector('.btn-danger');
+                const btnSuccess = footer.querySelector('.btn-success');
+                if (btnDanger) btnDanger.style.display = '';
+                if (btnSuccess) btnSuccess.style.display = '';
+            }
+        }
+        
         const response = await APIClient.get(`/formularios/${formularioId}`);
         
         if (response.success) {
             formularioActual = response.data;
             mostrarDatosValidacion(formularioActual);
             
-            const modal = new bootstrap.Modal(document.getElementById('validacionModal'));
+            const modal = new bootstrap.Modal(validacionModal || document.getElementById('validacionModal'));
             modal.show();
         }
     } catch (error) {

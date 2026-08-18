@@ -931,11 +931,7 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-<!-- Leaflet para mapas -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<!-- Script de geolocalización ya está cargado en base.html -->
+<!-- Leaflet ya cargado en base.html -->
 
 <script src="{{ url_for('static', filename='js/incidentes-delitos.js') }}"></script>
 <script src="{{ url_for('static', filename='js/upload-manager.js') }}"></script>
@@ -943,47 +939,5 @@
 <script src="{{ url_for('static', filename='js/seguimiento-timeline.js') }}"></script>
 <script src="{{ url_for('static', filename='js/coordinador-puesto.js') }}"></script>
 <script src="{{ url_for('static', filename='js/coordinador-puesto-mejoras.js') }}"></script>
-
-<script>
-// Inicializar mapa de geolocalización cuando se abre el tab de mapa
-document.addEventListener('DOMContentLoaded', function() {
-    const mapaTab = document.getElementById('mapa-tab');
-    if (mapaTab) {
-        mapaTab.addEventListener('shown.bs.tab', function() {
-            if (!window.mapaPuesto) {
-                console.log('Inicializando mapa de puesto...');
-                window.mapaPuesto = new MapaGeolocalizacion('mapaGeolocalizacion', {
-                    center: [1.6144, -75.6062], // Caquetá, Colombia
-                    zoom: 15,
-                    autoUpdate: true,
-                    updateInterval: 30000, // 30 segundos
-                    showPuestos: true,
-                    showUsuarios: true
-                });
-                window.mapaPuesto.init();
-            }
-        });
-    }
-});
-
-// Funciones para los botones del mapa
-function centrarMapaEnPuesto() {
-    if (window.mapaPuesto) {
-        window.mapaPuesto.centrarEn(1.6144, -75.6062, 15);
-    }
-}
-
-function ajustarVistaMapa() {
-    if (window.mapaPuesto) {
-        window.mapaPuesto.ajustarVista();
-    }
-}
-
-function actualizarMapa() {
-    if (window.mapaPuesto) {
-        window.mapaPuesto.actualizar();
-    }
-}
-</script>
 
 {% endblock %}
