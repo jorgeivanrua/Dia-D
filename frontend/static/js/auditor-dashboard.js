@@ -19,6 +19,7 @@ const auditorDashboard = {
         console.log('Inicializando dashboard de auditor...');
         this.loadUserProfile();
         this.loadStats();
+        this.loadResumen();
         this.loadFormularios();
         this.loadAnomalias();
         this.loadIncidentes();
