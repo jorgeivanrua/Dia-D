@@ -17,11 +17,63 @@ notificaciones_bp = Blueprint('notificaciones', __name__)
 def obtener_notificaciones():
     """
     Obtener notificaciones del usuario actual
-    
-    Query params:
-        - solo_no_leidas: bool (opcional)
-        - limit: int (opcional, default 50)
-        - offset: int (opcional, default 0)
+    ---
+    tags:
+      - Notificaciones
+    summary: Obtener notificaciones del usuario autenticado
+    security:
+      - Bearer: []
+    parameters:
+      - in: query
+        name: solo_no_leidas
+        schema:
+          type: boolean
+        required: false
+        description: Si es true, solo retorna notificaciones no leídas
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          default: 50
+        required: false
+        description: Máximo de notificaciones a retornar (máx 100)
+      - in: query
+        name: offset
+        schema:
+          type: integer
+          default: 0
+        required: false
+        description: Desplazamiento para paginación
+    responses:
+      200:
+        description: Lista de notificaciones
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                notificaciones:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      titulo:
+                        type: string
+                      mensaje:
+                        type: string
+                      leida:
+                        type: boolean
+                no_leidas:
+                  type: integer
+                total:
+                  type: integer
+      401:
+        description: Token inválido o ausente
     """
     try:
         user_id = get_jwt_identity()

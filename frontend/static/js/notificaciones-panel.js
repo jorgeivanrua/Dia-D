@@ -51,14 +51,14 @@ class NotificacionesPanel {
         container.innerHTML = `
             <div class="notificaciones-dropdown">
                 <button class="notificaciones-btn" id="notificaciones-btn" title="Notificaciones">
-                    <i class="fas fa-bell"></i>
+                    <i class="bi bi-bell"></i>
                     <span class="notificaciones-badge" id="notificaciones-badge" style="display: none;">0</span>
                 </button>
                 <div class="notificaciones-dropdown-menu" id="notificaciones-dropdown">
                     <div class="notificaciones-header">
                         <h3>Notificaciones</h3>
                         <button class="btn-marcar-todas" id="btn-marcar-todas" title="Marcar todas como leídas">
-                            <i class="fas fa-check-double"></i>
+                            <i class="bi bi-check-all"></i>
                         </button>
                     </div>
                     <div class="notificaciones-filtros">
@@ -67,7 +67,7 @@ class NotificacionesPanel {
                     </div>
                     <div class="notificaciones-lista" id="notificaciones-lista">
                         <div class="notificaciones-loading">
-                            <i class="fas fa-spinner fa-spin"></i> Cargando...
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div> Cargando...
                         </div>
                     </div>
                     <div class="notificaciones-footer">
@@ -94,7 +94,7 @@ class NotificacionesPanel {
                 <div class="notificaciones-modal-header">
                     <h2>Todas las Notificaciones</h2>
                     <button class="notificaciones-modal-close" id="modal-close">
-                        <i class="fas fa-times"></i>
+                        <i class="bi bi-x-lg"></i>
                     </button>
                 </div>
                 <div class="notificaciones-modal-body">
@@ -191,7 +191,7 @@ class NotificacionesPanel {
         this.mostrarLoading();
 
         try {
-            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token') || localStorage.getItem('token') || sessionStorage.getItem('token');
             const soloNoLeidas = this.filtro === 'no_leidas';
 
             const response = await fetch(
@@ -229,7 +229,7 @@ class NotificacionesPanel {
         if (this.notificaciones.length === 0) {
             lista.innerHTML = `
                 <div class="notificaciones-vacio">
-                    <i class="fas fa-bell-slash"></i>
+                    <i class="bi bi-bell-slash"></i>
                     <p>No hay notificaciones</p>
                 </div>
             `;
@@ -279,11 +279,11 @@ class NotificacionesPanel {
      */
     getIconoTipo(tipo) {
         const iconos = {
-            'nuevo_incidente': 'fas fa-exclamation-triangle',
-            'nuevo_delito': 'fas fa-gavel',
-            'cambio_estado': 'fas fa-sync-alt'
+            'nuevo_incidente': 'bi bi-exclamation-triangle',
+            'nuevo_delito': 'bi bi-gavel',
+            'cambio_estado': 'bi bi-arrow-repeat'
         };
-        return iconos[tipo] || 'fas fa-bell';
+        return iconos[tipo] || 'bi bi-bell';
     }
 
     /**
@@ -347,7 +347,7 @@ class NotificacionesPanel {
      */
     async marcarLeida(id) {
         try {
-            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token') || localStorage.getItem('token') || sessionStorage.getItem('token');
             const response = await fetch(`/api/notificaciones/${id}/leer`, {
                 method: 'POST',
                 headers: {
@@ -374,7 +374,7 @@ class NotificacionesPanel {
      */
     async marcarTodasLeidas() {
         try {
-            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token') || localStorage.getItem('token') || sessionStorage.getItem('token');
             const response = await fetch('/api/notificaciones/marcar-todas-leidas', {
                 method: 'POST',
                 headers: {
@@ -453,7 +453,7 @@ class NotificacionesPanel {
         if (this.notificaciones.length === 0) {
             lista.innerHTML = `
                 <div class="notificaciones-vacio">
-                    <i class="fas fa-bell-slash"></i>
+                    <i class="bi bi-bell-slash"></i>
                     <p>No hay notificaciones</p>
                 </div>
             `;
@@ -479,7 +479,7 @@ class NotificacionesPanel {
         if (lista) {
             lista.innerHTML = `
                 <div class="notificaciones-loading">
-                    <i class="fas fa-spinner fa-spin"></i> Cargando...
+                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div> Cargando...
                 </div>
             `;
         }
@@ -493,7 +493,7 @@ class NotificacionesPanel {
         if (lista) {
             lista.innerHTML = `
                 <div class="notificaciones-error">
-                    <i class="fas fa-exclamation-circle"></i>
+                    <i class="bi bi-exclamation-circle"></i>
                     <p>Error cargando notificaciones</p>
                 </div>
             `;
@@ -504,11 +504,17 @@ class NotificacionesPanel {
 // Crear instancia global
 window.notificacionesPanel = new NotificacionesPanel();
 
-// Auto-inicializar cuando el DOM esté listo
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
+// Auto-inicializar cuando el DOM esté listo (solo con navbar y token)
+function initNotificacionesPanel() {
+    const navbar = document.querySelector('.navbar') || document.querySelector('nav');
+    const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token') || localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (navbar && token) {
         window.notificacionesPanel.init();
-    });
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNotificacionesPanel);
 } else {
-    window.notificacionesPanel.init();
+    initNotificacionesPanel();
 }

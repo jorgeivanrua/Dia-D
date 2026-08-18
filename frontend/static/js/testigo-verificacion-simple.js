@@ -1,6 +1,6 @@
 /**
  * Verificación de presencia SIMPLE y ROBUSTA
- * Esta función SIEMPRE funciona, sin depender de APIs complejas
+ * Fail-closed: la presencia SOLO se marca si el API confirma el registro
  */
 
 window.verificarPresenciaSimple = async function() {
@@ -23,31 +23,41 @@ window.verificarPresenciaSimple = async function() {
         const mesaData = JSON.parse(selectedOption.dataset.mesa);
         console.log('📋 [SIMPLE] Mesa seleccionada:', mesaData);
         
-        // 2. Llamar al API para registrar presencia
+        // 2. Llamar al API para registrar presencia (obligatorio)
+        let response;
         try {
-            const response = await APIClient.post('/testigo/registrar-presencia', {
+            response = await APIClient.post('/testigo/registrar-presencia', {
                 mesa_id: mesaData.id
             });
-            
             console.log('📡 [SIMPLE] Respuesta del API:', response);
-            
-            if (!response.success) {
-                throw new Error(response.error || 'Error al verificar presencia');
-            }
         } catch (apiError) {
-            console.warn('⚠️ [SIMPLE] Error en API, continuando de todas formas:', apiError);
-            // Continuar de todas formas - el API puede fallar pero queremos que funcione localmente
+            console.error('❌ [SIMPLE] Error del API, presencia NO verificada:', apiError);
+            if (window.Utils && window.Utils.showError) {
+                Utils.showError('⚠️ Error al verificar presencia en el servidor. No se marcó la presencia.');
+            } else {
+                alert('⚠️ Error al verificar presencia en el servidor. No se marcó la presencia.');
+            }
+            return;
         }
         
-        // 3. Guardar en localStorage (SIEMPRE, incluso si el API falla)
+        // Fail-closed: si el API no confirmó éxito, no continuar
+        if (!response || !response.success) {
+            const errorMsg = (response && response.error) || 'Error al verificar presencia';
+            console.error('❌ [SIMPLE] API no confirmó, presencia NO verificada:', errorMsg);
+            if (window.Utils && window.Utils.showError) {
+                Utils.showError('⚠️ ' + errorMsg + '. No se marcó la presencia.');
+            } else {
+                alert('⚠️ ' + errorMsg + '. No se marcó la presencia.');
+            }
+            return;
+        }
+        
+        // 3. Guardar en localStorage (solo después de confirmación del servidor)
         localStorage.setItem('presenciaVerificada', 'true');
         localStorage.setItem('mesaVerificadaId', mesaData.id.toString());
         localStorage.setItem('mesaVerificadaData', JSON.stringify(mesaData));
         
         console.log('💾 [SIMPLE] Datos guardados en localStorage');
-        console.log('  - presenciaVerificada:', localStorage.getItem('presenciaVerificada'));
-        console.log('  - mesaVerificadaId:', localStorage.getItem('mesaVerificadaId'));
-        console.log('  - mesaVerificadaData existe:', !!localStorage.getItem('mesaVerificadaData'));
         
         // 4. Actualizar variables globales
         window.presenciaVerificada = true;
@@ -78,10 +88,8 @@ window.verificarPresenciaSimple = async function() {
             statEstadoTexto.textContent = 'Verificado';
         }
         
-        // 7. Habilitar botones (se hará automáticamente por el script de enable-buttons)
         console.log('✅ [SIMPLE] Verificación completada exitosamente');
         
-        // Mostrar mensaje de éxito
         if (window.Utils && window.Utils.showSuccess) {
             Utils.showSuccess('✅ Presencia verificada exitosamente');
         } else {
@@ -90,9 +98,13 @@ window.verificarPresenciaSimple = async function() {
         
     } catch (error) {
         console.error('❌ [SIMPLE] Error en verificación:', error);
-        alert('Error al verificar presencia: ' + error.message);
+        if (window.Utils && window.Utils.showError) {
+            Utils.showError('Error al verificar presencia: ' + error.message);
+        } else {
+            alert('Error al verificar presencia: ' + error.message);
+        }
     }
 };
 
 console.log('✅ [SIMPLE] Script de verificación simple cargado');
-console.log('💡 [SIMPLE] El botón "Verificar Mi Presencia" usa esta función');
+console.log('💡 [SIMPLE] El botón "Verificar Mi Presencia" usa esta función (fail-closed)');

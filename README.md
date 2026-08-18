@@ -255,26 +255,80 @@ mvp/
 
 ## 📊 API Endpoints
 
-### Autenticación
-- `POST /api/auth/login` - Iniciar sesión
-- `POST /api/auth/logout` - Cerrar sesión
-- `GET /api/auth/profile` - Obtener perfil
+> La API tiene **254 endpoints** en **33 blueprints**. La documentación interactiva completa se genera automáticamente con **Swagger/OpenAPI 3**.
 
-### Configuración Electoral
-- `GET /api/configuracion/tipos-eleccion` - Listar tipos de elección
-- `POST /api/configuracion/tipos-eleccion` - Crear tipo de elección
-- `GET /api/configuracion/partidos` - Listar partidos
-- `POST /api/configuracion/partidos` - Crear partido
-- `GET /api/configuracion/candidatos` - Listar candidatos
-- `POST /api/configuracion/candidatos` - Crear candidato
+### 🧪 Documentación Interactiva
+- **Swagger UI**: `GET /api/docs/` — Explora y prueba todos los endpoints
+- **Spec JSON**: `GET /apispec.json` — Spec OpenAPI 3 en formato JSON
+
+### Autenticación
+- `POST /api/auth/login` - Iniciar sesión (retorna `access_token` y `refresh_token`)
+- `POST /api/auth/logout` - Cerrar sesión
+- `GET /api/auth/profile` - Obtener perfil del usuario autenticado
+
+### Ubicaciones (DIVIPOLA)
+- `GET /api/locations/departamentos` - Listar departamentos
+- `GET /api/locations/municipios/{departamento_codigo}` - Listar municipios
+- `GET /api/locations/zonas/{municipio_codigo}` - Listar zonas
+- `GET /api/locations/puestos/{zona_codigo}` - Listar puestos
+- `GET /api/locations/mesas/{puesto_codigo}` - Listar mesas
 
 ### Formularios E-14
-- `GET /api/formularios-e14` - Listar formularios
-- `POST /api/formularios-e14` - Crear formulario
-- `GET /api/formularios-e14/{id}` - Ver formulario
-- `PUT /api/formularios-e14/{id}` - Actualizar formulario
-- `POST /api/formularios-e14/{id}/validar` - Validar/rechazar
-- `DELETE /api/formularios-e14/{id}` - Eliminar formulario
+- `GET /api/formularios/mis-formularios` - Listar mis formularios (testigo)
+- `GET /api/formularios/puesto` - Listar formularios del puesto (coordinador)
+- `POST /api/formularios` - Crear formulario E-14
+- `GET /api/formularios/{id}` - Ver formulario
+- `PUT /api/formularios/{id}` - Actualizar formulario
+- `PUT /api/formularios/{id}/validar` - Validar formulario
+- `PUT /api/formularios/{id}/rechazar` - Rechazar formulario
+- `POST /api/formularios/puesto/generar-e24` - Generar E-24 de puesto
+- `POST /api/formularios/municipal/generar-e24` - Generar E-24 municipal
+
+### Incidentes y Delitos
+- `POST /api/incidentes` - Reportar incidente
+- `GET /api/incidentes` - Listar incidentes
+- `PUT /api/incidentes/{id}/estado` - Cambiar estado de incidente
+- `POST /api/delitos` - Reportar delito
+- `GET /api/delitos` - Listar delitos
+- `PUT /api/delitos/{id}/estado` - Cambiar estado de delito
+- `POST /api/delitos/{id}/denunciar` - Denunciar formalmente un delito
+- `GET /api/reportes/estadisticas` - Estadísticas de reportes
+
+### Seguimiento
+- `GET /api/seguimiento/{tipo}/{reporte_id}` - Obtener seguimiento de un reporte
+- `POST /api/seguimiento` - Registrar seguimiento
+
+### Notificaciones
+- `GET /api/notificaciones` - Listar notificaciones
+- `POST /api/notificaciones/{id}/leer` - Marcar como leída
+- `POST /api/notificaciones/marcar-todas-leidas` - Marcar todas como leídas
+- `GET /api/notificaciones/contador` - Contador de no leídas
+
+### Monitoreo (Super Admin)
+- `GET /api/monitoreo/usuarios-activos` - Usuarios activos
+- `GET /api/monitoreo/estadisticas` - Estadísticas generales
+- `GET /api/monitoreo/alertas` - Alertas del sistema
+- `GET /api/monitoreo/actividad-reciente` - Actividad reciente
+- `GET /api/monitoreo/metricas-rendimiento` - Métricas de rendimiento
+- `GET /api/monitoreo/mapa-calor` - Mapa de calor
+- `GET /api/monitoreo/exportar-reporte` - Exportar reporte
+
+### Gestión de Usuarios
+- `GET /api/gestion-usuarios/puestos` - Listar puestos
+- `GET /api/gestion-usuarios/municipios` - Listar municipios
+- `GET /api/gestion-usuarios/departamentos` - Listar departamentos
+- `POST /api/gestion-usuarios/crear-testigos-puesto` - Crear testigos de un puesto
+- `POST /api/gestion-usuarios/crear-coordinador-puesto` - Crear coordinador de puesto
+- `POST /api/gestion-usuarios/crear-usuarios-municipio` - Crear usuarios de municipio
+- `POST /api/gestion-usuarios/crear-usuarios-departamento` - Crear usuarios de departamento
+
+### Otros
+- `GET /api/evidencia/{filename}` - Obtener evidencia
+- `POST /api/evidencia/upload` - Subir evidencia
+- `GET /api/partidos` - Listar partidos
+- `GET /api/candidatos` - Listar candidatos
+- `GET /api/database/exportar` - Backup completo de BD (JSON)
+- `GET /health` - Health check
 
 ## 📖 Documentación
 

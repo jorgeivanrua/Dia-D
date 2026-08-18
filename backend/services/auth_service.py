@@ -34,8 +34,8 @@ class AuthService:
         """
         logger.info(f"Autenticando: rol={rol}, ubicacion_data={ubicacion_data}")
         
-        # Super admin y monitoreo no necesitan ubicación
-        if rol in ['super_admin', 'monitoreo']:
+        # Super admin, monitoreo y auditor no necesitan ubicación
+        if rol in ['super_admin', 'monitoreo', 'auditor_electoral']:
             user = User.query.filter_by(
                 rol=rol,
                 activo=True
@@ -130,8 +130,8 @@ class AuthService:
         Returns:
             Location o None
         """
-        # Super admin no necesita ubicación
-        if rol == 'super_admin':
+        # Super admin, monitoreo y auditor no necesitan ubicación
+        if rol in ['super_admin', 'monitoreo', 'auditor_electoral']:
             return None
         
         query = Location.query
@@ -145,8 +145,9 @@ class AuthService:
         # Según el rol, determinar el tipo de ubicación
         if rol in ['admin_departamental', 'coordinador_departamental', 'auditor_electoral']:
             query = query.filter_by(tipo='departamento')
+            result = query.first()
             logger.debug("Filtrando por tipo=departamento")
-        
+
         elif rol in ['admin_municipal', 'coordinador_municipal']:
             if 'municipio_codigo' in ubicacion_data:
                 query = query.filter_by(
@@ -154,13 +155,14 @@ class AuthService:
                     municipio_codigo=ubicacion_data['municipio_codigo']
                 )
                 logger.debug(f"Filtrando por tipo=municipio, municipio_codigo={ubicacion_data['municipio_codigo']}")
-        
+            result = query.first()
+
         elif rol == 'coordinador_puesto':
             if 'puesto_codigo' in ubicacion_data:
                 # Construir el código completo si es necesario
                 zona_cod = ubicacion_data.get('zona_codigo', '')
                 puesto_cod = ubicacion_data.get('puesto_codigo', '')
-                
+
                 # Si puesto_codigo tiene menos de 8 caracteres, construir el completo
                 if len(puesto_cod) < 8 and zona_cod:
                     # zona_codigo (6) + últimos 2 dígitos de puesto_codigo = código completo (8)
@@ -170,13 +172,14 @@ class AuthService:
                     )
                 else:
                     puesto_codigo_completo = puesto_cod
-                
+
                 filters = {
                     'tipo': 'puesto',
                     'puesto_codigo': puesto_codigo_completo
                 }
                 query = query.filter_by(**filters)
                 logger.debug(f"Filtrando por tipo=puesto, puesto_codigo={puesto_codigo_completo}")
+            result = query.first()
         
         elif rol == 'testigo_electoral':
             # Testigos se autentican a nivel de puesto

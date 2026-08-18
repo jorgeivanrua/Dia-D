@@ -30,7 +30,7 @@ class SeguimientoTimeline {
         this.render();
 
         try {
-            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token') || localStorage.getItem('token') || sessionStorage.getItem('token');
             const response = await fetch(`/api/seguimiento/${tipoReporte}/${reporteId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -62,7 +62,7 @@ class SeguimientoTimeline {
         if (this.loading) {
             this.container.innerHTML = `
                 <div class="seguimiento-loading">
-                    <i class="fas fa-spinner fa-spin"></i>
+                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
                     <p>Cargando seguimiento...</p>
                 </div>
             `;
@@ -72,7 +72,7 @@ class SeguimientoTimeline {
         if (this.seguimientos.length === 0) {
             this.container.innerHTML = `
                 <div class="seguimiento-vacio">
-                    <i class="fas fa-history"></i>
+                    <i class="bi bi-clock-history"></i>
                     <p>No hay registros de seguimiento</p>
                 </div>
             `;
@@ -115,13 +115,13 @@ class SeguimientoTimeline {
                         </div>
                     </div>
                     <div class="seguimiento-usuario">
-                        <i class="fas fa-user"></i>
+                        <i class="bi bi-person"></i>
                         ${seguimiento.usuario_nombre || 'Usuario desconocido'}
                         <span class="seguimiento-rol">(${this.formatRol(seguimiento.usuario_rol)})</span>
                     </div>
                     ${seguimiento.comentario ? `
                         <div class="seguimiento-comentario">
-                            <i class="fas fa-comment"></i>
+                            <i class="bi bi-chat-left-text"></i>
                             ${this.escapeHtml(seguimiento.comentario)}
                         </div>
                     ` : ''}
@@ -176,15 +176,15 @@ class SeguimientoTimeline {
      */
     getIconoAccion(accion) {
         const iconos = {
-            'crear': 'fas fa-plus-circle',
-            'cambiar_estado': 'fas fa-exchange-alt',
-            'agregar_comentario': 'fas fa-comment',
-            'denunciar': 'fas fa-gavel',
-            'resolver': 'fas fa-check-circle',
-            'escalar': 'fas fa-arrow-up',
-            'exportar': 'fas fa-download'
+            'crear': 'bi bi-plus-circle',
+            'cambiar_estado': 'bi bi-arrow-left-right',
+            'agregar_comentario': 'bi bi-chat-left-text',
+            'denunciar': 'bi bi-gavel',
+            'resolver': 'bi bi-check-circle',
+            'escalar': 'bi bi-arrow-up',
+            'exportar': 'bi bi-download'
         };
-        return iconos[accion] || 'fas fa-circle';
+        return iconos[accion] || 'bi bi-circle';
     }
 
     /**
@@ -295,7 +295,7 @@ class SeguimientoTimeline {
     mostrarError(mensaje) {
         this.container.innerHTML = `
             <div class="seguimiento-error">
-                <i class="fas fa-exclamation-circle"></i>
+                <i class="bi bi-exclamation-circle"></i>
                 <p>${mensaje}</p>
             </div>
         `;

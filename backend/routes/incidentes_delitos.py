@@ -155,7 +155,47 @@ def actualizar_estado_incidente(incidente_id):
 @incidentes_delitos_bp.route('/api/delitos', methods=['POST'])
 @jwt_required()
 def crear_delito():
-    """Crear un nuevo delito electoral"""
+    """
+    Crear un nuevo delito electoral
+    ---
+    tags:
+      - Delitos
+    summary: Reportar un delito electoral
+    security:
+      - Bearer: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [tipo_delito, titulo, descripcion]
+            properties:
+              tipo_delito:
+                type: string
+                example: fraude_electoral
+              titulo:
+                type: string
+              descripcion:
+                type: string
+              gravedad:
+                type: string
+                example: media
+              testigos_adicionales:
+                type: string
+              mesa_id:
+                type: integer
+              tipo:
+                type: string
+                example: delito
+    responses:
+      201:
+        description: Delito creado exitosamente
+      400:
+        description: Datos requeridos faltantes
+      401:
+        description: Token inválido
+    """
     try:
         user_id = get_jwt_identity()
         current_user = User.query.get(int(user_id))
@@ -296,7 +336,67 @@ def actualizar_estado_delito(delito_id):
 @incidentes_delitos_bp.route('/api/delitos/<int:delito_id>/denunciar', methods=['POST'])
 @jwt_required()
 def denunciar_delito(delito_id):
-    """Denunciar formalmente un delito"""
+    """
+    Denunciar formalmente un delito
+    ---
+    tags:
+      - Delitos
+    summary: Marcar un delito como denunciado formalmente ante una autoridad
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: delito_id
+        required: true
+        schema:
+          type: integer
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [numero_denuncia, autoridad_competente]
+            properties:
+              numero_denuncia:
+                type: string
+                example: DEN-2024-001234
+              autoridad_competente:
+                type: string
+                example: fiscalia
+    responses:
+      200:
+        description: Delito denunciado formalmente
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                data:
+                  type: object
+                  properties:
+                    estado:
+                      type: string
+                      example: denunciado
+                    denunciado_formalmente:
+                      type: boolean
+                      example: true
+                    numero_denuncia:
+                      type: string
+                    autoridad_competente:
+                      type: string
+      400:
+        description: Número de denuncia y autoridad competente requeridos
+      403:
+        description: Rol sin permisos para denunciar
+      404:
+        description: Delito no encontrado
+    """
     try:
         user_id = get_jwt_identity()
         current_user = User.query.get(int(user_id))
@@ -304,8 +404,8 @@ def denunciar_delito(delito_id):
         if not current_user:
             return jsonify({'success': False, 'error': 'Usuario no encontrado'}), 404
         
-        # Solo auditores y super_admin pueden denunciar formalmente
-        if current_user.rol not in ['auditor_electoral', 'super_admin']:
+        # Coordinadores, auditores y super_admin pueden denunciar formalmente
+        if current_user.rol not in ['coordinador_puesto', 'coordinador_municipal', 'coordinador_departamental', 'auditor_electoral', 'super_admin']:
             return jsonify({'success': False, 'error': 'No tiene permisos para denunciar formalmente'}), 403
         
         data = request.get_json()
@@ -346,42 +446,6 @@ def obtener_estadisticas():
         )
         
         return jsonify({'success': True, 'data': estadisticas}), 200
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@incidentes_delitos_bp.route('/api/notificaciones', methods=['GET'])
-@jwt_required()
-def obtener_notificaciones():
-    """Obtener notificaciones del usuario"""
-    try:
-        user_id = get_jwt_identity()
-        current_user = User.query.get(int(user_id))
-        
-        if not current_user:
-            return jsonify({'success': False, 'error': 'Usuario no encontrado'}), 404
-        
-        solo_no_leidas = request.args.get('solo_no_leidas', 'false').lower() == 'true'
-        
-        notificaciones = IncidentesDelitosService.obtener_notificaciones(
-            current_user.id, solo_no_leidas
-        )
-        
-        return jsonify({'success': True, 'data': notificaciones}), 200
-        
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@incidentes_delitos_bp.route('/api/notificaciones/<int:notificacion_id>/leer', methods=['PUT'])
-@jwt_required()
-def marcar_notificacion_leida(notificacion_id):
-    """Marcar notificación como leída"""
-    try:
-        IncidentesDelitosService.marcar_notificacion_leida(notificacion_id)
-        
-        return jsonify({'success': True, 'message': 'Notificación marcada como leída'}), 200
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500

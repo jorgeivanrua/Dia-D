@@ -10,15 +10,6 @@ from backend.models.location import Location
 
 locations_bp = Blueprint('locations', __name__)
 
-# Constante para el código de Caquetá (DIVIPOLA)
-CAQUETA_CODE = '44'
-
-def validate_caqueta_code(code):
-    """Validar que el código pertenece a Caquetá"""
-    if not code:
-        return False
-    return code.startswith(CAQUETA_CODE)
-
 
 def _auto_load_divipola():
     """
@@ -50,6 +41,16 @@ def _auto_load_divipola():
         
         print(f"[AUTO-LOAD] Cargando desde: {csv_path}")
         
+        # Departamentos a cargar (configurable vía env DIVIPOLA_DEPARTAMENTOS, default '44')
+        deptos_a_cargar = set(
+            d.strip().zfill(2) for d in
+            os.getenv('DIVIPOLA_DEPARTAMENTOS', '44').replace(',', ' ').split()
+            if d.strip()
+        )
+        if not deptos_a_cargar:
+            deptos_a_cargar = {'44'}
+        print(f"[AUTO-LOAD] Departamentos a cargar: {sorted(deptos_a_cargar)}")
+        
         # Cargar datos
         locations_added = 0
         departamentos = {}
@@ -63,8 +64,8 @@ def _auto_load_divipola():
             for row in reader:
                 dd = row['dd'].strip().zfill(2)
                 
-                # SOLO CAQUETÁ
-                if dd != '44':
+                # Solo cargar los departamentos configurados
+                if dd not in deptos_a_cargar:
                     continue
                 
                 mm = row['mm'].strip().zfill(2)
@@ -459,11 +460,11 @@ def _auto_load_partidos_candidatos():
 @locations_bp.route('/departamentos', methods=['GET'])
 def get_departamentos():
     """
-    Obtener departamento de Caquetá únicamente
+    Obtener departamentos cargados en la base de datos
     Endpoint público (necesario para login)
-    
+
     Returns:
-        JSON con lista de departamentos (solo Caquetá)
+        JSON con lista de departamentos cargados
     """
     try:
         # Verificar si hay datos, si no, cargar automáticamente
@@ -476,10 +477,9 @@ def get_departamentos():
             # Cargar partidos y candidatos
             _auto_load_partidos_candidatos()
         
-        # Buscar departamento de Caquetá
+        # Todos los departamentos cargados en la BD
         departamentos = Location.query.filter_by(
             tipo='departamento',
-            departamento_codigo=CAQUETA_CODE,
             activo=True
         ).all()
         
@@ -499,12 +499,11 @@ def get_departamentos():
             
             return jsonify({
                 'success': False,
-                'error': 'No se encontró el departamento de Caquetá. La base de datos puede estar vacía o el archivo divipola.csv no está disponible.',
+                'error': 'No se encontraron departamentos. La base de datos puede estar vacía o el archivo divipola.csv no está disponible.',
                 'data': [],
                 'debug': {
                     'total_departamentos': total_deptos,
-                    'total_locations': Location.query.count(),
-                    'buscando_codigo': CAQUETA_CODE
+                    'total_locations': Location.query.count()
                 }
             }), 404
             

@@ -96,7 +96,7 @@ async function loadFormularios() {
         const errorMsg = error.message || 'Error al cargar formularios';
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center py-4">
+                <td colspan="7" class="text-center py-4">
                     <p class="text-danger">❌ ${errorMsg}</p>
                     <button class="btn btn-sm btn-outline-primary mt-2" onclick="loadFormularios()">
                         <i class="bi bi-arrow-clockwise"></i> Reintentar
@@ -133,7 +133,7 @@ function renderFormulariosTable(formularios) {
     if (formularios.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center py-4">
+                <td colspan="7" class="text-center py-4">
                     <p class="text-muted">No hay formularios ${estadoFiltro ? 'en estado ' + estadoFiltro : ''}</p>
                 </td>
             </tr>
@@ -198,11 +198,14 @@ function getEstadoBadge(estado) {
 function filtrarPorEstado(estado) {
     estadoFiltro = estado;
     
-    // Actualizar botones activos
-    document.querySelectorAll('#filterButtons button').forEach(btn => {
-        btn.classList.remove('active');
+    // Actualizar chips activos
+    document.querySelectorAll('.filter-chips .chip').forEach(chip => {
+        chip.classList.remove('active');
     });
-    event.target.classList.add('active');
+    const activeChip = event && event.target && event.target.closest ? event.target.closest('.chip') : null;
+    if (activeChip) {
+        activeChip.classList.add('active');
+    }
     
     // Recargar formularios
     loadFormularios();
@@ -213,13 +216,25 @@ function filtrarPorEstado(estado) {
  */
 async function abrirModalValidacion(formularioId) {
     try {
+        // Restaurar botones de acción por si fueron ocultados por verDetalles
+        const validacionModal = document.getElementById('validacionModal');
+        if (validacionModal) {
+            const footer = validacionModal.querySelector('.modal-footer');
+            if (footer) {
+                const btnDanger = footer.querySelector('.btn-danger');
+                const btnSuccess = footer.querySelector('.btn-success');
+                if (btnDanger) btnDanger.style.display = '';
+                if (btnSuccess) btnSuccess.style.display = '';
+            }
+        }
+        
         const response = await APIClient.get(`/formularios/${formularioId}`);
         
         if (response.success) {
             formularioActual = response.data;
             mostrarDatosValidacion(formularioActual);
             
-            const modal = new bootstrap.Modal(document.getElementById('validacionModal'));
+            const modal = new bootstrap.Modal(validacionModal || document.getElementById('validacionModal'));
             modal.show();
         }
     } catch (error) {
@@ -1463,28 +1478,17 @@ function mostrarModalGestionIncidente(incidente, seguimiento) {
             <p><strong>Reportado por:</strong> ${incidente.reportado_por_nombre}</p>
             <p><strong>Fecha:</strong> ${Utils.formatDate(incidente.fecha_reporte)}</p>
         </div>
-        ${seguimiento && seguimiento.length > 0 ? `
-            <div class="mb-3">
-                <h6>Historial de Seguimiento</h6>
-                <div class="list-group">
-                    ${seguimiento.map(seg => `
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">${seg.accion}</h6>
-                                <small>${Utils.formatDate(seg.created_at)}</small>
-                            </div>
-                            <p class="mb-1">${seg.comentario || ''}</p>
-                            <small>Por: ${seg.usuario_nombre}</small>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        ` : ''}
     `;
     
     document.getElementById('detalleIncidente').innerHTML = detalleHtml;
     document.getElementById('nuevoEstadoIncidente').value = 'en_revision';
     document.getElementById('comentarioIncidente').value = '';
+    
+    // Cargar timeline de seguimiento
+    if (window.SeguimientoTimeline) {
+        window.seguimientoIncidenteTimeline = new SeguimientoTimeline('seguimientoIncidente');
+        window.seguimientoIncidenteTimeline.cargar('incidente', incidente.id);
+    }
     
     const modal = new bootstrap.Modal(document.getElementById('gestionarIncidenteModal'));
     modal.show();
@@ -1561,31 +1565,31 @@ function mostrarModalGestionDelito(delito, seguimiento) {
             <p><strong>Reportado por:</strong> ${delito.reportado_por_nombre}</p>
             <p><strong>Fecha:</strong> ${Utils.formatDate(delito.fecha_reporte)}</p>
         </div>
-        ${seguimiento && seguimiento.length > 0 ? `
-            <div class="mb-3">
-                <h6>Historial de Seguimiento</h6>
-                <div class="list-group">
-                    ${seguimiento.map(seg => `
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">${seg.accion}</h6>
-                                <small>${Utils.formatDate(seg.created_at)}</small>
-                            </div>
-                            <p class="mb-1">${seg.comentario || ''}</p>
-                            <small>Por: ${seg.usuario_nombre}</small>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        ` : ''}
     `;
     
     document.getElementById('detalleDelito').innerHTML = detalleHtml;
     document.getElementById('nuevoEstadoDelito').value = 'en_investigacion';
     document.getElementById('comentarioDelito').value = '';
+    document.getElementById('numeroDenunciaDelito').value = '';
+    document.getElementById('autoridadCompetenteDelito').value = '';
+    toggleCamposDenunciaDelito();
+    
+    // Cargar timeline de seguimiento
+    if (window.SeguimientoTimeline) {
+        window.seguimientoDelitoTimeline = new SeguimientoTimeline('seguimientoDelito');
+        window.seguimientoDelitoTimeline.cargar('delito', delito.id);
+    }
     
     const modal = new bootstrap.Modal(document.getElementById('gestionarDelitoModal'));
     modal.show();
+}
+
+/**
+ * Mostrar/ocultar campos de denuncia según el estado seleccionado
+ */
+function toggleCamposDenunciaDelito() {
+    const mostrar = document.getElementById('nuevoEstadoDelito').value === 'denunciado';
+    document.getElementById('camposDenunciaDelito').style.display = mostrar ? 'block' : 'none';
 }
 
 /**
@@ -1603,11 +1607,29 @@ async function guardarGestionDelito() {
     try {
         Utils.showInfo('Actualizando delito...');
         
-        const response = await APIClient.actualizarEstadoDelito(
-            delitoActual.id,
-            nuevoEstado,
-            comentario
-        );
+        let response;
+        
+        if (nuevoEstado === 'denunciado') {
+            const numeroDenuncia = document.getElementById('numeroDenunciaDelito').value.trim();
+            const autoridadCompetente = document.getElementById('autoridadCompetenteDelito').value;
+            
+            if (!numeroDenuncia || !autoridadCompetente) {
+                Utils.showError('Número de denuncia y autoridad competente son requeridos');
+                return;
+            }
+            
+            response = await APIClient.denunciarDelito(
+                delitoActual.id,
+                numeroDenuncia,
+                autoridadCompetente
+            );
+        } else {
+            response = await APIClient.actualizarEstadoDelito(
+                delitoActual.id,
+                nuevoEstado,
+                comentario
+            );
+        }
         
         if (response.message) {
             Utils.showSuccess('✓ Delito actualizado exitosamente');

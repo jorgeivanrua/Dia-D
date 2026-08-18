@@ -8,6 +8,8 @@ from flask_cors import CORS
 from flask_compress import Compress
 # from flask_socketio import SocketIO  # Comentado temporalmente - instalar con: pip install flask-socketio
 from whitenoise import WhiteNoise
+# Flasgger for API documentation
+from flasgger import Swagger
 
 from backend.config import config
 from backend.database import init_db
@@ -69,7 +71,7 @@ def create_app(config_name='default'):
     with app.app_context():
         from backend.services import websocket_service  # Importar para registrar handlers
     
-    # Configurar WhiteNoise para servir archivos estáticos en producción
+# Configurar WhiteNoise para servir archivos estáticos en producción
     if not app.debug:
         app.wsgi_app = WhiteNoise(
             app.wsgi_app,
@@ -77,7 +79,55 @@ def create_app(config_name='default'):
             prefix='static/',
             max_age=31536000 if not app.debug else 0
         )
-    
+
+    # Configurar Flasgger para documentación de API
+    app.config['SWAGGER'] = {
+        'title': 'Dia-D API',
+        'uiversion': 3,
+        'openapi': '3.0.2',
+        'description': 'API para el sistema de gestión electoral Dia-D',
+        'version': '1.0.0',
+        'termsOfService': '',
+        'contact': {
+            'name': 'Dia-D Support',
+            'url': 'https://dia-d.example.com/support',
+            'email': 'support@dia-d.example.com'
+        },
+        'license': {
+            'name': 'MIT',
+            'url': 'https://opensource.org/licenses/MIT'
+        },
+        'schemes': [
+            'http',
+            'https'
+        ],
+        'specs': [
+            {
+                'endpoint': 'apispec',
+                'route': '/apispec.json',
+                'rule_filter': lambda rule: True,  # all in
+                'definition': {
+                    'security': [{}]
+                }
+            }
+        ],
+        'security_definitions': {
+            'Bearer': {
+                'type': 'apiKey',
+                'name': 'Authorization',
+                'in': 'header',
+                'description': 'JWT Authorization header usando el esquema: Bearer <token>'
+            }
+        },
+        'security': [
+            {
+                'Bearer': []
+            }
+        ],
+        'specs_route': '/api/docs/'
+    }
+    swagger = Swagger(app)
+
     # Inicializar usuarios básicos automáticamente
     with app.app_context():
         try:

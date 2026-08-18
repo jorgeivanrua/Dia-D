@@ -998,7 +998,7 @@ async function exportarDatosMunicipal() {
         Utils.showInfo('Generando archivo CSV...');
         
         const url = '/api/coordinador-municipal/exportar?formato=csv';
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('access_token');
         
         const response = await fetch(url, {
             headers: {
@@ -1675,7 +1675,15 @@ function renderVotosPartidosE24(votosPartidos) {
 /**
  * Logout
  */
-function logout() {
-    localStorage.removeItem('token');
-    window.location.href = '/auth/login';
+async function logout() {
+    try {
+        await APIClient.logout();
+    } catch (error) {
+        console.error('Error during logout:', error);
+    } finally {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user_data');
+        window.location.href = '/auth/login';
+    }
 }

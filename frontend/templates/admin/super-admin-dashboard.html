@@ -342,6 +342,11 @@ th.sortable:hover .sort-icon {
                 <div class="system-health mt-2">
                     <span class="health-indicator health-good" id="systemHealthIndicator"></span>
                     <small id="systemHealthText">Sistema operando normalmente</small>
+                    <div class="ms-3">
+                        <small class="text-muted me-2">CPU: <span id="cpuUsage">0%</span></small>
+                        <small class="text-muted me-2">Mem: <span id="memoryUsage">0%</span></small>
+                        <small class="text-success">DB: <span id="dbStatus">Conectada</span></small>
+                    </div>
                 </div>
             </div>
             <div class="col-md-4 text-end">
@@ -363,88 +368,107 @@ th.sortable:hover .sort-icon {
         </div>
     </div>
 
-    <!-- Estadísticas Principales -->
-    <div class="row mb-4">
-        <div class="col-md-3 col-sm-6">
-            <div class="stat-card">
-                <div class="stat-icon text-primary"><i class="bi bi-people-fill"></i></div>
-                <h3 id="totalUsuarios" class="mb-1">0</h3>
-                <p class="text-muted mb-0">Usuarios Activos</p>
-                <small class="text-success"><i class="bi bi-arrow-up"></i> <span id="usuariosChange">0</span> hoy</small>
-            </div>
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 sidebar-col">
+            <!-- Tabs de Navegación (Vertical) -->
+            <ul class="nav nav-flex-column mb-4" id="adminTabsSidebar" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">
+                        <i class="bi bi-speedometer2 me-2"></i> Vista General
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button">
+                        <i class="bi bi-people me-2"></i> Usuarios
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button">
+                        <i class="bi bi-gear me-2"></i> Configuración
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="monitoring-tab" data-bs-toggle="tab" data-bs-target="#monitoring" type="button">
+                        <i class="bi bi-activity me-2"></i> Monitoreo
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="audit-tab" data-bs-toggle="tab" data-bs-target="#audit" type="button">
+                        <i class="bi bi-journal-text me-2"></i> Auditoría
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="incidents-tab" data-bs-toggle="tab" data-bs-target="#incidents" type="button">
+                        <i class="bi bi-exclamation-triangle me-2"></i> Incidentes
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="campanas-tab" data-bs-toggle="tab" data-bs-target="#campanas" type="button">
+                        <i class="bi bi-calendar-event me-2"></i> Campañas
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="import-tab" data-bs-toggle="tab" data-bs-target="#import" type="button">
+                        <i class="bi bi-upload me-2"></i> Importar Datos
+                    </button>
+                </li>
+            </ul>
         </div>
-        <div class="col-md-3 col-sm-6">
-            <div class="stat-card">
-                <div class="stat-icon text-info"><i class="bi bi-geo-alt-fill"></i></div>
-                <h3 id="totalPuestos" class="mb-1">0</h3>
-                <p class="text-muted mb-0">Puestos Electorales</p>
-                <small class="text-muted"><span id="totalMesas">0</span> mesas</small>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6">
-            <div class="stat-card">
-                <div class="stat-icon text-warning"><i class="bi bi-file-earmark-text-fill"></i></div>
-                <h3 id="totalFormularios" class="mb-1">0</h3>
-                <p class="text-muted mb-0">Formularios E-14</p>
-                <small class="text-info"><span id="formulariosPendientes">0</span> pendientes</small>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6">
-            <div class="stat-card">
-                <div class="stat-icon text-success"><i class="bi bi-check-circle-fill"></i></div>
-                <h3 id="totalValidados" class="mb-1">0</h3>
-                <p class="text-muted mb-0">Validados</p>
-                <small class="text-success"><span id="porcentajeValidados">0</span>% completado</small>
-            </div>
-        </div>
-    </div>
 
-    <!-- Tabs de Navegación -->
-    <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">
-                <i class="bi bi-speedometer2"></i> Vista General
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button">
-                <i class="bi bi-people"></i> Usuarios
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="config-tab" data-bs-toggle="tab" data-bs-target="#config" type="button">
-                <i class="bi bi-gear"></i> Configuración
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="monitoring-tab" data-bs-toggle="tab" data-bs-target="#monitoring" type="button">
-                <i class="bi bi-activity"></i> Monitoreo
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="audit-tab" data-bs-toggle="tab" data-bs-target="#audit" type="button">
-                <i class="bi bi-journal-text"></i> Auditoría
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="incidents-tab" data-bs-toggle="tab" data-bs-target="#incidents" type="button">
-                <i class="bi bi-exclamation-triangle"></i> Incidentes
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="campanas-tab" data-bs-toggle="tab" data-bs-target="#campanas" type="button">
-                <i class="bi bi-calendar-event"></i> Campañas
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="import-tab" data-bs-toggle="tab" data-bs-target="#import" type="button">
-                <i class="bi bi-upload"></i> Importar Datos
-            </button>
-        </li>
-    </ul>
+        <!-- Main Content -->
+        <div class="col-md-9 col-lg-10 main-content-col">
+            <!-- Estadísticas Principales -->
+            <div class="row mb-4">
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card">
+                        <div class="stat-icon text-primary"><i class="bi bi-people-fill"></i></div>
+                        <h3 id="totalUsuarios" class="mb-1">0</h3>
+                        <p class="text-muted mb-0">Usuarios Activos</p>
+                        <div class="mt-2">
+                            <canvas id="sparklineUsuarios" height="20"></canvas>
+                        </div>
+                        <small class="text-success"><i class="bi bi-arrow-up"></i> <span id="usuariosChange">0</span> hoy</small>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card">
+                        <div class="stat-icon text-info"><i class="bi bi-geo-alt-fill"></i></div>
+                        <h3 id="totalPuestos" class="mb-1">0</h3>
+                        <p class="text-muted mb-0">Puestos Electorales</p>
+                        <div class="mt-2">
+                            <canvas id="sparklinePuestos" height="20"></canvas>
+                        </div>
+                        <small class="text-muted"><span id="totalMesas">0</span> mesas</small>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card">
+                        <div class="stat-icon text-warning"><i class="bi bi-file-earmark-text-fill"></i></div>
+                        <h3 id="totalFormularios" class="mb-1">0</h3>
+                        <p class="text-muted mb-0">Formularios E-14</p>
+                        <div class="mt-2">
+                            <canvas id="sparklineFormularios" height="20"></canvas>
+                        </div>
+                        <small class="text-info"><span id="formulariosPendientes">0</span> pendientes</small>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="stat-card">
+                        <div class="stat-icon text-success"><i class="bi bi-check-circle-fill"></i></div>
+                        <h3 id="totalValidados" class="mb-1">0</h3>
+                        <p class="text-muted mb-0">Validados</p>
+                        <div class="mt-2">
+                            <canvas id="sparklineValidados" height="20"></canvas>
+                        </div>
+                        <small class="text-success"><span id="porcentajeValidados">0</span>% completado</small>
+                    </div>
+                </div>
+            </div>
 
-    <!-- Contenido de Tabs -->
-    <div class="tab-content" id="adminTabsContent">
+            <!-- Contenido de Tabs -->
+            <div class="tab-content" id="adminTabsContent">
         
         <!-- Tab: Vista General -->
         <div class="tab-pane fade show active" id="overview" role="tabpanel">
@@ -506,40 +530,50 @@ th.sortable:hover .sort-icon {
                         </button>
                     </div>
                     
-                    <!-- Testing y Auditoría -->
-                    <div class="quick-action-card">
-                        <h5 class="mb-3"><i class="bi bi-bug"></i> Testing & Diagnóstico</h5>
-                        <button class="btn btn-outline-success quick-action-btn" onclick="initElectoralData()">
-                            <i class="bi bi-flag-fill"></i> Inicializar Datos Electorales
-                        </button>
-                        <button class="btn btn-outline-info quick-action-btn" onclick="initCaquetaData()">
-                            <i class="bi bi-geo-alt-fill"></i> Cargar Datos del Caquetá
-                        </button>
-                        <button class="btn btn-outline-primary quick-action-btn" onclick="loadTestData()">
-                            <i class="bi bi-database-add"></i> Cargar Datos de Prueba
-                        </button>
-                        <button class="btn btn-outline-info quick-action-btn" onclick="runSystemAudit()">
-                            <i class="bi bi-clipboard-check"></i> Auditoría del Sistema
-                        </button>
-                        <button class="btn btn-outline-success quick-action-btn" onclick="runDiagnostico()">
-                            <i class="bi bi-heart-pulse"></i> Diagnóstico del Sistema
-                        </button>
-                        <button class="btn btn-outline-warning quick-action-btn" onclick="fixRoles()">
-                            <i class="bi bi-person-badge"></i> Corregir Roles
-                        </button>
-                        <button class="btn btn-outline-warning quick-action-btn" onclick="fixPasswords()">
-                            <i class="bi bi-key"></i> Arreglar Contraseñas
-                        </button>
-                        <button class="btn btn-outline-danger quick-action-btn" onclick="resetDatabase()">
-                            <i class="bi bi-arrow-clockwise"></i> Resetear Base de Datos
-                        </button>
-                    </div>
-                    
                     <!-- Actividad Reciente -->
                     <div class="chart-card">
                         <h5 class="mb-3">Actividad Reciente</h5>
                         <div id="recentActivity" style="max-height: 400px; overflow-y: auto;">
                             <p class="text-muted text-center">Cargando actividad...</p>
+                        </div>
+                    </div>
+
+                    <!-- Herramientas de Desarrollo (colapsadas) -->
+                    <div class="accordion" id="devToolsAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="devToolsHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#devToolsCollapse" aria-expanded="false" aria-controls="devToolsCollapse">
+                                    <i class="bi bi-bug me-2"></i> Herramientas de Desarrollo
+                                </button>
+                            </h2>
+                            <div id="devToolsCollapse" class="accordion-collapse collapse" aria-labelledby="devToolsHeading" data-bs-parent="#devToolsAccordion">
+                                <div class="accordion-body p-3">
+                                    <button class="btn btn-outline-success quick-action-btn" onclick="initElectoralData()">
+                                        <i class="bi bi-flag-fill"></i> Inicializar Datos Electorales
+                                    </button>
+                                    <button class="btn btn-outline-info quick-action-btn" onclick="initCaquetaData()">
+                                        <i class="bi bi-geo-alt-fill"></i> Cargar Datos del Caquetá
+                                    </button>
+                                    <button class="btn btn-outline-primary quick-action-btn" onclick="loadTestData()">
+                                        <i class="bi bi-database-add"></i> Cargar Datos de Prueba
+                                    </button>
+                                    <button class="btn btn-outline-info quick-action-btn" onclick="runSystemAudit()">
+                                        <i class="bi bi-clipboard-check"></i> Auditoría del Sistema
+                                    </button>
+                                    <button class="btn btn-outline-success quick-action-btn" onclick="runDiagnostico()">
+                                        <i class="bi bi-heart-pulse"></i> Diagnóstico del Sistema
+                                    </button>
+                                    <button class="btn btn-outline-warning quick-action-btn" onclick="fixRoles()">
+                                        <i class="bi bi-person-badge"></i> Corregir Roles
+                                    </button>
+                                    <button class="btn btn-outline-warning quick-action-btn" onclick="fixPasswords()">
+                                        <i class="bi bi-key"></i> Arreglar Contraseñas
+                                    </button>
+                                    <button class="btn btn-outline-danger quick-action-btn" onclick="resetDatabase()">
+                                        <i class="bi bi-arrow-clockwise"></i> Resetear Base de Datos
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -574,6 +608,11 @@ th.sortable:hover .sort-icon {
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="carga-subtab" data-bs-toggle="pill" data-bs-target="#carga-content" type="button">
                         <i class="bi bi-cloud-upload"></i> Carga Masiva
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="personalizacion-subtab" data-bs-toggle="pill" data-bs-target="#personalizacion-content" type="button">
+                        <i class="bi bi-palette"></i> Personalización
                     </button>
                 </li>
             </ul>
@@ -817,6 +856,46 @@ th.sortable:hover .sort-icon {
             </div><!-- Fin del chart-card de carga masiva -->
             
                 </div><!-- Fin del sub-tab de carga masiva -->
+                
+                <!-- Sub-tab: Personalización -->
+                <div class="tab-pane fade" id="personalizacion-content" role="tabpanel">
+                    <div class="fondos-section">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <h4 class="mb-2"><i class="bi bi-palette"></i> Personalización del Sistema</h4>
+                                <p class="text-muted mb-0">Personaliza la apariencia de la página de login</p>
+                            </div>
+                            <button class="btn btn-crear-fondo" onclick="personalizacion.mostrarFormularioCrear()">
+                                <i class="bi bi-plus-circle"></i> Crear Nuevo Fondo
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="fondos-section">
+                        <h5><i class="bi bi-images"></i> Fondos Actuales</h5>
+                        <div class="row" id="fondos-actuales">
+                            <div class="col-12 text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Cargando fondos...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="fondos-section">
+                        <h5><i class="bi bi-star"></i> Fondos Predefinidos</h5>
+                        <p class="text-muted small">Selecciona un fondo predefinido para usar rápidamente</p>
+                        <div class="row" id="fondos-predefinidos">
+                            <div class="col-12 text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Cargando fondos predefinidos...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
             </div><!-- Fin de configSubTabsContent -->
         </div><!-- Fin del tab de Configuración -->
@@ -1256,54 +1335,6 @@ th.sortable:hover .sort-icon {
     </div>
 </div>
 
-        <!-- ⭐ TAB: Personalización -->
-        <div class="tab-pane fade" id="personalizacion" role="tabpanel">
-            
-            <!-- Header -->
-            <div class="fondos-section">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h4 class="mb-2"><i class="bi bi-palette"></i> Personalización del Sistema</h4>
-                        <p class="text-muted mb-0">Personaliza la apariencia de la página de login</p>
-                    </div>
-                    <button class="btn btn-crear-fondo" onclick="personalizacion.mostrarFormularioCrear()">
-                        <i class="bi bi-plus-circle"></i> Crear Nuevo Fondo
-                    </button>
-                </div>
-            </div>
-
-            <!-- Fondos Actuales -->
-            <div class="fondos-section">
-                <h5><i class="bi bi-images"></i> Fondos Actuales</h5>
-                <div class="row" id="fondos-actuales">
-                    <div class="col-12 text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Cargando...</span>
-                        </div>
-                        <p class="mt-2 text-muted">Cargando fondos...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Fondos Predefinidos -->
-            <div class="fondos-section">
-                <h5><i class="bi bi-star"></i> Fondos Predefinidos</h5>
-                <p class="text-muted small">Selecciona un fondo predefinido para usar rápidamente</p>
-                <div class="row" id="fondos-predefinidos">
-                    <div class="col-12 text-center py-4">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Cargando...</span>
-                        </div>
-                        <p class="mt-2 text-muted">Cargando fondos predefinidos...</p>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-    </div>
-</div>
-
 <!-- Modal: Crear Fondo -->
 <div class="modal fade modal-personalizar" id="crearFondoModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -1511,17 +1542,14 @@ th.sortable:hover .sort-icon {
         </div>
     </div>
 </div>
+</div>
 
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-<!-- Leaflet para mapas -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<!-- Script de geolocalización ya está cargado en base.html -->
+<!-- Leaflet ya cargado en base.html -->
 
 <!-- Cargador de datos con manejo de errores -->
 <script src="{{ url_for('static', filename='js/dashboard-data-loader.js') }}?v=20251201"></script>
@@ -1533,13 +1561,6 @@ th.sortable:hover .sort-icon {
 <!-- Scripts de gestión de partidos y candidatos -->
 <script src="{{ url_for('static', filename='js/partidos-manager.js') }}?v=20251202"></script>
 <script src="{{ url_for('static', filename='js/candidatos-manager.js') }}?v=20251202"></script>
-<!-- Script de debugging -->
-<script src="{{ url_for('static', filename='js/super-admin-dashboard-debug.js') }}?v=20251201"></script>
-<script src="{{ url_for('static', filename='js/force-usuarios-render.js') }}?v=20251205"></script>
-<script src="{{ url_for('static', filename='js/fix-partidos-render.js') }}?v=20251205"></script>
-<script src="{{ url_for('static', filename='js/debug-partidos.js') }}?v=20251205"></script>
-<script src="{{ url_for('static', filename='js/debug-candidatos.js') }}?v=20251205"></script>
-<script src="{{ url_for('static', filename='js/fix-candidatos-render.js') }}?v=20251205"></script>
 <script>
 // Inicializar dashboard
 document.addEventListener('DOMContentLoaded', function() {
@@ -1551,7 +1572,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Inicializar módulo de personalización cuando se abre la pestaña
-    const personalizacionTab = document.getElementById('personalizacion-tab');
+    const personalizacionTab = document.getElementById('personalizacion-subtab');
     if (personalizacionTab) {
         personalizacionTab.addEventListener('shown.bs.tab', function() {
             if (window.personalizacion && !window.personalizacion.initialized) {
@@ -1699,8 +1720,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <!-- Scripts de debug -->
-<script src="{{ url_for('static', filename='js/debug-partidos.js') }}?v=20251205"></script>
-<script src="{{ url_for('static', filename='js/debug-candidatos.js') }}?v=20251205"></script>
+
 
 <!-- 🆕 Funciones de Backup y Restauración de Base de Datos -->
 <script>

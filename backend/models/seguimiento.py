@@ -51,7 +51,7 @@ class SeguimientoReporte(db.Model):
             'estado_nuevo': self.estado_nuevo,
             'comentario': self.comentario,
             'usuario_id': self.usuario_id,
-            'usuario_nombre': self.usuario.nombre_completo if self.usuario else None,
+            'usuario_nombre': self.usuario.nombre if self.usuario else None,
             'usuario_rol': self.usuario.rol if self.usuario else None,
             'metadatos': self.metadatos,
             'fecha_accion': self.fecha_accion.isoformat(),

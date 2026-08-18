@@ -17,15 +17,11 @@ class NotificacionesManager {
     }
 
     /**
-     * Inicializar y conectar al servidor WebSocket
+     * Inicializar en modo REST (polling periódico)
+     * El backend no tiene WebSocket/Socket.IO, se usa polling
      */
     async init() {
         try {
-            // Cargar Socket.IO desde CDN si no está disponible
-            if (typeof io === 'undefined') {
-                await this.loadSocketIO();
-            }
-
             // Obtener token de autenticación
             const token = this.getAuthToken();
             if (!token) {
@@ -33,11 +29,15 @@ class NotificacionesManager {
                 return;
             }
 
-            // Conectar al servidor
-            this.connect(token);
-
             // Cargar notificaciones existentes
             await this.loadNotificaciones();
+
+            // Polling periódico (cada 60 segundos)
+            this.pollingInterval = setInterval(() => {
+                this.loadNotificaciones().catch(err => {
+                    console.error('Error en polling de notificaciones:', err);
+                });
+            }, 60000);
 
         } catch (error) {
             console.error('Error inicializando NotificacionesManager:', error);
@@ -61,7 +61,7 @@ class NotificacionesManager {
      * Obtener token de autenticación
      */
     getAuthToken() {
-        return localStorage.getItem('token') || sessionStorage.getItem('token');
+        return localStorage.getItem('access_token') || sessionStorage.getItem('access_token') || localStorage.getItem('token') || sessionStorage.getItem('token');
     }
 
     /**
@@ -209,7 +209,9 @@ class NotificacionesManager {
                 const data = await response.json();
                 if (data.success) {
                     this.notificaciones = data.notificaciones || [];
-                    this.actualizarBadge();
+                    // Usar el contador del servidor si viene, sino calcular local
+                    const noLeidasServer = typeof data.no_leidas === 'number' ? data.no_leidas : null;
+                    this.actualizarBadge(noLeidasServer);
                 }
             }
         } catch (error) {
@@ -220,8 +222,10 @@ class NotificacionesManager {
     /**
      * Actualizar badge de notificaciones no leídas
      */
-    actualizarBadge() {
-        const noLeidas = this.notificaciones.filter(n => !n.leida).length;
+    actualizarBadge(noLeidasExterno) {
+        const noLeidas = noLeidasExterno !== null && noLeidasExterno !== undefined
+            ? noLeidasExterno
+            : this.notificaciones.filter(n => !n.leida).length;
         
         // Actualizar badge en navbar
         const badge = document.getElementById('notificaciones-badge');
