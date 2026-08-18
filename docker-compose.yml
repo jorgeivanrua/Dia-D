@@ -23,17 +23,20 @@ services:
         condition: service_healthy
       minio:
         condition: service_started
-    # ✅ SOLO el puerto interno (Dokploy/Traefik gestiona el dominio)
     expose:
       - 5000
     volumes:
-      # ✅ named volumes en vez de rutas relativas ./ (más confiable en Dokploy)
       - instance_data:/app/instance
       - uploads_data:/app/uploads
     networks:
       - dokploy-network
     labels:
-      
+      traefik.enable: "true"
+      traefik.http.routers.app.rule: "Host(`dia-d.karolt.org`)"
+      traefik.http.routers.app.entrypoints: "websecure"
+      traefik.http.routers.app.tls.certresolver: "letsencrypt"
+      traefik.http.services.app.loadbalancer.server.port: "5000"
+
   postgres:
     image: postgres:15
     restart: always
@@ -49,7 +52,7 @@ services:
       start_period: 10s
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks: [dokploy-network]      # ❌ sin puertos externos: solo red interna
+    networks: [dokploy-network]
 
   minio:
     image: minio/minio:latest
@@ -60,12 +63,11 @@ services:
     volumes:
       - minio_data:/data
     networks: [dokploy-network]
-    # ❌ sin puertos externos
 
 volumes:
   postgres_data:
   minio_data:
-  instanc_data:
+  app_data:        # ✅ (antes estaba mal escrito como "instanc_data")
   uploads_data:
 
 networks:
