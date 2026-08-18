@@ -1675,7 +1675,15 @@ function renderVotosPartidosE24(votosPartidos) {
 /**
  * Logout
  */
-function logout() {
-    localStorage.removeItem('token');
-    window.location.href = '/auth/login';
+async function logout() {
+    try {
+        await APIClient.logout();
+    } catch (error) {
+        console.error('Error during logout:', error);
+    } finally {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user_data');
+        window.location.href = '/auth/login';
+    }
 }

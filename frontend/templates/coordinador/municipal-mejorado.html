@@ -4,31 +4,30 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/coordinador-puesto-v2.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/mobile-responsive.css') }}">
 <style>
-.stats-card {
+.stat-card {
     border-left: 4px solid;
     transition: transform 0.2s;
 }
 
-.stats-card:hover {
+.stat-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-.stats-card.pendientes {
+.stat-card.pendientes {
     border-left-color: #ffc107;
 }
 
-.stats-card.validados {
+.stat-card.validados {
     border-left-color: #28a745;
 }
 
-.stats-card.rechazados {
+.stat-card.rechazados {
     border-left-color: #dc3545;
 }
 
-.stats-card.progreso {
+.stat-card.progreso {
     border-left-color: #007bff;
 }
 
@@ -580,9 +579,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Leaflet para mapas -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Leaflet ya cargado en base.html -->
 
 <script src="{{ url_for('static', filename='js/coordinador-municipal-mejorado.js') }}"></script>
 {% endblock %}
