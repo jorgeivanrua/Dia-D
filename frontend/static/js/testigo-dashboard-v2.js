@@ -1898,31 +1898,7 @@ function setupImagePreview() {
 /**
  * Verificar presencia del testigo en la mesa
  */
-async function verificarPresencia() {
-    if (!confirm('¿Confirma que está presente en la mesa asignada?')) {
-        return;
-    }
-    
-    try {
-        const response = await APIClient.post('/auth/verificar-presencia', {});
-        
-        if (response.success) {
-            Utils.showSuccess('Presencia verificada exitosamente');
-            
-            // Ocultar botón y mostrar alerta de verificación
-            document.getElementById('btnVerificarPresencia').classList.add('d-none');
-            document.getElementById('alertaPresenciaVerificada').classList.remove('d-none');
-            
-            // Mostrar fecha de verificación
-            const fecha = new Date(response.data.presencia_verificada_at);
-            document.getElementById('presenciaFecha').textContent = 
-                `Verificado el ${fecha.toLocaleDateString()} a las ${fecha.toLocaleTimeString()}`;
-        }
-    } catch (error) {
-        console.error('Error verificando presencia:', error);
-        Utils.showError('Error al verificar presencia: ' + error.message);
-    }
-}
+
 
 /**
  * Verificar estado de presencia al cargar
@@ -2811,3 +2787,74 @@ function limpiarFotoDelito() {
     document.getElementById('imgPreviewDelito').src = '';
     document.getElementById('previewDelito').style.display = 'none';
 }
+
+/**
+ * Abrir cámara para tomar foto del formulario
+ */
+function abrirCamara() {
+    // Crear un input de archivo temporal con capacidad de captura
+    const tempInput = document.createElement('input');
+    tempInput.type = 'file';
+    tempInput.accept = 'image/*';
+    tempInput.capture = 'environment'; // Usa la cámara trasera
+    tempInput.style.display = 'none';
+    
+    // Manejar la selección de archivo
+    tempInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Verificar que sea una imagen
+            if (file.type.startsWith('image/')) {
+                // Crear un DataTransfer para establecer los archivos en el input principal
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                
+                // Establecer el archivo en el input principal del formulario
+                const imagenInput = document.getElementById('imagen');
+                if (imagenInput) {
+                    imagenInput.files = dataTransfer.files;
+                    
+                    // Disparar el evento change para activar la vista previa
+                    const changeEvent = new Event('change');
+                    imagenInput.dispatchEvent(changeEvent);
+                    
+                    console.log('📸 Foto capturada y establecida en el input del formulario');
+                } else {
+                    console.error('❌ No se encontró el input de imagen principal');
+                }
+            } else {
+                if (window.Utils) {
+                    Utils.showError('Por favor seleccione una imagen válida');
+                } else {
+                    alert('Por favor seleccione una imagen válida');
+                }
+            }
+        }
+        
+        // Limpiar: eliminar el input temporal
+        tempInput.remove();
+    });
+    
+    // Manejar cancelación (cuando no se selecciona ningún archivo)
+    tempInput.addEventListener('cancel', function() {
+        tempInput.remove();
+    });
+    
+    // Agregar el input al documento y hacer clic en él
+    document.body.appendChild(tempInput);
+    tempInput.click();
+}
+
+// Exponer funciones globalmente
+window.loadUserProfile = loadUserProfile;
+window.loadMesas = loadMesas;
+window.loadForms = loadForms;
+window.loadTiposEleccion = loadTiposEleccion;
+window.cargarPartidosYCandidatos = cargarPartidosYCandidatos;
+window.actualizarPanelMesas = actualizarPanelMesas;
+window.saveForm = saveForm;
+window.calcularTotales = calcularTotales;
+window.setupImagePreview = setupImagePreview;
+window.abrirCamara = abrirCamara;
+
+console.log('✅ testigo-dashboard-v2.js cargado - Funciones expuestas globalmente');
