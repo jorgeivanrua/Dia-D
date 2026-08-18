@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: .
-      restart: always
+    restart: always
     environment:
       FLASK_ENV: production
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/electoral_db
@@ -34,7 +34,7 @@ services:
       - dokploy-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.diad-app.rule=Host(`tu-dominio.com`)"   # ⚠️ pon tu dominio
+      - "traefik.http.routers.diad-app.rule=Host(`https://brysoftsas.com/diad`)"   # ⚠️ pon tu dominio
       - "traefik.http.routers.diad-app.entrypoints=websecure"
       - "traefik.http.routers.diad-app.tls.certResolver=letsencrypt"
       - "traefik.http.services.diad-app.loadbalancer.server.port=5000"
