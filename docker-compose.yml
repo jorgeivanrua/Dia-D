@@ -2,8 +2,7 @@ services:
   app:
     build:
       context: .
-    container_name: dia_d_app        # ❌ ELIMINADO - Dokploy no permite container_name
-    restart: always
+      restart: always
     environment:
       FLASK_ENV: production
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/electoral_db
