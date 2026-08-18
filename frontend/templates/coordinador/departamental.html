@@ -158,11 +158,11 @@
                             <thead>
                                 <tr>
                                     <th>Municipio</th>
-                                    <th>Coordinador</th>
                                     <th>Puestos</th>
+                                    <th>Mesas</th>
+                                    <th>Formularios</th>
                                     <th>Avance</th>
                                     <th>Estado</th>
-                                    <th>Acciones</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -283,12 +283,12 @@
 <!-- Bottom Navigation (Solo Móvil) -->
 <nav class="bottom-nav d-md-none">
     <a href="#municipios" class="bottom-nav-item active" data-bs-toggle="tab" data-tab="municipios">
-        <i class="bi bi-speedometer2-fill"></i>
-        <span>Dashboard</span>
-    </a>
-    <a href="#municipios" class="bottom-nav-item" data-bs-toggle="tab" data-tab="municipios">
         <i class="bi bi-building-fill"></i>
         <span>Municipios</span>
+    </a>
+    <a href="#consolidado" class="bottom-nav-item" data-bs-toggle="tab" data-tab="consolidado">
+        <i class="bi bi-pie-chart-fill"></i>
+        <span>Consolidado</span>
     </a>
     <a href="#analisis" class="bottom-nav-item" data-bs-toggle="tab" data-tab="analisis">
         <i class="bi bi-bar-chart-fill"></i>
@@ -322,11 +322,7 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 
-<!-- Leaflet para mapas -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<!-- Script de geolocalización ya está cargado en base.html -->
+<!-- Leaflet ya cargado en base.html -->
 
 <script>
 // Funciones auxiliares

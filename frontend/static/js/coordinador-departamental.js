@@ -50,23 +50,107 @@ async function loadMunicipios() {
         if (response.success) {
             municipiosData = response.data || [];
             renderMunicipiosTable(municipiosData);
+            actualizarBadgesMunicipios();
         } else {
             throw new Error(response.error || 'Error al cargar municipios');
         }
     } catch (error) {
         console.error('Error loading municipios:', error);
         const tbody = document.querySelector('#municipiosTable tbody');
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" class="text-center py-4">
-                    <p class="text-danger mb-2">❌ Error al cargar municipios</p>
-                    <button class="btn btn-sm btn-outline-primary" onclick="loadMunicipios()">
-                        <i class="bi bi-arrow-clockwise"></i> Reintentar
-                    </button>
-                </td>
-            </tr>
-        `;
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <p class="text-danger mb-2">❌ Error al cargar municipios</p>
+                        <button class="btn btn-sm btn-outline-primary" onclick="loadMunicipios()">
+                            <i class="bi bi-arrow-clockwise"></i> Reintentar
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
     }
+}
+
+/**
+ * Determinar estado de un municipio según su porcentaje de avance
+ */
+function getMunicipioEstado(porcentaje) {
+    if (porcentaje >= 90) return 'completo';
+    if (porcentaje > 0) return 'incompleto';
+    return 'sin_datos';
+}
+
+/**
+ * Actualizar badges de filtros con conteos reales
+ */
+function actualizarBadgesMunicipios() {
+    if (!municipiosData || municipiosData.length === 0) return;
+    
+    const completos = municipiosData.filter(m => getMunicipioEstado(m.porcentaje_avance || 0) === 'completo').length;
+    const incompletos = municipiosData.filter(m => getMunicipioEstado(m.porcentaje_avance || 0) === 'incompleto').length;
+    
+    const updateBadge = (id, value) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    };
+    
+    updateBadge('badgeTodos', municipiosData.length);
+    updateBadge('badgeCompletos', completos);
+    updateBadge('badgeIncompletos', incompletos);
+}
+
+/**
+ * Filtrar municipios según estado
+ */
+function filtrarMunicipios(filtro) {
+    let filtrados = municipiosData;
+    
+    if (filtro) {
+        filtrados = municipiosData.filter(m => {
+            const estado = getMunicipioEstado(m.porcentaje_avance || 0);
+            if (filtro === 'completo') return estado === 'completo';
+            if (filtro === 'incompleto') return estado === 'incompleto';
+            if (filtro === 'con_discrepancias') return false; // Sin datos de discrepancias por ahora
+            return true;
+        });
+    }
+    
+    renderMunicipiosTable(filtrados);
+    
+    // Sincronizar tarjetas móviles
+    if (window.departamentalMejoras && window.departamentalMejoras.renderMunicipiosMobile) {
+        window.departamentalMejoras.renderMunicipiosMobile(filtrados);
+    }
+}
+
+/**
+ * Buscar municipios por texto
+ */
+function buscarMunicipio() {
+    const input = document.getElementById('searchMunicipio');
+    const termino = (input ? input.value : '').toLowerCase().trim();
+    
+    const filtrados = municipiosData.filter(m => {
+        const nombre = (m.nombre || m.nombre_completo || '').toLowerCase();
+        const codigo = (m.municipio_codigo || '').toLowerCase();
+        return !termino || nombre.includes(termino) || codigo.includes(termino);
+    });
+    
+    renderMunicipiosTable(filtrados);
+    
+    if (window.departamentalMejoras && window.departamentalMejoras.renderMunicipiosMobile) {
+        window.departamentalMejoras.renderMunicipiosMobile(filtrados);
+    }
+}
+
+/**
+ * Actualizar datos
+ */
+function actualizarDatos() {
+    loadMunicipios();
+    loadEstadisticas();
+    Utils.showSuccess('Datos actualizados');
 }
 
 /**
@@ -138,32 +222,29 @@ function getEstadoBadge(porcentaje) {
 
 /**
  * Cargar estadísticas departamentales
+ * Actualiza las tarjetas de resumen y el panel de análisis
  */
 async function loadEstadisticas() {
     try {
-        const response = await APIClient.get('/coordinador-departamental/estadisticas');
+        // 1. Estadísticas generales para las tarjetas (statMunicipios, statPuestos, statFormularios, statParticipacion)
+        const statsResponse = await APIClient.get('/coordinador-departamental/stats');
+        if (statsResponse.success) {
+            const stats = statsResponse.data;
+            const updateElement = (id, value) => {
+                const element = document.getElementById(id);
+                if (element) element.textContent = value;
+            };
+            
+            updateElement('statMunicipios', Utils.formatNumber(stats.total_municipios || 0));
+            updateElement('statPuestos', Utils.formatNumber(stats.total_puestos || 0));
+            updateElement('statFormularios', Utils.formatNumber(stats.total_formularios || 0));
+            updateElement('statParticipacion', (stats.porcentaje_avance || 0).toFixed(1) + '%');
+        }
         
-        if (response.success) {
-            const stats = response.data;
-            
-            // Actualizar estadísticas generales
-            document.getElementById('statTotalMesas').textContent = Utils.formatNumber(stats.total_mesas);
-            document.getElementById('statFormulariosRecibidos').textContent = Utils.formatNumber(stats.total_formularios);
-            document.getElementById('statFormulariosValidados').textContent = Utils.formatNumber(stats.estados.validado);
-            document.getElementById('statPorcentajeCompletado').textContent = stats.porcentaje_completado.toFixed(1) + '%';
-            
-            // Actualizar estadísticas por estado
-            document.getElementById('statPendientes').textContent = stats.estados.pendiente || 0;
-            document.getElementById('statValidados').textContent = stats.estados.validado || 0;
-            document.getElementById('statRechazados').textContent = stats.estados.rechazado || 0;
-            document.getElementById('statSinReporte').textContent = stats.estados.sin_reporte || 0;
-            
-            // Renderizar tabla de municipios con estadísticas
-            if (stats.estadisticas_por_municipio) {
-                renderEstadisticasMunicipios(stats.estadisticas_por_municipio);
-            }
-        } else {
-            throw new Error(response.error || 'Error al cargar estadísticas');
+        // 2. Estadísticas detalladas para el panel de Análisis
+        const detalleResponse = await APIClient.get('/coordinador-departamental/estadisticas');
+        if (detalleResponse.success) {
+            renderEstadisticasGenerales(detalleResponse.data);
         }
     } catch (error) {
         console.error('Error loading estadisticas:', error);
@@ -172,38 +253,70 @@ async function loadEstadisticas() {
 }
 
 /**
- * Renderizar estadísticas por municipio
+ * Renderizar panel de estadísticas detalladas en el tab de Análisis
  */
-function renderEstadisticasMunicipios(estadisticas) {
-    const container = document.getElementById('estadisticasMunicipios');
-    
+function renderEstadisticasGenerales(estadisticas) {
+    const container = document.getElementById('estadisticasGenerales');
     if (!container) return;
     
-    let html = '<div class="table-responsive"><table class="table table-sm">';
-    html += '<thead class="table-light"><tr><th>Municipio</th><th>Mesas</th><th>Recibidos</th><th>Validados</th><th>Avance</th></tr></thead>';
-    html += '<tbody>';
+    const estados = estadisticas.estados || {};
+    let html = `
+        <div class="mb-3">
+            <p class="mb-1"><strong>Mesas totales:</strong> ${estadisticas.total_mesas || 0}</p>
+            <p class="mb-1"><strong>Formularios recibidos:</strong> ${estadisticas.total_formularios || 0}</p>
+            <p class="mb-1"><strong>Completado:</strong> ${(estadisticas.porcentaje_completado || 0).toFixed(1)}%</p>
+            <p class="mb-0"><strong>Validado:</strong> ${(estadisticas.porcentaje_validado || 0).toFixed(1)}%</p>
+        </div>
+        <hr>
+        <h6 class="mb-2">Estado de formularios</h6>
+        <div class="d-flex justify-content-between mb-1">
+            <span><span class="badge bg-warning">Pendientes</span></span>
+            <strong>${estados.pendiente || 0}</strong>
+        </div>
+        <div class="d-flex justify-content-between mb-1">
+            <span><span class="badge bg-success">Validados</span></span>
+            <strong>${estados.validado || 0}</strong>
+        </div>
+        <div class="d-flex justify-content-between mb-1">
+            <span><span class="badge bg-danger">Rechazados</span></span>
+            <strong>${estados.rechazado || 0}</strong>
+        </div>
+        <div class="d-flex justify-content-between">
+            <span><span class="badge bg-secondary">Sin reporte</span></span>
+            <strong>${estados.sin_reporte || 0}</strong>
+        </div>
+    `;
     
-    estadisticas.forEach(stat => {
-        const progressColor = stat.porcentaje_avance >= 90 ? 'success' : stat.porcentaje_avance >= 50 ? 'warning' : 'danger';
+    // Tabla de avance por municipio
+    const porMunicipio = estadisticas.estadisticas_por_municipio || [];
+    if (porMunicipio.length > 0) {
+        html += '<hr><h6 class="mb-2">Avance por municipio</h6>';
+        html += '<div class="table-responsive"><table class="table table-sm">';
+        html += '<thead class="table-light"><tr><th>Municipio</th><th>Mesas</th><th>Recibidos</th><th>Validados</th><th>Avance</th></tr></thead>';
+        html += '<tbody>';
         
-        html += `
-            <tr>
-                <td><strong>${stat.municipio}</strong></td>
-                <td>${stat.total_mesas}</td>
-                <td>${stat.formularios_recibidos}</td>
-                <td>${stat.formularios_validados}</td>
-                <td>
-                    <div class="progress" style="height: 20px;">
-                        <div class="progress-bar bg-${progressColor}" style="width: ${stat.porcentaje_avance}%;">
-                            ${stat.porcentaje_avance.toFixed(1)}%
+        porMunicipio.forEach(stat => {
+            const progressColor = stat.porcentaje_avance >= 90 ? 'success' : stat.porcentaje_avance >= 50 ? 'warning' : 'danger';
+            html += `
+                <tr>
+                    <td><strong>${stat.municipio}</strong></td>
+                    <td>${stat.total_mesas}</td>
+                    <td>${stat.formularios_recibidos}</td>
+                    <td>${stat.formularios_validados}</td>
+                    <td>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-${progressColor}" style="width: ${stat.porcentaje_avance}%;">
+                                ${stat.porcentaje_avance.toFixed(1)}%
+                            </div>
                         </div>
-                    </div>
-                </td>
-            </tr>
-        `;
-    });
+                    </td>
+                </tr>
+            `;
+        });
+        
+        html += '</tbody></table></div>';
+    }
     
-    html += '</tbody></table></div>';
     container.innerHTML = html;
 }
 
@@ -222,7 +335,7 @@ async function loadConsolidado() {
         }
     } catch (error) {
         console.error('Error loading consolidado:', error);
-        document.getElementById('consolidadoPanel').innerHTML = `
+        document.getElementById('resumenDepartamental').innerHTML = `
             <div class="text-center py-3">
                 <p class="text-danger mb-2">❌ Error al cargar consolidado</p>
                 <button class="btn btn-sm btn-outline-primary" onclick="loadConsolidado()">
@@ -237,7 +350,7 @@ async function loadConsolidado() {
  * Renderizar consolidado
  */
 function renderConsolidado(data) {
-    const container = document.getElementById('consolidadoPanel');
+    const container = document.getElementById('resumenDepartamental');
     
     if (!data || !data.votos_por_partido || data.votos_por_partido.length === 0) {
         container.innerHTML = '<p class="text-muted">No hay datos consolidados aún</p>';
