@@ -33,12 +33,7 @@ services:
     networks:
       - dokploy-network
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.diad-app.rule=Host(`https://brysoftsas.com/diad`)"   # ⚠️ pon tu dominio
-      - "traefik.http.routers.diad-app.entrypoints=websecure"
-      - "traefik.http.routers.diad-app.tls.certResolver=letsencrypt"
-      - "traefik.http.services.diad-app.loadbalancer.server.port=5000"
-
+      
   postgres:
     image: postgres:15
     restart: always
