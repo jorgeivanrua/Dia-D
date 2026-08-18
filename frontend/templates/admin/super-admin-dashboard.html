@@ -1542,17 +1542,14 @@ th.sortable:hover .sort-icon {
         </div>
     </div>
 </div>
+</div>
 
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
-<!-- Leaflet para mapas -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<!-- Script de geolocalización ya está cargado en base.html -->
+<!-- Leaflet ya cargado en base.html -->
 
 <!-- Cargador de datos con manejo de errores -->
 <script src="{{ url_for('static', filename='js/dashboard-data-loader.js') }}?v=20251201"></script>
