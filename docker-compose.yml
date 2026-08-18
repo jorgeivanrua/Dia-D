@@ -1,8 +1,9 @@
 services:
   app:
-    build: .
-    container_name: dia_d_app
-    restart: unless-stopped
+    build:
+      context: .
+    container_name: dia_d_app        # ❌ ELIMINADO - Dokploy no permite container_name
+    restart: always
     environment:
       FLASK_ENV: production
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/electoral_db
@@ -23,15 +24,24 @@ services:
         condition: service_healthy
       minio:
         condition: service_started
-    ports:
-      - "5000:5000"
+    # ✅ SOLO el puerto interno (Dokploy/Traefik gestiona el dominio)
+    expose:
+      - 5000
     volumes:
-      - ./instance:/app/instance
-      - ./uploads:/app/uploads
+      # ✅ named volumes en vez de rutas relativas ./ (más confiable en Dokploy)
+      - instance_data:/app/instance
+      - uploads_data:/app/uploads
+    networks:
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.diad-app.rule=Host(`tu-dominio.com`)"   # ⚠️ pon tu dominio
+      - "traefik.http.routers.diad-app.entrypoints=websecure"
+      - "traefik.http.routers.diad-app.tls.certResolver=letsencrypt"
+      - "traefik.http.services.diad-app.loadbalancer.server.port=5000"
 
   postgres:
     image: postgres:15
-    container_name: dia_d_postgres
     restart: always
     environment:
       POSTGRES_USER: postgres
@@ -45,22 +55,25 @@ services:
       start_period: 10s
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    networks: [dokploy-network]      # ❌ sin puertos externos: solo red interna
 
   minio:
     image: minio/minio:latest
-    container_name: dia_d_minio
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
-    ports:
-      - "9000:9000"
-      - "9001:9001"
     volumes:
       - minio_data:/data
+    networks: [dokploy-network]
+    # ❌ sin puertos externos
 
 volumes:
   postgres_data:
   minio_data:
+  instanc_data:
+  uploads_data:
+
+networks:
+  dokploy-network:
+    external: true
