@@ -28,14 +28,6 @@ services:
     volumes:
       - instance_data:/app/instance
       - uploads_data:/app/uploads
-    networks:
-      - dokploy-network
-    labels:
-      traefik.enable: "true"
-      traefik.http.routers.app.rule: "Host(`dia-d.karolt.org`)"
-      traefik.http.routers.app.entrypoints: "websecure"
-      traefik.http.routers.app.tls.certresolver: "letsencrypt"
-      traefik.http.services.app.loadbalancer.server.port: "5000"
 
   postgres:
     image: postgres:15
@@ -52,7 +44,6 @@ services:
       start_period: 10s
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks: [dokploy-network]
 
   minio:
     image: minio/minio:latest
@@ -62,14 +53,9 @@ services:
       MINIO_ROOT_PASSWORD: minioadmin
     volumes:
       - minio_data:/data
-    networks: [dokploy-network]
 
 volumes:
   postgres_data:
   minio_data:
-  instance_data:    # ✅ nombre exacto que usa el servicio app
+  instance_data:
   uploads_data:
-
-networks:
-  dokploy-network:
-    external: true
