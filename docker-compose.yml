@@ -67,7 +67,7 @@ services:
 volumes:
   postgres_data:
   minio_data:
-  app_data:        # ✅ (antes estaba mal escrito como "instanc_data")
+  instance_data:    # ✅ nombre exacto que usa el servicio app
   uploads_data:
 
 networks:
