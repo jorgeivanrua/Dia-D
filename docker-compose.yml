@@ -29,7 +29,7 @@ services:
       - uploads_data:/app/uploads
 
   postgres:
-    image: postgres:16
+    image: postgres:17
     restart: always
     environment:
       POSTGRES_USER: postgres
