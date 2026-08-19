@@ -19,7 +19,7 @@ services:
       DB_PORT: "5432"
     depends_on:
       postgres:
-        condition: service_healthy
+        condition: service_started
       minio:
         condition: service_started
     expose:
