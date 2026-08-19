@@ -5,7 +5,6 @@ services:
     restart: always
     environment:
       FLASK_ENV: production
-      SECRET_KEY: dia-d-production-secret-key-change-immediately
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/electoral_db
       S3_ENABLED: "True"
       S3_ENDPOINT_URL: http://minio:9000
@@ -16,7 +15,6 @@ services:
       CHROMA_ENABLED: "False"
       CHROMA_PERSIST_DIR: /data/chroma
       CHROMA_SERVER_HOST: ""
-      PORT: "5000"
       DB_HOST: postgres
       DB_PORT: "5432"
     depends_on:
@@ -24,11 +22,11 @@ services:
         condition: service_healthy
       minio:
         condition: service_started
-    ports:
-      - "5000:5000"
+    expose:
+      - 5000
     volumes:
-      - ./instance:/app/instance
-      - ./uploads:/app/uploads
+      - instance_data:/app/instance
+      - uploads_data:/app/uploads
 
   postgres:
     image: postgres:17
@@ -52,12 +50,11 @@ services:
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
-    ports:
-      - "9000:9000"
-      - "9001:9001"
     volumes:
       - minio_data:/data
 
 volumes:
   postgres_data:
   minio_data:
+  instance_data:
+  uploads_data:
