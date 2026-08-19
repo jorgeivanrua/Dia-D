@@ -33,24 +33,55 @@ def init_db(app):
             # Los modelos aún no están creados
             pass
         
-        # Solucionar conflicto: tipo "users" ya existe en pg_catalog de PG 15/17
-        # Los datos viejos de PG15 tienen una tabla/users con estructura distinta.
-        # La secuencia correcta es: 1) DROP TABLE users CASCADE, 2) DROP TYPE IF EXISTS users CASCADE, 3) db.create_all()
+        from sqlalchemy import text
+        
+        # Serializar la inicialización entre workers/replicas con advisory lock
+        # de PostgreSQL. Evita que dos workers corran create_all() a la vez y
+        # choquen con "duplicate key pg_type_typname_nsp_index (users, 2200)".
+        conn = db.session.connection()
+        locked = False
         try:
-            from sqlalchemy import text
-            db.session.execute(text("DROP TABLE IF EXISTS users CASCADE"))
-            db.session.commit()
+            conn.execute(text("SELECT pg_advisory_lock(82413001)"))
+            locked = True
         except Exception:
-            # Si la tabla no existe, continúa sin error
-            pass
+            pass  # SQLite o sin soporte de advisory lock
         
         try:
-            from sqlalchemy import text
-            db.session.execute(text("DROP TYPE IF EXISTS users CASCADE"))
-            db.session.commit()
-        except Exception:
-            # Si el tipo no existe, continúa sin error
-            pass
-        
-        # Crear todas las tablas si no existen
-        db.create_all()
+            # RESET_DB=true borra todas las tablas existentes (deploy limpio).
+            import os
+            if os.getenv('RESET_DB', 'false').lower() == 'true':
+                db.metadata.drop_all(bind=conn if locked else db.engine)
+                db.session.commit()
+
+            # Crear todas las tablas (checkfirst=True: no recrea las que ya
+            # existen, por eso un reinicio normal conserva los datos).
+            #
+            # Si la estructura heredada de PG15 está rota (el tipo compuesto
+            # "users" de la versión vieja bloquea el CREATE TABLE), create_all
+            # lanza duplicate key. Entonces se limpia tabla + tipo y se
+            # reintenta una sola vez.
+            try:
+                if locked:
+                    db.metadata.create_all(bind=conn)
+                else:
+                    db.create_all()
+            except Exception as e:
+                db.session.rollback()
+                if 'duplicate key' in str(e).lower() or 'pg_type' in str(e).lower():
+                    db.session.execute(text("DROP TABLE IF EXISTS users CASCADE"))
+                    db.session.commit()
+                    db.session.execute(text("DROP TYPE IF EXISTS users CASCADE"))
+                    db.session.commit()
+                    if locked:
+                        db.metadata.create_all(bind=conn)
+                    else:
+                        db.create_all()
+                else:
+                    raise
+        finally:
+            if locked:
+                try:
+                    conn.execute(text("SELECT pg_advisory_unlock(82413001)"))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()

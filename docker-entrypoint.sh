@@ -28,4 +28,4 @@ do
 done
 
 printf 'PostgreSQL listo. Iniciando aplicación...\n'
-exec gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 2 run:app
+exec gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 1 run:app
