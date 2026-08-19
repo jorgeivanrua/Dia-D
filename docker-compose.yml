@@ -37,10 +37,10 @@ services:
       POSTGRES_DB: electoral_db
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d electoral_db"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-      start_period: 20s
+      interval: 20s
+      timeout: 15s
+      retries: 8
+      start_period: 45s
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
