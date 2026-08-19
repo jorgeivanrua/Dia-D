@@ -35,12 +35,13 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: electoral_db
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d electoral_db"]
-      interval: 20s
-      timeout: 15s
-      retries: 8
-      start_period: 45s
+
+healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
