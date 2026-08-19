@@ -34,13 +34,22 @@ def init_db(app):
             pass
         
         # Solucionar conflicto: tipo "users" ya existe en pg_catalog de PG 15/17
-        # Este error ocurre cuando los datos viejos de PG15 coexisten con PG17
+        # Los datos viejos de PG15 tienen una tabla/users con estructura distinta.
+        # La secuencia correcta es: 1) DROP TABLE users CASCADE, 2) DROP TYPE IF EXISTS users CASCADE, 3) db.create_all()
+        try:
+            from sqlalchemy import text
+            db.session.execute(text("DROP TABLE IF EXISTS users CASCADE"))
+            db.session.commit()
+        except Exception:
+            # Si la tabla no existe, continúa sin error
+            pass
+        
         try:
             from sqlalchemy import text
             db.session.execute(text("DROP TYPE IF EXISTS users CASCADE"))
             db.session.commit()
         except Exception:
-            # Si no existe el tipo, está bien continuar
+            # Si el tipo no existe, continúa sin error
             pass
         
         # Crear todas las tablas si no existen
