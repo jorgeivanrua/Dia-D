@@ -28,7 +28,7 @@ services:
       - instance_data:/app/instance
       - uploads_data:/app/uploads
 
-postgres:
+  postgres:
     image: postgres:17
     restart: always
     environment:
