@@ -15,7 +15,6 @@ services:
       CHROMA_ENABLED: "False"
       CHROMA_PERSIST_DIR: /data/chroma
       CHROMA_SERVER_HOST: ""
-      PORT: "5000"
       DB_HOST: postgres
       DB_PORT: "5432"
     depends_on:
