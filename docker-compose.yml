@@ -24,7 +24,7 @@ services:
       minio:
         condition: service_started
     expose:
-      - 5000
+      - 5001
     volumes:
       - instance_data:/app/instance
       - uploads_data:/app/uploads
