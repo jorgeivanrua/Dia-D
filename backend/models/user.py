@@ -103,7 +103,7 @@ class User(db.Model):
         self.intentos_fallidos += 1
         
         if self.intentos_fallidos >= 5:
-            self.bloqueado_hasta = datetime.utcnow() + timedelta(minutes=1)
+            self.bloqueado_hasta = datetime.utcnow() + timedelta(minutes=30)
     
     def reset_failed_attempts(self):
         """Resetear intentos fallidos después de login exitoso"""

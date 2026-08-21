@@ -148,17 +148,45 @@ class MapaGeolocalizacion {
             this.map.removeLayer(this.markers[markerId]);
         }
 
-        // Determinar color según porcentaje de avance
+        // Determinar color según porcentaje de avance y estado de testigos
         const porcentaje = puesto.porcentaje_avance || 0;
+        const totalTestigosPuesto = puesto.total_testigos || 0;
+        const testigosVerificadosPuesto = puesto.testigos_verificados || 0;
         let colorPuesto = '#dc3545'; // Rojo por defecto (0%)
         let estadoTexto = 'Sin votos';
+        let estadoTestigos = 'NINGUN';
         
-        if (porcentaje >= 100) {
+        // Determinar estado de testigos
+        if (totalTestigosPuesto > 0) {
+            const porcentajeTestigos = (testigosVerificadosPuesto / totalTestigosPuesto) * 100;
+            if (porcentajeTestigos >= 100) {
+                estadoTestigos = 'TODOS_VERIFICADOS';
+            } else if (porcentajeTestigos > 0) {
+                estadoTestigos = 'ALGUNOS_VERIFICADOS';
+            } else {
+                estadoTestigos = 'NINGUN_VERIFICADO';
+            }
+        } else {
+            estadoTestigos = 'SIN_DATOS';
+        }
+        
+        // Lógica de color prioridad: testigos > progreso
+        // Si todos los testigos están verificados, usar verde especial
+        if (estadoTestigos === 'TODOS_VERIFICADOS') {
+            colorPuesto = '#198754'; // Verde oscuro - todos los testigos verificados
+            estadoTexto = 'Testigos OK';
+        } else if (estadoTestigos === 'ALGUNOS_VERIFICADOS') {
+            colorPuesto = '#fd7e14'; // Naranja - algunos testigos verificados
+            estadoTexto = 'Testigos Parciales';
+        } else if (porcentaje >= 100) {
             colorPuesto = '#28a745'; // Verde - completado
             estadoTexto = 'Completado';
         } else if (porcentaje > 0) {
             colorPuesto = '#ffc107'; // Amarillo - en progreso
             estadoTexto = 'En progreso';
+        } else {
+            colorPuesto = '#dc3545'; // Rojo - sin votos
+            estadoTexto = 'Sin votos';
         }
 
         // Determinar si hay alertas
@@ -173,7 +201,7 @@ class MapaGeolocalizacion {
             iconoAlerta = '<span class="alerta-normal" title="Alerta">⚠️</span>';
         }
 
-        // Icono personalizado para puestos con número de mesa y alerta
+        // Icono personalizado para puestos con número de mesa, alerta y estado de testigos
         const iconoPuesto = L.divIcon({
             className: 'custom-marker-puesto',
             html: `
@@ -181,6 +209,9 @@ class MapaGeolocalizacion {
                     <span class="mesa-numero">${puesto.puesto_codigo || ''}</span>
                 </div>
                 ${iconoAlerta}
+                <div class="estado-testigos-badge" title="Estado testigos: ${estadoTestigos}">
+                    <span>${estadoTestigos}</span>
+                </div>
             `,
             iconSize: [30, 40],
             iconAnchor: [15, 40],
@@ -246,6 +277,9 @@ class MapaGeolocalizacion {
                     <div class="progress-bar" style="width: ${porcentaje}%; background-color: ${colorPuesto};"></div>
                 </div>
                 ${seccionAlertas}
+                <div class="mt-2 small" style="color: #6c757d;">
+                    <strong>👥 Testigos:</strong> ${estadoTestigos}
+                </div>
             </div>
         `;
 
@@ -670,8 +704,8 @@ const estilosMarkers = `
 }
 
 .marker-pin-puesto {
-    width: 30px;
-    height: 40px;
+    width: calc(30px + 2vw);
+    height: calc(40px + 2vw);
     border-radius: 15px 15px 15px 0;
     position: relative;
     transform: rotate(-45deg);
@@ -690,7 +724,7 @@ const estilosMarkers = `
 
 .marker-pin-puesto .mesa-numero {
     transform: rotate(45deg);
-    font-size: 11px;
+    font-size: calc(9px + 0.5vw);
     font-weight: bold;
     color: white;
     text-shadow: 0 1px 2px rgba(0,0,0,0.5);
@@ -723,6 +757,30 @@ const estilosMarkers = `
     50% {
         transform: scale(1.2);
         opacity: 0.8;
+    }
+}
+
+.custom-marker-puesto .estado-testigos-badge {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 2px solid #6c757d;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: calc(8px + 1vw);
+    font-weight: bold;
+    color: #495057;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* Responsive: badge font size adjustment for mobile */
+@media (max-width: 576px) {
+    .custom-marker-puesto .estado-testigos-badge {
+        font-size: calc(6px + 0.5vw);
+        padding: 1px 4px;
     }
 }
 
@@ -781,7 +839,7 @@ const estilosMarkers = `
 }
 
 .marker-popup .badge {
-    font-size: 11px;
+    font-size: calc(9px + 0.5vw);
     padding: 4px 8px;
 }
 
@@ -800,6 +858,47 @@ const estilosMarkers = `
 </style>
 `;
 
+
+@media (max-width: 576px) {
+    .marker-popup {
+        min-width: 200px;
+        padding: 10px;
+    }
+    .marker-popup h6 {
+        font-size: 14px;
+    }
+    .marker-popup p {
+        font-size: calc(9px + 0.5vw);
+    }
+    .marker-popup .progress {
+        height: 4px;
+    }
+    .marker-popup .progress-bar {
+        height: 4px;
+    }
+    .marker-popup .badge {
+        font-size: 9px;
+        padding: 3px 5px;
+    }
+    .custom-marker-puesto {
+        width: calc(25px + 3vw);
+        height: calc(35px + 3vw);
+    }
+    .custom-marker-puesto .mesa-numero {
+        font-size: calc(8px + 0.4vw);
+    }
+    .custom-marker-puesto .alerta-critica,
+    .custom-marker-puesto .alerta-normal {
+        top: -6px;
+        right: -6px;
+        font-size: 14px;
+    }
+    .estado-testigos-badge {
+        bottom: -6px;
+        font-size: calc(5px + 0.4vw);
+        padding: 1px 3px;
+    }
+}
 // Inyectar estilos
 if (!document.getElementById('marker-styles')) {
     const styleElement = document.createElement('div');

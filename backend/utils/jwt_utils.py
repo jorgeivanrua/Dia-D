@@ -1,8 +1,20 @@
 """
 Utilidades para manejo de JWT
 """
-from flask_jwt_extended import create_access_token, create_refresh_token
+from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt, jwt_required
 from datetime import timedelta
+from backend.utils.exceptions import BaseAPIException
+
+# Blacklist para invalidar tokens JWT
+BLACKLIST = set()
+
+def is_token_blacklisted(jti):
+    """Verificar si un token ha sido añadido a la blacklist"""
+    return jti in BLACKLIST
+
+def add_to_blacklist(jti):
+    """Añadir un JTI a la blacklist"""
+    BLACKLIST.add(jti)
 
 
 def generate_tokens(user):

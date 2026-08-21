@@ -1,6 +1,7 @@
 """
 Rutas para Admin Departamental
 """
+from datetime import datetime
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from backend.models.user import User
@@ -260,10 +261,100 @@ def get_formularios():
         return jsonify({
             'success': True,
             'data': formularios_data
-        }), 200
-        
+}), 200
     except Exception as e:
         return jsonify({
             'success': False,
             'error': str(e)
         }), 500
+    
+    @admin_bp.route('/exportar', methods=['GET'])
+    @jwt_required()
+    def exportar_datos():
+        """Exportar datos del departamento"""
+        try:
+            user_id = get_jwt_identity()
+            user = User.query.get(int(user_id))
+            
+            if not user or user.rol != 'admin_departamental':
+                return jsonify({
+                    'success': False,
+                    'error': 'No autorizado'
+                }), 403
+            
+            if not user.ubicacion_id:
+                return jsonify({
+                    'success': False,
+                    'error': 'Usuario sin ubicación asignada'
+                }), 400
+            
+            departamento = Location.query.get(user.ubicacion_id)
+            
+            # Obtener estadísticas del departamento
+            municipios = Location.query.filter_by(
+                tipo='municipio',
+                departamento_codigo=departamento.departamento_codigo,
+                activo=True
+            ).count()
+            
+            puestos = Location.query.filter_by(
+                tipo='puesto',
+                departamento_codigo=departamento.departamento_codigo,
+                activo=True
+            ).count()
+            
+            mesas = Location.query.filter_by(
+                tipo='mesa',
+                departamento_codigo=departamento.departamento_codigo,
+                activo=True
+            ).count()
+            
+            # Obtener usuarios activos
+            usuarios = User.query.join(Location).filter(
+                Location.departamento_codigo == departamento.departamento_codigo,
+                User.activo == True
+            ).count()
+            
+            # Obtener formularios del departamento
+            mesa_ids = [m.id for m in Location.query.filter_by(
+                tipo='mesa',
+                departamento_codigo=departamento.departamento_codigo,
+                activo=True
+            ).all()]
+            
+            formularios = FormularioE14.query.filter(
+                FormularioE14.mesa_id.in_(mesa_ids)
+            ).all() if mesa_ids else []
+            
+            formularios_completados = sum(1 for f in formularios if f.estado == 'completado')
+            
+            # Datos para exportación
+            datos_exportacion = {
+                'departamento': {
+                    'id': departamento.id,
+                    'nombre': departamento.nombre_completo,
+                    'codigo': departamento.departamento_codigo
+                },
+                'estadisticas': {
+                    'total_municipios': municipios,
+                    'total_puestos': puestos,
+                    'total_mesas': mesas,
+                    'total_usuarios': usuarios,
+                    'total_formularios': len(formularios),
+                    'formularios_completados': formularios_completados,
+                    'formularios_pendientes': len(formularios) - formularios_completados,
+                    'porcentaje_avance': (formularios_completados / len(formularios) * 100) if formularios else 0
+                },
+                'fecha_exportacion': datetime.utcnow().isoformat()
+            }
+            
+            return jsonify({
+                'success': True,
+                'data': datos_exportacion
+            }), 200
+            
+        except Exception as e:
+            return jsonify({
+                'success': False,
+                'error': str(e)
+            }), 500

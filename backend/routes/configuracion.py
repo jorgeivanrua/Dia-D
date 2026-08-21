@@ -343,3 +343,137 @@ def create_coalicion():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@configuracion_bp.route('/territorial/departamentos', methods=['GET'])
+@jwt_required()
+def get_departamentos_activados():
+    try:
+        current_user_id = get_jwt_identity()
+        user = User.query.get(current_user_id)
+        if user.rol != 'super_admin':
+            return jsonify({'success': False, 'error': 'No autorizado - solo super_admin'}, 403)
+        from backend.models.configuracion_sistema import ConfiguracionSistema
+        import json
+        config = ConfiguracionSistema.get_valor('departamentos_activados')
+        departamentos_codigos = json.loads(config) if config else []
+        from backend.models.location import Location
+        deptos = Location.query.filter(
+            Location.tipo == 'departamento',
+            Location.departamento_codigo.in_(departamentos_codigos)
+        ).all()
+        resultado = []
+        for d in deptos:
+            resultado.append({
+                'codigo': d.departamento_codigo,
+                'nombre': d.nombre_completo,
+                'activo': d.departamento_codigo in departamentos_codigos
+            })
+        return jsonify({
+            'success': True,
+            'data': resultado
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@configuracion_bp.route('/territorial/departamentos', methods=['POST'])
+@jwt_required()
+def set_departamentos_activados():
+    try:
+        current_user_id = get_jwt_identity()
+        user = User.query.get(current_user_id)
+        if user.rol != 'super_admin':
+            return jsonify({'success': False, 'error': 'No autorizado - solo super_admin'}, 403)
+        data = request.get_json()
+        departamentos = data.get('departamentos', [])
+        import json
+        ConfiguracionSistema.set_valor(
+            'departamentos_activados',
+            json.dumps(departamentos),
+            tipo='json',
+            descripcion='Códigos de departamentos activados para visualización',
+            user_id=current_user_id
+        )
+        return jsonify({
+            'success': True,
+            'data': {'departamentos': departamentos},
+            'message': 'Departamentos activados actualizados exitosamente'
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@configuracion_bp.route('/territorial/municipios', methods=['GET'])
+@jwt_required()
+def get_municipios_activados():
+    try:
+        current_user_id = get_jwt_identity()
+        user = User.query.get(current_user_id)
+        if user.rol != 'super_admin':
+            return jsonify({'success': False, 'error': 'No autorizado - solo super_admin'}, 403)
+        from backend.models.configuracion_sistema import ConfiguracionSistema
+        from backend.models.location import Location
+        import json
+        config_dept = ConfiguracionSistema.get_valor('departamentos_activados')
+        departamentos_activados = json.loads(config_dept) if config_dept else []
+        query = Location.query.filter(
+            Location.tipo == 'municipio',
+            Location.departamento_codigo.in_(departamentos_activados)
+        )
+        municipios = query.all()
+        resultado = []
+        for m in municipios:
+            resultado.append({
+                'codigo': m.municipio_codigo,
+                'nombre': m.nombre_completo,
+                'departamento': m.departamento_nombre,
+                'activo': m.departamento_codigo in departamentos_activados
+            })
+        return jsonify({
+            'success': True,
+            'data': resultado
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@configuracion_bp.route('/territorial/municipios', methods=['POST'])
+@jwt_required()
+def set_municipios_activados():
+    try:
+        current_user_id = get_jwt_identity()
+        user = User.query.get(current_user_id)
+        if user.rol != 'super_admin':
+            return jsonify({'success': False, 'error': 'No autorizado - solo super_admin'}, 403)
+        data = request.get_json()
+        municipios = data.get('municipios', [])
+        departamento_filtro = data.get('departamento_codigo')
+        import json
+        config_str = ConfiguracionSistema.get_valor('municipios_activados')
+        municipios_activados = json.loads(config_str) if config_str else {}
+        nuevo_registro = {}
+        for m in municipios:
+            codigo = m.get('codigo', '')
+            if departamento_filtro:
+                clave = f'{departamento_filtro}:{codigo}'
+            else:
+                clave = codigo
+            nuevo_registro[clave] = True
+        todos = {**municipios_activados, **nuevo_registro}
+        ConfiguracionSistema.set_valor(
+            'municipios_activados',
+            json.dumps(todos),
+            tipo='json',
+            descripcion='Códigos de municipios activados para visualización',
+            user_id=current_user_id
+        )
+        return jsonify({
+            'success': True,
+            'data': {'municipios': municipios, 'departamento': departamento_filtro},
+            'message': 'Municipios activados actualizados exitosamente'
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500

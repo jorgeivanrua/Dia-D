@@ -99,6 +99,39 @@ def obtener_puestos_geolocalizados():
                 FormularioE14.estado == 'validado'
             ).count()
             
+            # Contar testigos asignados al puesto y su estado de verificación
+            testigos_verificados = 0
+            total_testigos_puesto = 0
+            
+            # Buscar testigos activos y contar los verificados en este puesto
+            testigos_puesto = User.query.filter(
+                User.rol == 'testigo_electoral',
+                User.activo == True
+            ).all()
+            
+            for testigo in testigos_puesto:
+                if testigo.ubicacion_id:
+                    loc_testigo = Location.query.get(testigo.ubicacion_id)
+                    if loc_testigo:
+                        # Si el testigo está en una mesa, verificar si pertenece a este puesto
+                        if loc_testigo.tipo == 'mesa':
+                            puesto_mesa = Location.query.filter_by(
+                                tipo='puesto',
+                                departamento_codigo=loc_testigo.departamento_codigo,
+                                municipio_codigo=loc_testigo.municipio_codigo,
+                                zona_codigo=loc_testigo.zona_codigo,
+                                puesto_codigo=loc_testigo.puesto_codigo
+                            ).first()
+                            if puesto_mesa and puesto_mesa.id == puesto.id:
+                                total_testigos_puesto += 1
+                                if testigo.presencia_verificada:
+                                    testigos_verificados += 1
+                        # Si el testigo ya está en el puesto directo
+                        elif loc_testigo.tipo == 'puesto' and loc_testigo.id == puesto.id:
+                            total_testigos_puesto += 1
+                            if testigo.presencia_verificada:
+                                testigos_verificados += 1
+            
             # Contar incidentes del puesto (activos = no resueltos)
             incidentes_activos = IncidenteElectoral.query.filter(
                 IncidenteElectoral.puesto_id == puesto.id,
@@ -189,6 +222,8 @@ def obtener_puestos_geolocalizados():
                     'formularios_validados': formularios_validados,
                     'formularios_pendientes': formularios_pendientes,
                     'porcentaje_avance': round((formularios_validados / mesas * 100) if mesas > 0 else 0, 2),
+                    'total_testigos_puesto': total_testigos_puesto,
+                    'testigos_verificados': testigos_verificados,
                     'incidentes': {
                         'total': incidentes_activos,
                         'criticos': incidentes_criticos
